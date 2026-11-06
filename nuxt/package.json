@@ -1,0 +1,49 @@
+{
+  "name": "dirtool",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "deploy": "NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
+    "typecheck": "nuxt typecheck",
+    "db:local": "wrangler d1 execute product-atlas --local --file server/database/schema.sql",
+    "db:remote": "wrangler d1 execute product-atlas --remote --file server/database/schema.sql",
+    "seed:directory": "node scripts/seed-directory.mjs",
+    "seed:directory:sql": "node scripts/seed-directory.mjs --sql"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.0",
+    "@nuxt/ui": "^4.12.0",
+    "@nuxtjs/i18n": "^10.6.0",
+    "@tiptap/extension-image": "^3.32.3",
+    "@tiptap/extension-placeholder": "^3.32.3",
+    "@tiptap/starter-kit": "^3.32.3",
+    "@tiptap/vue-3": "^3.32.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.577.0",
+    "markdown-it": "^15.0.3",
+    "marked": "^17.0.6",
+    "nuxt": "^4.6.4",
+    "reka-ui": "^2.11.0",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.1.0",
+    "turndown": "^7.2.5",
+    "tw-animate-css": "^1.4.0",
+    "vue": "^3.5.44",
+    "vue-sonner": "^2.0.9",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.2.0",
+    "@types/node": "^26.6.6",
+    "@types/turndown": "^5.0.6",
+    "typescript": "~5.9",
+    "vue-tsc": "^3.3.14",
+    "wrangler": "^4.0.0"
+  }
+}

@@ -1,0 +1,229 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@nuxt/ui";
+
+/* ---------------------------------------------------------------------------
+   legacy.css is the live site's stylesheet, byte-for-byte.
+
+   The rebuild originally approximated it with Tailwind utilities, and two
+   rounds of "the type looks different" followed. The cause was simple: the
+   original sets px per element (34px hero, 12.5px board descriptions, 11.5px
+   tags) rather than snapping to a 7-step scale, so every approximation drifted.
+   `assets/css/style.css` on the live site hashes identical to the copy this
+   was taken from, so reusing it makes fidelity structural instead of a matter
+   of tuning numbers until it looks close.
+
+   Order matters: it is imported last and it is unlayered, while Tailwind's
+   preflight and utilities live in `@layer base` / `@layer utilities`. Unlayered
+   CSS always wins over layered CSS, which is what we want — the original rules
+   are the authority, and templates use the original class names rather than
+   mixing in utilities that would silently lose.
+--------------------------------------------------------------------------- */
+
+@import "./legacy.css";
+@import "./detail.css";
+@import "./admin.css";
+@import "./payment.css";
+@import "./collections.css";
+@import "./tickets.css";
+
+/* ---------------------------------------------------------------------------
+   The source project's Tailwind theme.
+
+   Everything below the homepage is being ported from `shipany-dir`, whose
+   markup is written against shadcn-style utilities — `text-muted-foreground`,
+   `bg-card`, `border-input`, `ring-ring/50`. Tailwind only emits those classes
+   when a `--color-*` theme token maps onto a CSS variable, and `legacy.css`
+   never declared that mapping: it sets `--muted-foreground` and friends
+   directly, for hand-written rules.
+
+   Binding the two costs one block and changes nothing that already renders —
+   no template in this app uses any of these utilities (verified by grep), so
+   the only elements affected are the ported pages themselves.
+
+   `--color-destructive` is a literal rather than a `var()`: `legacy.css` only
+   ever reads `var(--destructive, #b4442c)`, so defining the variable would
+   quietly restyle two existing rules. The token stays inside Tailwind.
+--------------------------------------------------------------------------- */
+
+/* Tailwind's stock `dark:` variant follows `prefers-color-scheme`; this app
+   toggles a `.dark` class on <html> instead. Same rule the source declares, so
+   a ported `dark:bg-violet-500/10` responds to the site's own switch. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: oklch(52% 0.16 30);
+  --color-destructive-foreground: oklch(100% 0 0);
+
+  /* Chart + sidebar tokens. `legacy.css` defines the sidebar palette but not
+     every token shadcn's sidebar reads (`--sidebar-ring` is absent), so the two
+     that would resolve to nothing fall back to their non-sidebar twin. */
+  --color-chart-1: var(--primary);
+  --color-chart-2: oklch(66% 0.16 55);
+  --color-chart-3: oklch(74% 0.14 65);
+  --color-chart-4: oklch(78% 0.14 75);
+  --color-chart-5: oklch(85% 0 0);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--ring);
+}
+
+/* ---------------------------------------------------------------------------
+   Undoing the legacy element reset, for source-ported pages only.
+
+   `legacy.css` opens with `button { border: 0; background: none; padding: 0 }`
+   and similar resets. It is unlayered, so it beats every Tailwind utility —
+   which is exactly right for the pages that were written against it, and
+   exactly wrong for the pages now being ported from `shipany-dir`, where a
+   card is a `<button class="border bg-card p-5">` and all three declarations
+   were being thrown away (the tier cards rendered as bare text).
+
+   `revert-layer` hands the property back to the cascade as if this rule did not
+   exist, so a utility that is present wins and one that is absent falls back to
+   the initial value. Scoped to `.src-page`, so nothing built against
+   `legacy.css` changes.
+
+   Portals are the second half of the same problem. reka-ui teleports dialogs,
+   sheets, menus, popovers and tooltips straight into `<body>`, so `.src-page` is
+   not an ancestor of any of them and the legacy reset applied again inside the
+   overlay: every button in a dialog lost its background and its border and
+   rendered as bare text ("Send Reply" came out as a grey word). The portalled
+   roots are the ones reka-ui and sonner teleport out, and the marker used below
+   is "a direct child of <body> that is not the app root" — that catches the
+   `#teleports` container, floating-ui's popper wrapper and sonner's toaster
+   without naming any of them.
+--------------------------------------------------------------------------- */
+
+:is(.src-page, body > :not(#__nuxt)) :is(button, input, select, textarea) {
+  border: revert-layer;
+  background: revert-layer;
+  padding: revert-layer;
+}
+
+/* Same problem, same fix, for the rest of the legacy reset.
+ *
+ * `legacy.css` also zeroes margins on headings/paragraphs/lists, strips list
+ * markers, and sets `a { color: inherit; text-decoration: none }`. A ported
+ * article body styles those through `[&_h2]:mt-6`, `[&_ul]:list-disc`,
+ * `[&_a]:text-primary` — utilities that the unlayered reset silently beat, so
+ * every ported page rendered as one flat run of text with no bullets and no
+ * link colour. `:focus-visible` is here for the same reason: the global 2px
+ * outline drew a second ring around shadcn's own `ring-3` focus style.
+ */
+:is(.src-page, body > :not(#__nuxt)) :is(h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote) {
+  margin: revert-layer;
+}
+
+:is(.src-page, body > :not(#__nuxt)) :is(ul, ol) {
+  padding: revert-layer;
+  list-style: revert-layer;
+}
+
+:is(.src-page, body > :not(#__nuxt)) a {
+  color: revert-layer;
+  text-decoration: revert-layer;
+}
+
+:is(.src-page, body > :not(#__nuxt)) :focus-visible {
+  outline: revert-layer;
+  outline-offset: revert-layer;
+}
+
+/* ---------------------------------------------------------------------------
+   `legacy.css` ships `.hidden { display: none !important }` — an unlayered,
+   important utility, so it beats every Tailwind display utility regardless of
+   layer or breakpoint. That is correct for the pages written against it and
+   fatal for the ported ones, where `hidden md:block` is the standard way to say
+   "mobile: gone, desktop: a column": the rail stayed `display: none` at every
+   width and the whole settings shell rendered without a sidebar.
+
+   `revert-layer` hands the declaration back to the last declared layer
+   (`utilities`), so Tailwind's own `hidden` / `md:block` pair decides again —
+   including the responsive part. Scoped to the ported UI, so the legacy pages
+   keep their utility untouched.
+--------------------------------------------------------------------------- */
+
+:is(.src-page, body > :not(#__nuxt)) .hidden {
+  display: revert-layer !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Tailwind's preflight applies `font: inherit` to form controls, so an input
+   picks up the body's 1.5 line-height. The original stylesheet never set one —
+   it relied on the UA default — so every text box came out 4px taller than the
+   live site (41px vs 37px on the submit URL row). Restore the native value;
+   this is unlayered, so it beats the preflight rule.
+--------------------------------------------------------------------------- */
+
+input:not([type='checkbox']):not([type='radio']):not([type='submit']),
+select,
+textarea {
+  line-height: normal;
+}
+
+/* Preflight resets headings to `font-weight: inherit`. The original stylesheet
+   mostly set only sizes, so headings leaned on the UA default (bold) — the
+   pricing CTA's "Not sure which one?" came out 400 instead of 700. Restore the
+   default; every legacy rule that declares its own weight still wins on
+   specificity. */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+}
+
+/* Preflight caps every image at its container's width *and* forces
+   `height: auto`. The live site only caps the width: its 64px logo inside the
+   1px-bordered `.detail-icon` becomes 62px wide but stays 64px tall, and the
+   overflow is clipped. Preflight was shrinking it to 62×62, which shifted the
+   mark by a pixel. Nothing else on the site sizes an image inside a bordered
+   box, so the override stays scoped. */
+.detail-icon img {
+  height: 64px;
+}
+
+/* ---------------------------------------------------------------------------
+   Nuxt UI still needs a resolvable colour ramp for the few primitives that
+   survive (UApp, toasts). `static` is required: Tailwind v4 prunes theme
+   variables no generated utility references, but Nuxt UI reads the ramp at
+   runtime through `var(--color-brand-50, )` — a reference Tailwind cannot see.
+   Without `static` the whole scale was tree-shaken away and those components
+   rendered colourless while the markup still looked fine.
+--------------------------------------------------------------------------- */
+
+@theme static {
+  --color-brand-50: oklch(97.2% 0.017 66);
+  --color-brand-100: oklch(94% 0.038 62);
+  --color-brand-200: oklch(89% 0.07 58);
+  --color-brand-300: oklch(83% 0.108 55);
+  --color-brand-400: oklch(72% 0.15 53);
+  --color-brand-500: oklch(61% 0.185 52);
+  --color-brand-600: oklch(55% 0.172 50);
+  --color-brand-700: oklch(47% 0.145 48);
+  --color-brand-800: oklch(39% 0.118 47);
+  --color-brand-900: oklch(32% 0.09 46);
+  --color-brand-950: oklch(24% 0.06 45);
+}
+
+/* class-based dark mode, matching the original `html.dark` switch */
+@custom-variant dark (&:where(.dark, .dark *));

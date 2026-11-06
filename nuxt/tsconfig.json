@@ -1,0 +1,6 @@
+{
+  // Nuxt 4 writes the real config into `.nuxt/`; this file is the entry point
+  // editors and `nuxt typecheck` look for. Without it `vue-tsc` has no project
+  // to load and silently prints tsc's help instead of checking anything.
+  "extends": "./.nuxt/tsconfig.json"
+}

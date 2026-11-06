@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://dirtool.com/sitemap.xml
+Sitemap: https://dirtool.com/sitemap-reports.xml

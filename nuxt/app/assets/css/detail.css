@@ -1,0 +1,96 @@
+/* ---------------------------------------------------------------------------
+   Tool detail page additions.
+
+   Everything structural already lives in legacy.css — `.steps`, `.feature-list`,
+   `.pros-cons`, `.pc-card`, `.faq-list`, `.toc`, `.doc-section`, `.gallery`.
+   Those rules were written for the original static build and have been sitting
+   unused since the rebuild dropped the sections they style.
+
+   This file adds only what legacy.css never had: the *sticky* variant of the
+   section nav, and an affordance on the FAQ disclosure. It loads after
+   legacy.css, so same-specificity rules here win.
+--------------------------------------------------------------------------- */
+
+/* The inline `.toc` is a wrap-and-forget row. On a seven-section page it has to
+   park under the topbar instead, or the reader loses the outline after the
+   first scroll. `top` matches `.topbar__inner`'s 56px, not `--header-h` (52px),
+   which is only used for anchor scroll padding. */
+.toc--sticky {
+  position: sticky;
+  top: 56px;
+  z-index: 20;
+  flex-wrap: nowrap;
+  gap: 0;
+  margin: 0 0 28px;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: color-mix(in oklab, var(--background) 92%, transparent);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.toc--sticky::-webkit-scrollbar {
+  display: none;
+}
+.toc--sticky a {
+  position: relative;
+  flex-shrink: 0;
+  padding: 12px 12px 13px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.toc--sticky a:first-child {
+  padding-left: 0;
+}
+.toc--sticky a::after {
+  content: '';
+  position: absolute;
+  inset-inline: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 9999px;
+  background: transparent;
+  transition: background-color 0.15s;
+}
+.toc--sticky a:first-child::after {
+  inset-inline-start: 0;
+}
+.toc--sticky a.is-active::after {
+  background: var(--primary);
+}
+
+/* Native <details> already hides the marker; without a glyph of our own the
+   row gives no sign it opens. */
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.faq-item summary::after {
+  content: '+';
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.faq-item[open] summary::after {
+  content: '\2212'; /* minus sign, same optical weight as the plus */
+}
+
+/* Native hash navigation (someone pastes /tools/x#faq) uses `scroll-padding-top`
+   on `html`, which only accounts for the 52px topbar. The sticky nav adds
+   another 46px, so without this the heading lands underneath it. The click
+   handler subtracts the same offset in JS; this covers the no-JS path. */
+.doc-section {
+  scroll-margin-top: 114px;
+}
+
+/* The last section should not carry the 48px bottom margin into the footer. */
+.doc-section:last-child {
+  margin-bottom: 0;
+}

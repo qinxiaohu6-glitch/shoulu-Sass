@@ -1,0 +1,7 @@
+{
+  "_note": "Domain owners can ask to be excluded. Add the bare domain here, rebuild nothing — the server reads this file on every request.",
+  "domains": [
+    "example.com"
+  ],
+  "updated": "2026-10-30"
+}

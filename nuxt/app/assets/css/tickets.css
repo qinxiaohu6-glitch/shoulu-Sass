@@ -1,0 +1,379 @@
+/* ---------------------------------------------------------------------------
+   Support tickets — shared by /settings/tickets and /admin/tickets.
+
+   One thread renderer for two audiences, so the bubbles are *not* left/right:
+   the same message is "mine" on one page and "theirs" on the other, and a
+   layout that encodes a side would be wrong half the time. Role is carried by
+   tint and by the name in the header instead, which reads the same from both
+   ends of the conversation.
+
+   Everything here is plain CSS on the existing tokens (--card, --border,
+   --secondary, --primary, --muted-foreground). `legacy.css` is unlayered, so a
+   Tailwind utility class on the same element would lose silently.
+--------------------------------------------------------------------------- */
+
+/* --- back link above a thread title -------------------------------------- */
+
+.tk-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tk-back:hover {
+  color: var(--foreground);
+}
+
+.tk-back .ic {
+  width: 14px;
+  height: 14px;
+}
+
+.tk-dot {
+  margin: 0 6px;
+  color: var(--muted-foreground);
+}
+
+/* --- the table cell that opens a thread ---------------------------------- */
+
+/* A button, not a link: the thread is a query parameter on the same page, and
+   an <a> here would promise a navigation the router does not do. */
+.tk-link {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tk-link:hover .dash-name {
+  color: var(--primary);
+}
+
+.tk-preview {
+  max-width: 460px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- errors -------------------------------------------------------------- */
+
+/* There is no `--red` token; the stylesheet expresses its one red family as raw
+   oklch (see `.status--rejected`). Same value here, mixed against the surface
+   so it reads as a tint on both themes. */
+.tk-error {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border: 1px solid color-mix(in oklab, oklch(55% 0.19 25) 40%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, oklch(55% 0.19 25) 10%, transparent);
+  color: color-mix(in oklab, oklch(55% 0.19 25) 68%, var(--foreground));
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* --- the thread ---------------------------------------------------------- */
+
+.tk-thread {
+  display: grid;
+  gap: 12px;
+}
+
+/* Inside the console's editor panel the outer card already supplies padding. */
+.tk-thread--flat {
+  padding: 14px 0;
+}
+
+.tk-msg {
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+}
+
+.tk-msg--user {
+  background: var(--secondary);
+}
+
+/* The owner's reply gets a left rule rather than a different side: it is the
+   answer, and the eye should land on it while scrolling. */
+.tk-msg--admin {
+  background: color-mix(in oklab, var(--primary) 7%, var(--card));
+  border-color: color-mix(in oklab, var(--primary) 22%, var(--border));
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.tk-msg__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 5px;
+}
+
+.tk-msg__head b {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.tk-msg__head time {
+  flex-shrink: 0;
+  color: var(--muted-foreground);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tk-msg__body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* --- attachments --------------------------------------------------------- */
+
+.tk-attach {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tk-attach a,
+.tk-attach--draft button {
+  position: relative;
+  display: block;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--secondary);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.tk-attach img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tk-attach a:hover img {
+  opacity: 0.82;
+}
+
+/* A tile whose image did not load. Collapsing to a glyph keeps the row height
+   honest without pretending the picture is there. */
+.tk-attach__broken {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--muted-foreground);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Draft thumbnails are removable, so they need a visible affordance. The
+   button's `title` is the accessible name; this badge is the sighted cue. */
+.tk-attach--draft button::after {
+  content: '×';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, #000 62%, transparent);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.tk-attach--draft button:hover {
+  border-color: oklch(55% 0.19 25);
+}
+
+/* --- pasting a link ------------------------------------------------------ */
+
+.tk-attach-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tk-attach-add input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.tk-attach-add input::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+}
+
+.tk-attach-add input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 20%, transparent);
+}
+
+.tk-attach-add .btn {
+  flex: 0 0 auto;
+}
+
+/* --- composer ------------------------------------------------------------ */
+
+.tk-composer {
+  display: grid;
+  gap: 10px;
+  padding: 14px 18px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.tk-composer--flat {
+  padding: 14px 0 0;
+}
+
+.tk-composer textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 9px 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.tk-composer textarea::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+}
+
+.tk-composer textarea:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 20%, transparent);
+}
+
+.tk-composer__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tk-composer__row .tk-attach-add {
+  flex: 1 1 260px;
+}
+
+/* The composer is a grid with its own gap; the thumbnail row must not add a
+   second one on top of it. */
+.tk-composer .tk-attach {
+  margin-top: 0;
+}
+
+.tk-compose-note {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tk-closed-note {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- the create form ----------------------------------------------------- */
+
+/* `.set-card__foot` is `justify-content: flex-start` because it was built for a
+   single Sign out button; two buttons need to sit at the end. */
+.tk-create__foot {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tk-create .field + .field {
+  margin-top: 16px;
+}
+
+/* --- console list -------------------------------------------------------- */
+
+.tk-pad {
+  padding: 14px 12px;
+}
+
+.tk-admin-thread .admin-editor__head {
+  align-items: flex-start;
+}
+
+.tk-admin-thread .admin-hint {
+  margin: 4px 0 0;
+}
+
+/* --- narrow screens ------------------------------------------------------ */
+
+@media (max-width: 720px) {
+  /* `.set-head` is a two-column flex built for one short button. A ticket
+     title plus a status badge plus "Close ticket" is wider than 390px, and the
+     actions were being clipped rather than wrapped. Scoped to this page so the
+     other settings screens keep the layout they shipped with. */
+  .tk-page .set-head {
+    flex-wrap: wrap;
+  }
+
+  .tk-page .set-head__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .tk-preview {
+    max-width: 220px;
+  }
+
+  .tk-composer__row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  /* Only the send button goes full width. The "Add" button lives inside the
+     link row and used to be caught by this rule too, which crushed the input
+     to a few pixels. */
+  .tk-composer__row > .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tk-composer__row .tk-attach-add {
+    flex: 1 1 auto;
+  }
+}

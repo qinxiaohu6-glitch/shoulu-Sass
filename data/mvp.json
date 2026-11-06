@@ -1,0 +1,1578 @@
+{
+  "site": {
+    "name": "Product Atlas",
+    "base": "https://dirtool.com",
+    "dr": 41,
+    "dr_verified": false
+  },
+  "generated": "2026-10-29",
+  "categories": [
+    {
+      "slug": "chatbots",
+      "icon": "message-square",
+      "count": 5,
+      "name_en": "AI Assistants",
+      "name_zh": "AI 助手",
+      "desc_en": "General-purpose assistants you can talk to.",
+      "desc_zh": "通用对话助手，什么问题都能接。"
+    },
+    {
+      "slug": "coding",
+      "icon": "code",
+      "count": 6,
+      "name_en": "Developer Tools",
+      "name_zh": "开发工具",
+      "desc_en": "Editors, coding agents and app builders.",
+      "desc_zh": "编辑器、编程智能体与应用构建工具。"
+    },
+    {
+      "slug": "image",
+      "icon": "image",
+      "count": 4,
+      "name_en": "Design Tools",
+      "name_zh": "设计工具",
+      "desc_en": "Image generation, UI and creative production.",
+      "desc_zh": "图像生成、界面与创意生产工具。"
+    },
+    {
+      "slug": "video",
+      "icon": "video",
+      "count": 4,
+      "name_en": "Video",
+      "name_zh": "视频",
+      "desc_en": "Generate, edit and translate video.",
+      "desc_zh": "视频生成、剪辑与翻译。"
+    },
+    {
+      "slug": "audio",
+      "icon": "music",
+      "count": 3,
+      "name_en": "Audio & Music",
+      "name_zh": "音频与音乐",
+      "desc_en": "Text-to-speech, voice cloning and AI music.",
+      "desc_zh": "语音合成、声音克隆与音乐生成。"
+    },
+    {
+      "slug": "writing",
+      "icon": "pen-line",
+      "count": 2,
+      "name_en": "Writing",
+      "name_zh": "写作",
+      "desc_en": "Draft, rewrite and polish text.",
+      "desc_zh": "起草、改写与润色文字。"
+    },
+    {
+      "slug": "productivity",
+      "icon": "layout-dashboard",
+      "count": 3,
+      "name_en": "Productivity",
+      "name_zh": "效率工具",
+      "desc_en": "Slides, notes and meetings, done faster.",
+      "desc_zh": "幻灯片、笔记与会议，做得更快。"
+    },
+    {
+      "slug": "research",
+      "icon": "search",
+      "count": 3,
+      "name_en": "Research",
+      "name_zh": "研究与搜索",
+      "desc_en": "Answer engines and research assistants.",
+      "desc_zh": "答案引擎与研究助手。"
+    }
+  ],
+  "tags": [
+    {
+      "slug": "api",
+      "count": 6,
+      "name_en": "API",
+      "name_zh": "API"
+    },
+    {
+      "slug": "agent",
+      "count": 5,
+      "name_en": "Agent",
+      "name_zh": "智能体"
+    },
+    {
+      "slug": "chatbot",
+      "count": 5,
+      "name_en": "Chatbot",
+      "name_zh": "聊天机器人"
+    },
+    {
+      "slug": "video-generation",
+      "count": 5,
+      "name_en": "Video Generation",
+      "name_zh": "视频生成"
+    },
+    {
+      "slug": "image-generation",
+      "count": 4,
+      "name_en": "Image Generation",
+      "name_zh": "图像生成"
+    },
+    {
+      "slug": "search",
+      "count": 4,
+      "name_en": "Search",
+      "name_zh": "搜索"
+    },
+    {
+      "slug": "app-builder",
+      "count": 3,
+      "name_en": "App Builder",
+      "name_zh": "应用构建"
+    },
+    {
+      "slug": "code-assistant",
+      "count": 3,
+      "name_en": "Code Assistant",
+      "name_zh": "代码助手"
+    },
+    {
+      "slug": "writing",
+      "count": 3,
+      "name_en": "Writing",
+      "name_zh": "写作"
+    },
+    {
+      "slug": "avatar",
+      "count": 2,
+      "name_en": "Avatar",
+      "name_zh": "数字人"
+    },
+    {
+      "slug": "music",
+      "count": 2,
+      "name_en": "Music",
+      "name_zh": "音乐"
+    },
+    {
+      "slug": "open-source",
+      "count": 2,
+      "name_en": "Open Source",
+      "name_zh": "开源"
+    },
+    {
+      "slug": "meeting",
+      "count": 1,
+      "name_en": "Meeting",
+      "name_zh": "会议"
+    },
+    {
+      "slug": "presentation",
+      "count": 1,
+      "name_en": "Presentation",
+      "name_zh": "演示"
+    },
+    {
+      "slug": "text-to-speech",
+      "count": 1,
+      "name_en": "Text to Speech",
+      "name_zh": "语音合成"
+    }
+  ],
+  "tools": [
+    {
+      "slug": "chatgpt",
+      "name_en": "ChatGPT",
+      "name_zh": "ChatGPT",
+      "short_en": "OpenAI's assistant for writing, analysis, coding and everyday questions.",
+      "short_zh": "OpenAI 的对话助手，可用于写作、分析、编程和日常问答。",
+      "long_en": "ChatGPT is OpenAI's conversational AI assistant. You type (or speak) a request in plain language and it writes, explains, summarizes, translates, analyzes files and images, and helps with code. It is available on the web, desktop and mobile, with a free tier and paid plans that unlock more capable models and higher limits.",
+      "long_zh": "ChatGPT 是 OpenAI 的对话式 AI 助手，用自然语言提问就能得到回答、改写、代码或分析结果，支持文字、语音与图片输入。\n\n免费版即可覆盖日常问答与写作；付费版开放更强的模型、更长的上下文与更多工具调用，适合把 AI 直接接进日常工作流。",
+      "url": "https://chatgpt.com/",
+      "logo": "assets/img/icons/chatgpt.png",
+      "category": "chatbots",
+      "tags": [
+        "API",
+        "Chatbot"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-11-12",
+      "votes_total": 2076,
+      "votes_week": 68,
+      "created_at": "2026-10-28",
+      "maker": "OpenAI",
+      "shots": [
+        "chatgpt.jpg",
+        "chatgpt-2.jpg"
+      ]
+    },
+    {
+      "slug": "claude",
+      "name_en": "Claude",
+      "name_zh": "Claude",
+      "short_en": "A thoughtful AI assistant for writing, research, coding and long documents.",
+      "short_zh": "注重思考的 AI 助手，擅长写作、研究、编程与长文档处理。",
+      "long_en": "Claude is Anthropic's AI assistant, known for careful, well-written answers and for working with long documents. It helps with writing, research, analysis and coding, and can read large files such as reports, contracts or codebases in a single conversation.",
+      "long_zh": "Claude 是 Anthropic 的 AI 助手，以长文档理解、稳健推理和自然的中文表达见长，适合研究、合同审阅与代码阅读。\n\n支持上传文档、图片与代码库，也能通过 API 接入自有产品；回答会尽量避免臆断，遇到不确定的信息通常会更谨慎。",
+      "url": "https://claude.ai/",
+      "logo": "assets/img/icons/claude.png",
+      "category": "chatbots",
+      "tags": [
+        "API",
+        "Agent",
+        "Chatbot"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-11-15",
+      "votes_total": 836,
+      "votes_week": 188,
+      "created_at": "2026-10-26",
+      "maker": "Anthropic",
+      "shots": [
+        "claude.jpg",
+        "claude-2.jpg"
+      ]
+    },
+    {
+      "slug": "cursor",
+      "name_en": "Cursor",
+      "name_zh": "Cursor",
+      "short_en": "The AI code editor: autocomplete, chat and agents across your codebase.",
+      "short_zh": "AI 代码编辑器：跨代码库的自动补全、对话与智能体。",
+      "long_en": "Cursor is an AI-first code editor built on VS Code. It brings autocomplete that predicts your next edit, a chat that understands your whole codebase, and an agent that can make multi-file changes and run commands — while keeping your existing VS Code extensions and settings.",
+      "long_zh": "Cursor 是基于 VS Code 的 AI 代码编辑器，把补全、对话与智能体放进同一个界面，可以跨整个代码库检索与修改。\n\n适合需要频繁重构、读陌生项目或批量改代码的开发者，也能直接用自然语言描述需求让它落地成可运行代码。",
+      "url": "https://cursor.com/",
+      "logo": "assets/img/icons/cursor.png",
+      "category": "coding",
+      "tags": [
+        "Agent",
+        "Code Assistant"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-11-18",
+      "votes_total": 1254,
+      "votes_week": 66,
+      "created_at": "2026-10-20",
+      "maker": "Anysphere",
+      "shots": [
+        "cursor.jpg"
+      ]
+    },
+    {
+      "slug": "midjourney",
+      "name_en": "Midjourney",
+      "name_zh": "Midjourney",
+      "short_en": "Striking, artistic images from text prompts.",
+      "short_zh": "用文字提示生成富有艺术感的图像。",
+      "long_en": "Midjourney is an AI image generator known for its striking, artistic style. You describe an image in a text prompt and it produces several variations you can upscale, vary or edit. It runs in a web app (and on Discord) and is popular with designers, illustrators and marketers.",
+      "long_zh": "Midjourney 以风格化、审美在线的出图效果著称，输入一句描述即可生成高质量的插画、概念图与摄影风格画面。\n\n提供风格参考、局部重绘与放大等控制手段，适合做视觉探索、情绪板与营销素材的初稿。",
+      "url": "https://www.midjourney.com/",
+      "logo": "assets/img/icons/midjourney.png",
+      "category": "image",
+      "tags": [
+        "Image Generation"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": true,
+      "featured_until": "2026-11-21",
+      "votes_total": 1640,
+      "votes_week": 72,
+      "created_at": "2026-10-11",
+      "maker": "Midjourney",
+      "shots": []
+    },
+    {
+      "slug": "runway",
+      "name_en": "Runway",
+      "name_zh": "Runway",
+      "short_en": "Generate and edit video with state-of-the-art models.",
+      "short_zh": "用前沿模型生成与编辑视频。",
+      "long_en": "Generate and edit video with state-of-the-art models.",
+      "long_zh": "Runway 提供文生视频、图生视频与视频编辑的一整套工具，模型更新快，适合广告、短片与社媒内容的快速试错。\n\n除了生成，还能做抠像、运动追踪、镜头延展等后期处理，把 AI 素材直接接进剪辑流程。",
+      "url": "https://runwayml.com/",
+      "logo": "assets/img/icons/runway.png",
+      "category": "video",
+      "tags": [
+        "Video Generation"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-11-24",
+      "votes_total": 1929,
+      "votes_week": 101,
+      "created_at": "2026-10-05",
+      "maker": "Runway",
+      "shots": [
+        "runway.jpg"
+      ]
+    },
+    {
+      "slug": "elevenlabs",
+      "name_en": "ElevenLabs",
+      "name_zh": "ElevenLabs",
+      "short_en": "Lifelike text-to-speech, voice cloning and dubbing.",
+      "short_zh": "拟真语音合成、声音克隆与配音。",
+      "long_en": "Lifelike text-to-speech, voice cloning and dubbing.",
+      "long_zh": "ElevenLabs 提供拟真的语音合成与声音克隆，支持多语言配音与情感控制，常用于有声书、播客与产品旁白。\n\n提供 API，可把语音能力接进应用；克隆声音需要授权样本，平台对滥用有明确的使用条款约束。",
+      "url": "https://elevenlabs.io/",
+      "logo": "assets/img/icons/elevenlabs.png",
+      "category": "audio",
+      "tags": [
+        "API",
+        "Text to Speech"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-11-27",
+      "votes_total": 2109,
+      "votes_week": 41,
+      "created_at": "2026-09-29",
+      "maker": "ElevenLabs",
+      "shots": [
+        "elevenlabs.jpg",
+        "elevenlabs-2.jpg"
+      ]
+    },
+    {
+      "slug": "gamma",
+      "name_en": "Gamma",
+      "name_zh": "Gamma",
+      "short_en": "Beautiful presentations, docs and sites, generated from a prompt.",
+      "short_zh": "一句话生成精美的演示文稿、文档与网页。",
+      "long_en": "Beautiful presentations, docs and sites, generated from a prompt.",
+      "long_zh": "Gamma 用一句话或一份大纲生成演示文稿、文档与网页，排版自动完成，省掉大量对齐与配图时间。\n\n适合做内部汇报、销售材料与课程讲义，生成后仍可逐页调整版式与内容，也支持导出为 PPT 与 PDF。",
+      "url": "https://gamma.app/",
+      "logo": "assets/img/icons/gamma.png",
+      "category": "productivity",
+      "tags": [
+        "Presentation"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-11-30",
+      "votes_total": 1843,
+      "votes_week": 15,
+      "created_at": "2026-09-22",
+      "maker": "Gamma",
+      "shots": [
+        "gamma.jpg"
+      ]
+    },
+    {
+      "slug": "perplexity",
+      "name_en": "Perplexity",
+      "name_zh": "Perplexity",
+      "short_en": "An answer engine that searches the web and cites its sources.",
+      "short_zh": "会联网检索并标注来源的答案引擎。",
+      "long_en": "Perplexity is an AI answer engine. Instead of a list of links, it searches the web, reads the sources and writes a direct answer with numbered citations so you can check where every claim comes from. It is useful for quick research, fact-finding and staying on top of a topic.",
+      "long_zh": "Perplexity 是答案引擎：先联网检索，再用带引用的段落直接回答问题，省去逐个打开搜索结果的时间。\n\n适合做资料速查、事实核对与选题调研，支持追问、聚焦特定来源，也能整理成可分享的页面。",
+      "url": "https://www.perplexity.ai/",
+      "logo": "assets/img/icons/perplexity.png",
+      "category": "research",
+      "tags": [
+        "Chatbot",
+        "Search"
+      ],
+      "status": "approved",
+      "is_featured": true,
+      "is_paid": false,
+      "featured_until": "2026-12-03",
+      "votes_total": 1125,
+      "votes_week": 177,
+      "created_at": "2026-09-17",
+      "maker": "Perplexity",
+      "shots": [
+        "perplexity.jpg"
+      ]
+    },
+    {
+      "slug": "gemini",
+      "name_en": "Gemini",
+      "name_zh": "Gemini",
+      "short_en": "Google's multimodal assistant, built into Search, Gmail and Docs.",
+      "short_zh": "Google 的多模态助手，已接入搜索、Gmail 与文档。",
+      "long_en": "Google's multimodal assistant, built into Search, Gmail and Docs.",
+      "long_zh": "Gemini 是 Google 的多模态模型，已经接入搜索、Gmail、文档与表格，能在原有工作流里直接调用。\n\n擅长图文混合理解、长上下文与代码，适合已经在用 Google 全家桶的团队。",
+      "url": "https://gemini.google.com/",
+      "logo": "assets/img/icons/gemini.png",
+      "category": "chatbots",
+      "tags": [
+        "API",
+        "Chatbot"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 620,
+      "votes_week": 152,
+      "created_at": "2026-10-25",
+      "maker": "Google",
+      "shots": []
+    },
+    {
+      "slug": "deepseek",
+      "name_en": "DeepSeek",
+      "name_zh": "DeepSeek",
+      "short_en": "Open-weight reasoning models with a free chat app and a low-cost API.",
+      "short_zh": "开放权重的推理模型，提供免费聊天应用与低成本 API。",
+      "long_en": "Open-weight reasoning models with a free chat app and a low-cost API.",
+      "long_zh": "DeepSeek 提供开放权重的推理模型，聊天应用免费，API 价格低，适合做成本敏感的产品集成。\n\n在数学、代码与逻辑推理任务上表现突出，权重开放也方便自行部署与微调。",
+      "url": "https://chat.deepseek.com/",
+      "logo": "assets/img/icons/deepseek.png",
+      "category": "chatbots",
+      "tags": [
+        "API",
+        "Chatbot",
+        "Open Source"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 984,
+      "votes_week": 136,
+      "created_at": "2026-10-23",
+      "maker": "DeepSeek",
+      "shots": []
+    },
+    {
+      "slug": "ollama",
+      "name_en": "Ollama",
+      "name_zh": "Ollama",
+      "short_en": "Run open large language models locally with one command.",
+      "short_zh": "一条命令在本地运行开源大模型。",
+      "long_en": "Run open large language models locally with one command.",
+      "long_zh": "Ollama 把开源大模型的下载、运行与接口封装成一条命令，本地即可跑起对话与嵌入模型。\n\n适合做隐私敏感的数据处理、离线环境与本地开发调试，也常被用来快速验证模型效果。",
+      "url": "https://ollama.com/",
+      "logo": "assets/img/icons/ollama.png",
+      "category": "chatbots",
+      "tags": [
+        "API",
+        "Open Source"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1078,
+      "votes_week": 150,
+      "created_at": "2026-10-22",
+      "maker": "Ollama",
+      "shots": []
+    },
+    {
+      "slug": "claude-code",
+      "name_en": "Claude Code",
+      "name_zh": "Claude Code",
+      "short_en": "An agentic coding tool that works in your terminal, IDE and browser.",
+      "short_zh": "在终端、IDE 和浏览器中工作的智能编程工具。",
+      "long_en": "An agentic coding tool that works in your terminal, IDE and browser.",
+      "long_zh": "Claude Code 是运行在终端里的智能编程代理，能读写项目文件、执行命令并根据结果继续推进任务。\n\n适合处理跨文件的改造、批量修复与代码库理解，也可在 IDE 与浏览器中使用。",
+      "url": "https://claude.com/product/claude-code",
+      "logo": "assets/img/icons/claude-code.png",
+      "category": "coding",
+      "tags": [
+        "Agent",
+        "Code Assistant"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": true,
+      "featured_until": "2026-11-09",
+      "votes_total": 862,
+      "votes_week": 74,
+      "created_at": "2026-10-19",
+      "maker": "Anthropic",
+      "shots": []
+    },
+    {
+      "slug": "github-copilot",
+      "name_en": "GitHub Copilot",
+      "name_zh": "GitHub Copilot",
+      "short_en": "AI pair programmer inside VS Code, JetBrains and GitHub.",
+      "short_zh": "内置在 VS Code、JetBrains 与 GitHub 中的 AI 结对程序员。",
+      "long_en": "AI pair programmer inside VS Code, JetBrains and GitHub.",
+      "long_zh": "GitHub Copilot 是最早普及的 AI 结对编程工具，在编辑器里提供补全、对话与代码解释。\n\n与 GitHub 深度集成，可以在 PR 里生成摘要、解释改动，团队版还能基于内部代码做定制。",
+      "url": "https://github.com/features/copilot",
+      "logo": "assets/img/icons/github-copilot.png",
+      "category": "coding",
+      "tags": [
+        "Code Assistant"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 665,
+      "votes_week": 37,
+      "created_at": "2026-10-17",
+      "maker": "GitHub",
+      "shots": []
+    },
+    {
+      "slug": "v0",
+      "name_en": "v0",
+      "name_zh": "v0",
+      "short_en": "Describe a UI or app and get working React code you can deploy.",
+      "short_zh": "描述界面或应用，直接得到可部署的 React 代码。",
+      "long_en": "Describe a UI or app and get working React code you can deploy.",
+      "long_zh": "v0 用自然语言描述界面，直接生成可用的 React 与 Tailwind 代码，并支持迭代修改。\n\n适合快速做落地页、后台界面与组件原型，生成结果可以一键部署或复制进现有项目。",
+      "url": "https://v0.app/",
+      "logo": "assets/img/icons/v0.png",
+      "category": "coding",
+      "tags": [
+        "App Builder"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1504,
+      "votes_week": 36,
+      "created_at": "2026-10-16",
+      "maker": "Vercel",
+      "shots": []
+    },
+    {
+      "slug": "bolt",
+      "name_en": "Bolt",
+      "name_zh": "Bolt",
+      "short_en": "Prompt, run, edit and deploy full-stack web apps in the browser.",
+      "short_zh": "在浏览器里用提示词生成、运行、修改并部署全栈应用。",
+      "long_en": "Prompt, run, edit and deploy full-stack web apps in the browser.",
+      "long_zh": "Bolt 在浏览器里完成全栈应用的生成、运行与部署，改代码、装依赖、看效果都在同一个页面。\n\n适合做 MVP 与内部工具，支持接入数据库与第三方服务，省去本地环境搭建。",
+      "url": "https://bolt.new/",
+      "logo": "assets/img/icons/bolt.png",
+      "category": "coding",
+      "tags": [
+        "Agent",
+        "App Builder"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 824,
+      "votes_week": 116,
+      "created_at": "2026-10-14",
+      "maker": "StackBlitz",
+      "shots": []
+    },
+    {
+      "slug": "replit",
+      "name_en": "Replit",
+      "name_zh": "Replit",
+      "short_en": "Build and ship apps from a prompt with an AI agent and hosting built in.",
+      "short_zh": "用 AI 智能体从提示词构建并上线应用，托管内置。",
+      "long_en": "Build and ship apps from a prompt with an AI agent and hosting built in.",
+      "long_zh": "Replit 是云端 IDE，加上 AI 智能体后可以从一句需求直接生成并上线应用，托管与域名一并解决。\n\n适合教学、快速验证想法与小型团队协作，环境在浏览器里即开即用。",
+      "url": "https://replit.com/",
+      "logo": "assets/img/icons/replit.png",
+      "category": "coding",
+      "tags": [
+        "Agent",
+        "App Builder"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1042,
+      "votes_week": 174,
+      "created_at": "2026-10-13",
+      "maker": "Replit",
+      "shots": []
+    },
+    {
+      "slug": "ideogram",
+      "name_en": "Ideogram",
+      "name_zh": "Ideogram",
+      "short_en": "Image generation that gets text and typography right.",
+      "short_zh": "擅长文字与排版的图像生成工具。",
+      "long_en": "Image generation that gets text and typography right.",
+      "long_zh": "Ideogram 的强项是画面中的文字：海报、Logo 与带标语的图都能把字写对，排版也相对规整。\n\n提供多种风格预设与重绘能力，适合做社媒图、封面与品牌视觉草案。",
+      "url": "https://ideogram.ai/",
+      "logo": "assets/img/icons/ideogram.png",
+      "category": "image",
+      "tags": [
+        "Image Generation"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1523,
+      "votes_week": 15,
+      "created_at": "2026-10-10",
+      "maker": "Ideogram",
+      "shots": []
+    },
+    {
+      "slug": "leonardo-ai",
+      "name_en": "Leonardo.Ai",
+      "name_zh": "Leonardo.Ai",
+      "short_en": "Generate production-ready art and assets with fine control.",
+      "short_zh": "生成可直接用于生产的插画与素材，控制精细。",
+      "long_en": "Generate production-ready art and assets with fine control.",
+      "long_zh": "Leonardo.Ai 面向生产场景，提供模型微调、风格参考、构图控制与批量出图。\n\n适合游戏美术、电商素材与内容团队的稳定产出，生成结果版权归属清晰。",
+      "url": "https://leonardo.ai/",
+      "logo": "assets/img/icons/leonardo-ai.png",
+      "category": "image",
+      "tags": [
+        "Image Generation"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 324,
+      "votes_week": 76,
+      "created_at": "2026-10-08",
+      "maker": "Leonardo Interactive",
+      "shots": []
+    },
+    {
+      "slug": "krea",
+      "name_en": "Krea",
+      "name_zh": "Krea",
+      "short_en": "Real-time image generation, upscaling and enhancement.",
+      "short_zh": "实时图像生成、放大与增强。",
+      "long_en": "Real-time image generation, upscaling and enhancement.",
+      "long_zh": "Krea 主打实时生成：画布上边画边出图，适合做构图探索与风格试错。\n\n同时提供放大、增强与视频生成，能把草图快速推到可用精度。",
+      "url": "https://www.krea.ai/",
+      "logo": "assets/img/icons/krea.png",
+      "category": "image",
+      "tags": [
+        "Image Generation",
+        "Video Generation"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 581,
+      "votes_week": 133,
+      "created_at": "2026-10-07",
+      "maker": "Krea AI",
+      "shots": []
+    },
+    {
+      "slug": "pika",
+      "name_en": "Pika",
+      "name_zh": "Pika",
+      "short_en": "Turn ideas and images into short, playful videos.",
+      "short_zh": "把想法和图片变成简短有趣的视频。",
+      "long_en": "Turn ideas and images into short, playful videos.",
+      "long_zh": "Pika 把文字或图片变成几秒钟的短片，操作简单，特效模板丰富。\n\n适合社媒内容、表情包与创意短片，也支持对已有视频做局部修改。",
+      "url": "https://pika.art/",
+      "logo": "assets/img/icons/pika.png",
+      "category": "video",
+      "tags": [
+        "Video Generation"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1091,
+      "votes_week": 163,
+      "created_at": "2026-10-04",
+      "maker": "Pika Labs",
+      "shots": []
+    },
+    {
+      "slug": "heygen",
+      "name_en": "HeyGen",
+      "name_zh": "HeyGen",
+      "short_en": "Talking AI avatars and video translation for any language.",
+      "short_zh": "会说话的数字人，支持任意语言的视频翻译。",
+      "long_en": "Talking AI avatars and video translation for any language.",
+      "long_zh": "HeyGen 生成会说话的数字人视频，输入脚本即可得到口型同步的成片。\n\n支持多语言视频翻译与声音克隆，常用于产品介绍、培训与出海内容本地化。",
+      "url": "https://www.heygen.com/",
+      "logo": "assets/img/icons/heygen.png",
+      "category": "video",
+      "tags": [
+        "Avatar",
+        "Video Generation"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 518,
+      "votes_week": 110,
+      "created_at": "2026-10-02",
+      "maker": "HeyGen",
+      "shots": []
+    },
+    {
+      "slug": "synthesia",
+      "name_en": "Synthesia",
+      "name_zh": "Synthesia",
+      "short_en": "Studio-quality presenter videos from a script.",
+      "short_zh": "用脚本生成演播室级的主持人视频。",
+      "long_en": "Studio-quality presenter videos from a script.",
+      "long_zh": "Synthesia 用脚本生成演播室级的主持人视频，提供大量数字人与模板。\n\n适合企业培训、内部沟通与多语言版本批量产出，不需要拍摄与剪辑团队。",
+      "url": "https://www.synthesia.io/",
+      "logo": "assets/img/icons/synthesia.png",
+      "category": "video",
+      "tags": [
+        "Avatar",
+        "Video Generation"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": true,
+      "featured_until": "2026-11-09",
+      "votes_total": 819,
+      "votes_week": 131,
+      "created_at": "2026-10-01",
+      "maker": "Synthesia",
+      "shots": []
+    },
+    {
+      "slug": "suno",
+      "name_en": "Suno",
+      "name_zh": "Suno",
+      "short_en": "Make complete songs with vocals from a text prompt.",
+      "short_zh": "用文字提示生成带人声的完整歌曲。",
+      "long_en": "Make complete songs with vocals from a text prompt.",
+      "long_zh": "Suno 输入一句描述就能生成带人声、编曲完整的歌曲，风格覆盖流行、摇滚、电子等。\n\n适合做短视频配乐、demo 与创意玩票，付费版可商用并支持更长的曲目。",
+      "url": "https://suno.com/",
+      "logo": "assets/img/icons/suno.png",
+      "category": "audio",
+      "tags": [
+        "Music"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1534,
+      "votes_week": 126,
+      "created_at": "2026-09-28",
+      "maker": "Suno",
+      "shots": []
+    },
+    {
+      "slug": "udio",
+      "name_en": "Udio",
+      "name_zh": "Udio",
+      "short_en": "Create and remix music in any style.",
+      "short_zh": "创作与改编任意风格的音乐。",
+      "long_en": "Create and remix music in any style.",
+      "long_zh": "Udio 专注音乐生成，支持延长、重混与分段编辑，对结构的控制比同类工具更细。\n\n适合音乐人与内容创作者快速产出编曲草案与配乐。",
+      "url": "https://www.udio.com/",
+      "logo": "assets/img/icons/udio.png",
+      "category": "audio",
+      "tags": [
+        "Music"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 565,
+      "votes_week": 117,
+      "created_at": "2026-09-26",
+      "maker": "Udio",
+      "shots": []
+    },
+    {
+      "slug": "grammarly",
+      "name_en": "Grammarly",
+      "name_zh": "Grammarly",
+      "short_en": "Writing assistance everywhere you type.",
+      "short_zh": "在任何输入场景提供写作辅助。",
+      "long_en": "Writing assistance everywhere you type.",
+      "long_zh": "Grammarly 在浏览器、文档与邮件里实时检查语法、语气与表达清晰度。\n\n除纠错外还能按场景改写、调整正式程度，团队版可统一品牌语气规范。",
+      "url": "https://www.grammarly.com/",
+      "logo": "assets/img/icons/grammarly.png",
+      "category": "writing",
+      "tags": [
+        "Writing"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1540,
+      "votes_week": 32,
+      "created_at": "2026-09-25",
+      "maker": "Grammarly",
+      "shots": []
+    },
+    {
+      "slug": "jasper",
+      "name_en": "Jasper",
+      "name_zh": "Jasper",
+      "short_en": "On-brand marketing copy for teams.",
+      "short_zh": "面向团队的品牌一致性营销文案。",
+      "long_en": "On-brand marketing copy for teams.",
+      "long_zh": "Jasper 面向营销团队，用品牌语气库与模板批量产出文案，保证多渠道口径一致。\n\n支持博客、广告、邮件与社媒内容，也能对接工作流做规模化生产。",
+      "url": "https://www.jasper.ai/",
+      "logo": "assets/img/icons/jasper.png",
+      "category": "writing",
+      "tags": [
+        "Writing"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": true,
+      "featured_until": "2026-11-09",
+      "votes_total": 620,
+      "votes_week": 172,
+      "created_at": "2026-09-23",
+      "maker": "Jasper AI",
+      "shots": []
+    },
+    {
+      "slug": "notion-ai",
+      "name_en": "Notion AI",
+      "name_zh": "Notion AI",
+      "short_en": "Search, write and summarize across your Notion workspace.",
+      "short_zh": "在 Notion 工作区内搜索、写作与总结。",
+      "long_en": "Search, write and summarize across your Notion workspace.",
+      "long_zh": "Notion AI 在笔记与数据库里直接写作、总结、翻译与检索，不用切换工具。\n\n适合把散落的会议记录、需求文档与知识库串起来，问答结果会标注来源页面。",
+      "url": "https://www.notion.com/product/ai",
+      "logo": "assets/img/icons/notion-ai.png",
+      "category": "productivity",
+      "tags": [
+        "Search",
+        "Writing"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": true,
+      "featured_until": "2026-11-09",
+      "votes_total": 964,
+      "votes_week": 116,
+      "created_at": "2026-09-20",
+      "maker": "Notion",
+      "shots": []
+    },
+    {
+      "slug": "otter",
+      "name_en": "Otter.ai",
+      "name_zh": "Otter.ai",
+      "short_en": "Meeting notes, transcripts and summaries, automatically.",
+      "short_zh": "自动生成会议记录、转写与摘要。",
+      "long_en": "Meeting notes, transcripts and summaries, automatically.",
+      "long_zh": "Otter.ai 自动加入会议并生成转写、要点与待办，支持多人发言区分。\n\n会后可直接搜索原话、导出摘要，适合访谈、周会与客户沟通的记录整理。",
+      "url": "https://otter.ai/",
+      "logo": "assets/img/icons/otter.png",
+      "category": "productivity",
+      "tags": [
+        "Meeting"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1269,
+      "votes_week": 61,
+      "created_at": "2026-09-19",
+      "maker": "Otter.ai",
+      "shots": []
+    },
+    {
+      "slug": "elicit",
+      "name_en": "Elicit",
+      "name_zh": "Elicit",
+      "short_en": "Find, summarize and extract data from research papers.",
+      "short_zh": "检索、总结并从论文中提取数据。",
+      "long_en": "Find, summarize and extract data from research papers.",
+      "long_zh": "Elicit 面向学术研究：检索论文、提取结构化字段并生成文献综述草稿。\n\n适合做系统性综述与证据整理，能把几十篇论文的关键信息汇总成表格。",
+      "url": "https://elicit.com/",
+      "logo": "assets/img/icons/elicit.png",
+      "category": "research",
+      "tags": [
+        "Search"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 443,
+      "votes_week": 75,
+      "created_at": "2026-09-16",
+      "maker": "Elicit",
+      "shots": []
+    },
+    {
+      "slug": "consensus",
+      "name_en": "Consensus",
+      "name_zh": "Consensus",
+      "short_en": "Evidence-based answers drawn from scientific literature.",
+      "short_zh": "基于科学文献的证据型答案。",
+      "long_en": "Evidence-based answers drawn from scientific literature.",
+      "long_zh": "Consensus 用科学文献回答问题，给出研究结论的方向与一致程度。\n\n适合快速判断某个说法是否有证据支持，并直接跳到原始论文核实。",
+      "url": "https://consensus.app/",
+      "logo": "assets/img/icons/consensus.png",
+      "category": "research",
+      "tags": [
+        "Search"
+      ],
+      "status": "approved",
+      "is_featured": false,
+      "is_paid": false,
+      "featured_until": "",
+      "votes_total": 1216,
+      "votes_week": 188,
+      "created_at": "2026-09-14",
+      "maker": "Consensus",
+      "shots": []
+    }
+  ],
+  "weeks": [
+    {
+      "id": "2026-W44",
+      "start": "2026-10-26",
+      "end": "2026-11-01",
+      "label_en": "Oct 26 – Nov 1, 2026",
+      "label_zh": "10 月 26 日 – 11 月 1 日",
+      "ranking": [
+        {
+          "slug": "claude",
+          "votes": 188
+        },
+        {
+          "slug": "consensus",
+          "votes": 188
+        },
+        {
+          "slug": "perplexity",
+          "votes": 177
+        },
+        {
+          "slug": "replit",
+          "votes": 174
+        },
+        {
+          "slug": "jasper",
+          "votes": 172
+        },
+        {
+          "slug": "pika",
+          "votes": 163
+        },
+        {
+          "slug": "gemini",
+          "votes": 152
+        },
+        {
+          "slug": "ollama",
+          "votes": 150
+        },
+        {
+          "slug": "deepseek",
+          "votes": 136
+        },
+        {
+          "slug": "krea",
+          "votes": 133
+        },
+        {
+          "slug": "synthesia",
+          "votes": 131
+        },
+        {
+          "slug": "suno",
+          "votes": 126
+        },
+        {
+          "slug": "udio",
+          "votes": 117
+        },
+        {
+          "slug": "bolt",
+          "votes": 116
+        },
+        {
+          "slug": "notion-ai",
+          "votes": 116
+        },
+        {
+          "slug": "heygen",
+          "votes": 110
+        },
+        {
+          "slug": "runway",
+          "votes": 101
+        },
+        {
+          "slug": "leonardo-ai",
+          "votes": 76
+        },
+        {
+          "slug": "elicit",
+          "votes": 75
+        },
+        {
+          "slug": "claude-code",
+          "votes": 74
+        },
+        {
+          "slug": "midjourney",
+          "votes": 72
+        },
+        {
+          "slug": "chatgpt",
+          "votes": 68
+        },
+        {
+          "slug": "cursor",
+          "votes": 66
+        },
+        {
+          "slug": "otter",
+          "votes": 61
+        },
+        {
+          "slug": "elevenlabs",
+          "votes": 41
+        },
+        {
+          "slug": "github-copilot",
+          "votes": 37
+        },
+        {
+          "slug": "v0",
+          "votes": 36
+        },
+        {
+          "slug": "grammarly",
+          "votes": 32
+        },
+        {
+          "slug": "gamma",
+          "votes": 15
+        },
+        {
+          "slug": "ideogram",
+          "votes": 15
+        }
+      ]
+    },
+    {
+      "id": "2026-W43",
+      "start": "2026-10-19",
+      "end": "2026-10-25",
+      "label_en": "Oct 19 – Oct 25, 2026",
+      "label_zh": "10 月 19 日 – 10 月 25 日",
+      "ranking": [
+        {
+          "slug": "pika",
+          "votes": 226
+        },
+        {
+          "slug": "jasper",
+          "votes": 215
+        },
+        {
+          "slug": "replit",
+          "votes": 208
+        },
+        {
+          "slug": "claude",
+          "votes": 186
+        },
+        {
+          "slug": "perplexity",
+          "votes": 161
+        },
+        {
+          "slug": "consensus",
+          "votes": 133
+        },
+        {
+          "slug": "ollama",
+          "votes": 127
+        },
+        {
+          "slug": "runway",
+          "votes": 121
+        },
+        {
+          "slug": "deepseek",
+          "votes": 110
+        },
+        {
+          "slug": "notion-ai",
+          "votes": 110
+        },
+        {
+          "slug": "krea",
+          "votes": 105
+        },
+        {
+          "slug": "gemini",
+          "votes": 104
+        },
+        {
+          "slug": "chatgpt",
+          "votes": 95
+        },
+        {
+          "slug": "claude-code",
+          "votes": 89
+        },
+        {
+          "slug": "suno",
+          "votes": 88
+        },
+        {
+          "slug": "synthesia",
+          "votes": 87
+        },
+        {
+          "slug": "cursor",
+          "votes": 86
+        },
+        {
+          "slug": "bolt",
+          "votes": 80
+        },
+        {
+          "slug": "leonardo-ai",
+          "votes": 72
+        },
+        {
+          "slug": "udio",
+          "votes": 70
+        },
+        {
+          "slug": "heygen",
+          "votes": 64
+        },
+        {
+          "slug": "otter",
+          "votes": 64
+        },
+        {
+          "slug": "elicit",
+          "votes": 64
+        },
+        {
+          "slug": "midjourney",
+          "votes": 48
+        },
+        {
+          "slug": "elevenlabs",
+          "votes": 43
+        },
+        {
+          "slug": "github-copilot",
+          "votes": 32
+        },
+        {
+          "slug": "v0",
+          "votes": 32
+        },
+        {
+          "slug": "grammarly",
+          "votes": 20
+        },
+        {
+          "slug": "gamma",
+          "votes": 16
+        },
+        {
+          "slug": "ideogram",
+          "votes": 14
+        }
+      ]
+    },
+    {
+      "id": "2026-W42",
+      "start": "2026-10-12",
+      "end": "2026-10-18",
+      "label_en": "Oct 12 – Oct 18, 2026",
+      "label_zh": "10 月 12 日 – 10 月 18 日",
+      "ranking": [
+        {
+          "slug": "claude",
+          "votes": 266
+        },
+        {
+          "slug": "consensus",
+          "votes": 240
+        },
+        {
+          "slug": "jasper",
+          "votes": 239
+        },
+        {
+          "slug": "pika",
+          "votes": 210
+        },
+        {
+          "slug": "deepseek",
+          "votes": 190
+        },
+        {
+          "slug": "synthesia",
+          "votes": 150
+        },
+        {
+          "slug": "krea",
+          "votes": 143
+        },
+        {
+          "slug": "bolt",
+          "votes": 142
+        },
+        {
+          "slug": "heygen",
+          "votes": 141
+        },
+        {
+          "slug": "replit",
+          "votes": 123
+        },
+        {
+          "slug": "perplexity",
+          "votes": 113
+        },
+        {
+          "slug": "udio",
+          "votes": 104
+        },
+        {
+          "slug": "elicit",
+          "votes": 95
+        },
+        {
+          "slug": "midjourney",
+          "votes": 87
+        },
+        {
+          "slug": "ollama",
+          "votes": 87
+        },
+        {
+          "slug": "gemini",
+          "votes": 83
+        },
+        {
+          "slug": "claude-code",
+          "votes": 76
+        },
+        {
+          "slug": "otter",
+          "votes": 75
+        },
+        {
+          "slug": "runway",
+          "votes": 74
+        },
+        {
+          "slug": "notion-ai",
+          "votes": 74
+        },
+        {
+          "slug": "suno",
+          "votes": 71
+        },
+        {
+          "slug": "leonardo-ai",
+          "votes": 60
+        },
+        {
+          "slug": "elevenlabs",
+          "votes": 56
+        },
+        {
+          "slug": "chatgpt",
+          "votes": 53
+        },
+        {
+          "slug": "cursor",
+          "votes": 44
+        },
+        {
+          "slug": "v0",
+          "votes": 39
+        },
+        {
+          "slug": "github-copilot",
+          "votes": 33
+        },
+        {
+          "slug": "grammarly",
+          "votes": 27
+        },
+        {
+          "slug": "ideogram",
+          "votes": 20
+        },
+        {
+          "slug": "gamma",
+          "votes": 12
+        }
+      ]
+    },
+    {
+      "id": "2026-W41",
+      "start": "2026-10-05",
+      "end": "2026-10-11",
+      "label_en": "Oct 5 – Oct 11, 2026",
+      "label_zh": "10 月 5 日 – 10 月 11 日",
+      "ranking": [
+        {
+          "slug": "consensus",
+          "votes": 231
+        },
+        {
+          "slug": "claude",
+          "votes": 212
+        },
+        {
+          "slug": "replit",
+          "votes": 186
+        },
+        {
+          "slug": "pika",
+          "votes": 174
+        },
+        {
+          "slug": "jasper",
+          "votes": 158
+        },
+        {
+          "slug": "udio",
+          "votes": 149
+        },
+        {
+          "slug": "krea",
+          "votes": 144
+        },
+        {
+          "slug": "bolt",
+          "votes": 139
+        },
+        {
+          "slug": "heygen",
+          "votes": 137
+        },
+        {
+          "slug": "perplexity",
+          "votes": 134
+        },
+        {
+          "slug": "synthesia",
+          "votes": 120
+        },
+        {
+          "slug": "gemini",
+          "votes": 115
+        },
+        {
+          "slug": "suno",
+          "votes": 114
+        },
+        {
+          "slug": "ollama",
+          "votes": 112
+        },
+        {
+          "slug": "midjourney",
+          "votes": 98
+        },
+        {
+          "slug": "deepseek",
+          "votes": 92
+        },
+        {
+          "slug": "elicit",
+          "votes": 83
+        },
+        {
+          "slug": "notion-ai",
+          "votes": 82
+        },
+        {
+          "slug": "otter",
+          "votes": 80
+        },
+        {
+          "slug": "chatgpt",
+          "votes": 73
+        },
+        {
+          "slug": "leonardo-ai",
+          "votes": 72
+        },
+        {
+          "slug": "runway",
+          "votes": 69
+        },
+        {
+          "slug": "cursor",
+          "votes": 66
+        },
+        {
+          "slug": "claude-code",
+          "votes": 55
+        },
+        {
+          "slug": "elevenlabs",
+          "votes": 52
+        },
+        {
+          "slug": "v0",
+          "votes": 41
+        },
+        {
+          "slug": "github-copilot",
+          "votes": 37
+        },
+        {
+          "slug": "grammarly",
+          "votes": 24
+        },
+        {
+          "slug": "gamma",
+          "votes": 19
+        },
+        {
+          "slug": "ideogram",
+          "votes": 15
+        }
+      ]
+    },
+    {
+      "id": "2026-W40",
+      "start": "2026-09-28",
+      "end": "2026-10-04",
+      "label_en": "Sep 28 – Oct 4, 2026",
+      "label_zh": "9 月 28 日 – 10 月 4 日",
+      "ranking": [
+        {
+          "slug": "jasper",
+          "votes": 237
+        },
+        {
+          "slug": "perplexity",
+          "votes": 212
+        },
+        {
+          "slug": "pika",
+          "votes": 156
+        },
+        {
+          "slug": "bolt",
+          "votes": 150
+        },
+        {
+          "slug": "krea",
+          "votes": 143
+        },
+        {
+          "slug": "udio",
+          "votes": 143
+        },
+        {
+          "slug": "deepseek",
+          "votes": 142
+        },
+        {
+          "slug": "gemini",
+          "votes": 133
+        },
+        {
+          "slug": "notion-ai",
+          "votes": 125
+        },
+        {
+          "slug": "consensus",
+          "votes": 122
+        },
+        {
+          "slug": "synthesia",
+          "votes": 119
+        },
+        {
+          "slug": "suno",
+          "votes": 119
+        },
+        {
+          "slug": "replit",
+          "votes": 106
+        },
+        {
+          "slug": "claude",
+          "votes": 105
+        },
+        {
+          "slug": "runway",
+          "votes": 99
+        },
+        {
+          "slug": "midjourney",
+          "votes": 98
+        },
+        {
+          "slug": "heygen",
+          "votes": 97
+        },
+        {
+          "slug": "elicit",
+          "votes": 90
+        },
+        {
+          "slug": "ollama",
+          "votes": 88
+        },
+        {
+          "slug": "chatgpt",
+          "votes": 81
+        },
+        {
+          "slug": "cursor",
+          "votes": 73
+        },
+        {
+          "slug": "otter",
+          "votes": 64
+        },
+        {
+          "slug": "leonardo-ai",
+          "votes": 53
+        },
+        {
+          "slug": "claude-code",
+          "votes": 48
+        },
+        {
+          "slug": "elevenlabs",
+          "votes": 47
+        },
+        {
+          "slug": "grammarly",
+          "votes": 29
+        },
+        {
+          "slug": "github-copilot",
+          "votes": 25
+        },
+        {
+          "slug": "v0",
+          "votes": 21
+        },
+        {
+          "slug": "ideogram",
+          "votes": 19
+        },
+        {
+          "slug": "gamma",
+          "votes": 10
+        }
+      ]
+    }
+  ]
+}

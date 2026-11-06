@@ -1,0 +1,39 @@
+# /etc/systemd/system/product-atlas.service
+#
+# 用 systemd 托管 serve.py：崩了自动拉起，日志进 journald。
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now product-atlas
+#   journalctl -u product-atlas -f
+
+[Unit]
+Description=Product Atlas (static directory + submission API)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/product-atlas
+
+# serve.py 读 PORT / HOST / SITE_BASE
+Environment=PORT=8898
+Environment=HOST=127.0.0.1
+Environment=SITE_BASE=https://dirtool.com
+Environment=PYTHONUNBUFFERED=1
+
+ExecStart=/usr/bin/python3 /opt/product-atlas/serve.py
+Restart=always
+RestartSec=2
+TimeoutStopSec=10
+
+# 只给它该有的权限：data/ 要能写，其余只读
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/product-atlas/data
+
+[Install]
+WantedBy=multi-user.target

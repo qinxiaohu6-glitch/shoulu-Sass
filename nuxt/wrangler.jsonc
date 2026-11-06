@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "product-atlas",
+  "compatibility_date": "2026-11-01",
+  // Nuxt/Nitro and a few transitive deps reach for Node built-ins.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // The Nitro `cloudflare_module` build (see the `deploy` script) writes here.
+  "main": ".output/server/index.mjs",
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  },
+
+  // The submission queue and the weekly votes. `database_id` is filled in by
+  // `wrangler d1 create product-atlas`; until then `wrangler deploy` fails
+  // loudly rather than deploying a site whose write path cannot start.
+  //
+  //   wrangler d1 create product-atlas
+  //   wrangler d1 execute product-atlas --remote --file server/database/schema.sql
+  //
+  // Locally, `nuxt dev` ignores this file and uses .data/local.sqlite with the
+  // same schema — see server/utils/db.ts.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "product-atlas",
+      "database_id": "c3355beb-7437-4b29-9ab8-a12c3f7c0c55"
+    }
+  ],
+
+  // Monday 03:00 UTC — the weekly board closes Sunday midnight, so the archive
+  // job runs a few hours later, once, before anyone looks at the site. Nitro
+  // turns this into the `cloudflare:scheduled` hook handled by
+  // `server/plugins/cron.ts`.
+  "triggers": {
+    "crons": ["0 3 * * 1"]
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

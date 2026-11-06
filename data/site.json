@@ -1,0 +1,1503 @@
+{
+ "tools": [
+  {
+   "slug": "chatgpt",
+   "name": "ChatGPT",
+   "tagline": "OpenAI's assistant for writing, analysis, coding and everyday questions.",
+   "desc": "OpenAI's assistant for writing, analysis, coding and everyday questions.",
+   "icon": "assets/img/icons/chatgpt.png",
+   "category": {
+    "slug": "chatbots",
+    "name": "AI Chatbots"
+   },
+   "tags": [
+    "API",
+    "Chatbot"
+   ],
+   "maker": "OpenAI",
+   "listed": "2026-10-28",
+   "website": "https://chatgpt.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "chatgpt.jpg",
+    "chatgpt-2.jpg"
+   ],
+   "overview": [
+    "ChatGPT is OpenAI's conversational AI assistant. You type (or speak) a request in plain language and it writes, explains, summarizes, translates, analyzes files and images, and helps with code. It is available on the web, desktop and mobile, with a free tier and paid plans that unlock more capable models and higher limits."
+   ],
+   "steps": [
+    "Go to <a href=\"http://chatgpt.com/?utm_source=dir.shipany.site&amp;utm_medium=content\" rel=\"nofollow noopener\" target=\"_blank\">chatgpt.com</a> and sign in, or start chatting without an account.",
+    "Describe what you need in the message box — include context, audience and the format you want.",
+    "Attach files or images when the task depends on them.",
+    "Refine the answer with follow-up messages (\"shorter\", \"as a table\", \"add sources\").",
+    "Save useful setups as custom instructions or projects so you don’t repeat yourself."
+   ],
+   "features": [
+    {
+     "title": "Natural conversation",
+     "desc": "Ask follow-up questions and refine answers in the same thread."
+    },
+    {
+     "title": "File and image understanding",
+     "desc": "Upload PDFs, spreadsheets or screenshots and ask questions about them."
+    },
+    {
+     "title": "Web search",
+     "desc": "Pull in current information with linked sources."
+    },
+    {
+     "title": "Voice mode",
+     "desc": "Talk to it hands-free on mobile and desktop."
+    },
+    {
+     "title": "Custom GPTs",
+     "desc": "Build and share assistants tuned for a specific task or knowledge base."
+    },
+    {
+     "title": "API access",
+     "desc": "Developers can use OpenAI's models in their own products via the API."
+    }
+   ],
+   "usecases": [
+    {
+     "title": "Writing and editing",
+     "desc": "Draft emails, posts and reports, then adjust tone and length."
+    },
+    {
+     "title": "Learning",
+     "desc": "Get concepts explained step by step at the level you need."
+    },
+    {
+     "title": "Data analysis",
+     "desc": "Upload a spreadsheet and ask for summaries, charts or anomalies."
+    },
+    {
+     "title": "Coding help",
+     "desc": "Explain errors, write snippets and review code."
+    }
+   ],
+   "pros": [
+    "Handles a very wide range of tasks well",
+    "Polished apps on every major platform",
+    "Generous free tier to get started"
+   ],
+   "cons": [
+    "Can state wrong facts confidently — verify important answers",
+    "The most capable models and limits require a paid plan",
+    "Be careful sharing sensitive data in conversations"
+   ],
+   "faq": [
+    {
+     "q": "Is ChatGPT free?",
+     "a": "Yes, there is a free tier. Paid plans add access to more capable models, higher usage limits and extra features."
+    },
+    {
+     "q": "Can ChatGPT browse the web?",
+     "a": "Yes. It can search the web for current information and links its sources in the answer."
+    },
+    {
+     "q": "Does ChatGPT have an API?",
+     "a": "Yes. Developers use OpenAI's models through the OpenAI API, which is billed separately from ChatGPT subscriptions."
+    }
+   ]
+  },
+  {
+   "slug": "claude",
+   "name": "Claude",
+   "tagline": "A thoughtful AI assistant for writing, research, coding and long documents.",
+   "desc": "A thoughtful AI assistant for writing, research, coding and long documents.",
+   "icon": "assets/img/icons/claude.png",
+   "category": {
+    "slug": "chatbots",
+    "name": "AI Chatbots"
+   },
+   "tags": [
+    "API",
+    "Agent",
+    "Chatbot"
+   ],
+   "maker": "Anthropic",
+   "listed": "2026-10-26",
+   "website": "https://claude.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "claude.jpg",
+    "claude-2.jpg"
+   ],
+   "overview": [
+    "Claude is Anthropic's AI assistant, known for careful, well-written answers and for working with long documents. It helps with writing, research, analysis and coding, and can read large files such as reports, contracts or codebases in a single conversation."
+   ],
+   "steps": [
+    "Go to <a href=\"http://claude.ai/?utm_source=dir.shipany.site&amp;utm_medium=content\" rel=\"nofollow noopener\" target=\"_blank\">claude.ai</a> and create a free account.",
+    "Start a chat and describe your task — Claude responds well to detailed context.",
+    "Attach documents, images or code that the task depends on.",
+    "Use Projects to keep related files and instructions together across chats.",
+    "Ask Claude to revise until the result fits — it keeps the whole conversation in mind."
+   ],
+   "features": [
+    {
+     "title": "Long-document understanding",
+     "desc": "Read and reason over long reports, books or codebases in one go."
+    },
+    {
+     "title": "High-quality writing",
+     "desc": "Clear, natural prose that follows style instructions."
+    },
+    {
+     "title": "Projects",
+     "desc": "Group files and custom instructions so every chat starts with the right context."
+    },
+    {
+     "title": "Artifacts",
+     "desc": "Generate documents, code and small apps in a side panel you can iterate on."
+    },
+    {
+     "title": "Strong at coding",
+     "desc": "Write, explain and refactor code across languages."
+    },
+    {
+     "title": "API and integrations",
+     "desc": "Build on Claude through the Anthropic API or connect it to your tools."
+    }
+   ],
+   "usecases": [
+    {
+     "title": "Research and summaries",
+     "desc": "Digest long reports or papers and pull out what matters."
+    },
+    {
+     "title": "Writing",
+     "desc": "Draft, edit and restructure long-form content in your voice."
+    },
+    {
+     "title": "Software development",
+     "desc": "Pair on features, debug issues and review changes."
+    },
+    {
+     "title": "Document review",
+     "desc": "Compare versions, check contracts or extract key terms."
+    }
+   ],
+   "pros": [
+    "Excellent writing quality and instruction following",
+    "Handles very long documents well",
+    "Strong reasoning and coding ability"
+   ],
+   "cons": [
+    "Free usage limits are reached quickly on heavy tasks",
+    "Fewer consumer extras (like image generation) than some rivals",
+    "Like any model, it can still make mistakes"
+   ],
+   "faq": [
+    {
+     "q": "Is Claude free to use?",
+     "a": "Yes, Claude has a free plan. Paid plans raise usage limits and unlock additional models and features."
+    },
+    {
+     "q": "What is Claude best at?",
+     "a": "Long-document analysis, careful writing and coding are where Claude stands out."
+    },
+    {
+     "q": "Who makes Claude?",
+     "a": "Claude is built by Anthropic, an AI safety and research company."
+    }
+   ]
+  },
+  {
+   "slug": "cursor",
+   "name": "Cursor",
+   "tagline": "The AI code editor: autocomplete, chat and agents across your codebase.",
+   "desc": "The AI code editor: autocomplete, chat and agents across your codebase.",
+   "icon": "assets/img/icons/cursor.png",
+   "category": {
+    "slug": "coding",
+    "name": "Coding"
+   },
+   "tags": [
+    "Agent",
+    "Code Assistant"
+   ],
+   "maker": "Anysphere",
+   "listed": "2026-10-20",
+   "website": "https://cursor.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "cursor.jpg"
+   ],
+   "overview": [
+    "Cursor is an AI-first code editor built on VS Code. It brings autocomplete that predicts your next edit, a chat that understands your whole codebase, and an agent that can make multi-file changes and run commands — while keeping your existing VS Code extensions and settings."
+   ],
+   "steps": [
+    "Download Cursor from <a href=\"http://cursor.com/?utm_source=dir.shipany.site&amp;utm_medium=content\" rel=\"nofollow noopener\" target=\"_blank\">cursor.com</a> and import your VS Code settings and extensions.",
+    "Open a project folder so Cursor can index your codebase.",
+    "Press Tab to accept inline suggestions as you type.",
+    "Open the chat to ask questions about your code or request changes.",
+    "Use agent mode for larger tasks, then review the diff before accepting."
+   ],
+   "features": [
+    {
+     "title": "Tab autocomplete",
+     "desc": "Predicts multi-line edits and your next change, not just the next word."
+    },
+    {
+     "title": "Codebase-aware chat",
+     "desc": "Ask questions that draw on your whole project, with relevant files pulled in."
+    },
+    {
+     "title": "Agent mode",
+     "desc": "Plans and applies changes across files and runs terminal commands."
+    },
+    {
+     "title": "Inline edit",
+     "desc": "Select code and describe the change in plain language."
+    },
+    {
+     "title": "Familiar VS Code base",
+     "desc": "Your extensions, themes and keybindings carry over."
+    }
+   ],
+   "usecases": [
+    {
+     "title": "Shipping features faster",
+     "desc": "Describe a feature and let the agent scaffold it across files."
+    },
+    {
+     "title": "Understanding new codebases",
+     "desc": "Ask how things work and where logic lives."
+    },
+    {
+     "title": "Refactoring",
+     "desc": "Rename, restructure and update call sites consistently."
+    },
+    {
+     "title": "Fixing bugs",
+     "desc": "Paste an error and get a targeted fix in context."
+    }
+   ],
+   "pros": [
+    "Very fast, context-aware autocomplete",
+    "Easy switch for VS Code users",
+    "Agent handles multi-file changes"
+   ],
+   "cons": [
+    "Heavy agent use needs a paid plan",
+    "Large changes still need careful review",
+    "Tied to its own editor rather than a plugin for other IDEs"
+   ],
+   "faq": [
+    {
+     "q": "Is Cursor free?",
+     "a": "There is a free tier with limited AI usage. Paid plans raise the limits and add more models."
+    },
+    {
+     "q": "Can I use my VS Code extensions in Cursor?",
+     "a": "Yes. Cursor is built on VS Code, so most extensions, themes and settings work as-is."
+    },
+    {
+     "q": "Which languages does Cursor support?",
+     "a": "Any language your editor supports; AI quality is best in popular languages like TypeScript, Python and Go."
+    }
+   ]
+  },
+  {
+   "slug": "midjourney",
+   "name": "Midjourney",
+   "tagline": "Striking, artistic images from text prompts.",
+   "desc": "Striking, artistic images from text prompts.",
+   "icon": "assets/img/icons/midjourney.png",
+   "category": {
+    "slug": "image",
+    "name": "Image Generation"
+   },
+   "tags": [
+    "Image Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-11",
+   "website": "https://www.midjourney.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": true,
+   "shots": [],
+   "overview": [
+    "Midjourney is an AI image generator known for its striking, artistic style. You describe an image in a text prompt and it produces several variations you can upscale, vary or edit. It runs in a web app (and on Discord) and is popular with designers, illustrators and marketers."
+   ],
+   "steps": [
+    "Sign up at <a href=\"http://midjourney.com/?utm_source=dir.shipany.site&amp;utm_medium=content\" rel=\"nofollow noopener\" target=\"_blank\">midjourney.com</a> and choose a subscription plan.",
+    "Type a prompt describing the subject, style, lighting and composition.",
+    "Pick the best of the generated images and upscale or create variations.",
+    "Use parameters such as aspect ratio and style settings to fine-tune results.",
+    "Download your image or keep iterating with edits."
+   ],
+   "features": [
+    {
+     "title": "Distinctive image quality",
+     "desc": "Rich, artistic results with strong composition and lighting."
+    },
+    {
+     "title": "Variations and upscaling",
+     "desc": "Explore alternatives and enlarge the one you like."
+    },
+    {
+     "title": "Style control",
+     "desc": "Steer results with aspect ratios, stylization and reference images."
+    },
+    {
+     "title": "Editing tools",
+     "desc": "Extend, repaint or adjust parts of an image."
+    },
+    {
+     "title": "Web and Discord",
+     "desc": "Create in the web app or in Discord with the community."
+    }
+   ],
+   "usecases": [
+    {
+     "title": "Concept art",
+     "desc": "Explore visual directions for games, films and products."
+    },
+    {
+     "title": "Marketing visuals",
+     "desc": "Create eye-catching images for campaigns and social posts."
+    },
+    {
+     "title": "Mood boards",
+     "desc": "Quickly generate references for a look and feel."
+    }
+   ],
+   "pros": [
+    "Some of the most aesthetic results available",
+    "Large community and prompt inspiration",
+    "Fast iteration with variations"
+   ],
+   "cons": [
+    "No free plan for ongoing use",
+    "Precise control (e.g. exact text, layout) can be hard",
+    "Images are public by default on lower plans"
+   ],
+   "faq": [
+    {
+     "q": "Is Midjourney free?",
+     "a": "Midjourney requires a paid subscription for regular use; plans differ in generation speed and limits."
+    },
+    {
+     "q": "Do I need Discord to use Midjourney?",
+     "a": "No. You can create images in the Midjourney web app; Discord remains available as an option."
+    },
+    {
+     "q": "Can I use Midjourney images commercially?",
+     "a": "Paid subscribers can generally use their images commercially; check Midjourney's current terms for details."
+    }
+   ]
+  },
+  {
+   "slug": "runway",
+   "name": "Runway",
+   "tagline": "Generate and edit video with state-of-the-art models.",
+   "desc": "Generate and edit video with state-of-the-art models.",
+   "icon": "assets/img/icons/runway.png",
+   "category": {
+    "slug": "video",
+    "name": "Video"
+   },
+   "tags": [
+    "Video Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-05",
+   "website": "https://runwayml.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "runway.jpg"
+   ],
+   "overview": [
+    "Generate and edit video with state-of-the-art models."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "elevenlabs",
+   "name": "ElevenLabs",
+   "tagline": "Lifelike text-to-speech, voice cloning and dubbing.",
+   "desc": "Lifelike text-to-speech, voice cloning and dubbing.",
+   "icon": "assets/img/icons/elevenlabs.png",
+   "category": {
+    "slug": "audio",
+    "name": "Voice & Music"
+   },
+   "tags": [
+    "API",
+    "Text to Speech"
+   ],
+   "maker": "",
+   "listed": "2026-09-29",
+   "website": "https://elevenlabs.io/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "elevenlabs.jpg",
+    "elevenlabs-2.jpg"
+   ],
+   "overview": [
+    "Lifelike text-to-speech, voice cloning and dubbing."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "gamma",
+   "name": "Gamma",
+   "tagline": "Beautiful presentations, docs and sites, generated from a prompt.",
+   "desc": "Beautiful presentations, docs and sites, generated from a prompt.",
+   "icon": "assets/img/icons/gamma.png",
+   "category": {
+    "slug": "productivity",
+    "name": "Productivity"
+   },
+   "tags": [
+    "Presentation"
+   ],
+   "maker": "",
+   "listed": "2026-09-22",
+   "website": "https://gamma.app/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "gamma.jpg"
+   ],
+   "overview": [
+    "Beautiful presentations, docs and sites, generated from a prompt."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "perplexity",
+   "name": "Perplexity",
+   "tagline": "An answer engine that searches the web and cites its sources.",
+   "desc": "An answer engine that searches the web and cites its sources.",
+   "icon": "assets/img/icons/perplexity.png",
+   "category": {
+    "slug": "research",
+    "name": "Search & Research"
+   },
+   "tags": [
+    "Chatbot",
+    "Search"
+   ],
+   "maker": "",
+   "listed": "2026-09-17",
+   "website": "https://www.perplexity.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": true,
+   "paid": false,
+   "shots": [
+    "perplexity.jpg"
+   ],
+   "overview": [
+    "Perplexity is an AI answer engine. Instead of a list of links, it searches the web, reads the sources and writes a direct answer with numbered citations so you can check where every claim comes from. It is useful for quick research, fact-finding and staying on top of a topic."
+   ],
+   "steps": [
+    "Go to <a href=\"http://perplexity.ai/?utm_source=dir.shipany.site&amp;utm_medium=content\" rel=\"nofollow noopener\" target=\"_blank\">perplexity.ai</a> — you can search without an account.",
+    "Ask a question in natural language, as specific as you like.",
+    "Read the answer and open the cited sources to verify details.",
+    "Ask follow-ups to dig deeper in the same thread.",
+    "Save threads to collections (Spaces) to organize ongoing research."
+   ],
+   "features": [
+    {
+     "title": "Answers with citations",
+     "desc": "Every answer links the sources it was built from."
+    },
+    {
+     "title": "Real-time web search",
+     "desc": "Up-to-date information rather than a fixed training snapshot."
+    },
+    {
+     "title": "Follow-up questions",
+     "desc": "Keep context and refine the research in one thread."
+    },
+    {
+     "title": "Focus modes",
+     "desc": "Narrow searches to sources such as academic papers or discussions."
+    },
+    {
+     "title": "File analysis",
+     "desc": "Upload documents and ask questions alongside web results."
+    }
+   ],
+   "usecases": [
+    {
+     "title": "Quick research",
+     "desc": "Get a sourced overview of an unfamiliar topic in minutes."
+    },
+    {
+     "title": "Fact-checking",
+     "desc": "Find and verify where a claim comes from."
+    },
+    {
+     "title": "Market and product research",
+     "desc": "Compare products, companies and trends with sources."
+    }
+   ],
+   "pros": [
+    "Citations make answers easy to verify",
+    "Fresh, real-time information",
+    "Fast and simple to use without an account"
+   ],
+   "cons": [
+    "Answer quality depends on the sources it finds",
+    "Advanced models and deeper research need a paid plan",
+    "Less suited to long creative writing than general assistants"
+   ],
+   "faq": [
+    {
+     "q": "Is Perplexity free?",
+     "a": "Yes, basic search is free. A paid plan adds more advanced searches and model choices."
+    },
+    {
+     "q": "How is Perplexity different from Google?",
+     "a": "Google returns a list of links; Perplexity reads the sources and writes a direct answer with citations."
+    },
+    {
+     "q": "Are Perplexity answers reliable?",
+     "a": "Answers are only as good as their sources, so use the citations to check important details."
+    }
+   ]
+  },
+  {
+   "slug": "gemini",
+   "name": "Gemini",
+   "tagline": "Google's multimodal assistant, built into Search, Gmail and Docs.",
+   "desc": "Google's multimodal assistant, built into Search, Gmail and Docs.",
+   "icon": "assets/img/icons/gemini.png",
+   "category": {
+    "slug": "chatbots",
+    "name": "AI Chatbots"
+   },
+   "tags": [
+    "API",
+    "Chatbot"
+   ],
+   "maker": "Google",
+   "listed": "2026-10-25",
+   "website": "https://gemini.google.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Google's multimodal assistant, built into Search, Gmail and Docs."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "deepseek",
+   "name": "DeepSeek",
+   "tagline": "Open-weight reasoning models with a free chat app and a low-cost API.",
+   "desc": "Open-weight reasoning models with a free chat app and a low-cost API.",
+   "icon": "assets/img/icons/deepseek.png",
+   "category": {
+    "slug": "chatbots",
+    "name": "AI Chatbots"
+   },
+   "tags": [
+    "API",
+    "Chatbot",
+    "Open Source"
+   ],
+   "maker": "DeepSeek",
+   "listed": "2026-10-23",
+   "website": "https://chat.deepseek.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Open-weight reasoning models with a free chat app and a low-cost API."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "ollama",
+   "name": "Ollama",
+   "tagline": "Run open large language models locally with one command.",
+   "desc": "Run open large language models locally with one command.",
+   "icon": "assets/img/icons/ollama.png",
+   "category": {
+    "slug": "chatbots",
+    "name": "AI Chatbots"
+   },
+   "tags": [
+    "API",
+    "Open Source"
+   ],
+   "maker": "",
+   "listed": "2026-10-22",
+   "website": "https://ollama.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Run open large language models locally with one command."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "claude-code",
+   "name": "Claude Code",
+   "tagline": "An agentic coding tool that works in your terminal, IDE and browser.",
+   "desc": "An agentic coding tool that works in your terminal, IDE and browser.",
+   "icon": "assets/img/icons/claude-code.png",
+   "category": {
+    "slug": "coding",
+    "name": "Coding"
+   },
+   "tags": [
+    "Agent",
+    "Code Assistant"
+   ],
+   "maker": "Anthropic",
+   "listed": "2026-10-19",
+   "website": "https://claude.com/product/claude-code?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": true,
+   "shots": [],
+   "overview": [
+    "An agentic coding tool that works in your terminal, IDE and browser."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "github-copilot",
+   "name": "GitHub Copilot",
+   "tagline": "AI pair programmer inside VS Code, JetBrains and GitHub.",
+   "desc": "AI pair programmer inside VS Code, JetBrains and GitHub.",
+   "icon": "assets/img/icons/github-copilot.png",
+   "category": {
+    "slug": "coding",
+    "name": "Coding"
+   },
+   "tags": [
+    "Code Assistant"
+   ],
+   "maker": "GitHub",
+   "listed": "2026-10-17",
+   "website": "https://github.com/features/copilot?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "AI pair programmer inside VS Code, JetBrains and GitHub."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "v0",
+   "name": "v0",
+   "tagline": "Describe a UI or app and get working React code you can deploy.",
+   "desc": "Describe a UI or app and get working React code you can deploy.",
+   "icon": "assets/img/icons/v0.png",
+   "category": {
+    "slug": "coding",
+    "name": "Coding"
+   },
+   "tags": [
+    "App Builder"
+   ],
+   "maker": "Vercel",
+   "listed": "2026-10-16",
+   "website": "https://v0.app/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Describe a UI or app and get working React code you can deploy."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "bolt",
+   "name": "Bolt",
+   "tagline": "Prompt, run, edit and deploy full-stack web apps in the browser.",
+   "desc": "Prompt, run, edit and deploy full-stack web apps in the browser.",
+   "icon": "assets/img/icons/bolt.png",
+   "category": {
+    "slug": "coding",
+    "name": "Coding"
+   },
+   "tags": [
+    "Agent",
+    "App Builder"
+   ],
+   "maker": "StackBlitz",
+   "listed": "2026-10-14",
+   "website": "https://bolt.new/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Prompt, run, edit and deploy full-stack web apps in the browser."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "replit",
+   "name": "Replit",
+   "tagline": "Build and ship apps from a prompt with an AI agent and hosting built in.",
+   "desc": "Build and ship apps from a prompt with an AI agent and hosting built in.",
+   "icon": "assets/img/icons/replit.png",
+   "category": {
+    "slug": "coding",
+    "name": "Coding"
+   },
+   "tags": [
+    "Agent",
+    "App Builder"
+   ],
+   "maker": "",
+   "listed": "2026-10-13",
+   "website": "https://replit.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Build and ship apps from a prompt with an AI agent and hosting built in."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "ideogram",
+   "name": "Ideogram",
+   "tagline": "Image generation that gets text and typography right.",
+   "desc": "Image generation that gets text and typography right.",
+   "icon": "assets/img/icons/ideogram.png",
+   "category": {
+    "slug": "image",
+    "name": "Image Generation"
+   },
+   "tags": [
+    "Image Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-10",
+   "website": "https://ideogram.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Image generation that gets text and typography right."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "leonardo-ai",
+   "name": "Leonardo.Ai",
+   "tagline": "Generate production-ready art and assets with fine control.",
+   "desc": "Generate production-ready art and assets with fine control.",
+   "icon": "assets/img/icons/leonardo-ai.png",
+   "category": {
+    "slug": "image",
+    "name": "Image Generation"
+   },
+   "tags": [
+    "Image Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-08",
+   "website": "https://leonardo.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Generate production-ready art and assets with fine control."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "krea",
+   "name": "Krea",
+   "tagline": "Real-time image generation, upscaling and enhancement.",
+   "desc": "Real-time image generation, upscaling and enhancement.",
+   "icon": "assets/img/icons/krea.png",
+   "category": {
+    "slug": "image",
+    "name": "Image Generation"
+   },
+   "tags": [
+    "Image Generation",
+    "Video Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-07",
+   "website": "https://www.krea.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Real-time image generation, upscaling and enhancement."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "pika",
+   "name": "Pika",
+   "tagline": "Turn ideas and images into short, playful videos.",
+   "desc": "Turn ideas and images into short, playful videos.",
+   "icon": "assets/img/icons/pika.png",
+   "category": {
+    "slug": "video",
+    "name": "Video"
+   },
+   "tags": [
+    "Video Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-04",
+   "website": "https://pika.art/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Turn ideas and images into short, playful videos."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "heygen",
+   "name": "HeyGen",
+   "tagline": "Talking AI avatars and video translation for any language.",
+   "desc": "Talking AI avatars and video translation for any language.",
+   "icon": "assets/img/icons/heygen.png",
+   "category": {
+    "slug": "video",
+    "name": "Video"
+   },
+   "tags": [
+    "Avatar",
+    "Video Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-02",
+   "website": "https://www.heygen.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Talking AI avatars and video translation for any language."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "synthesia",
+   "name": "Synthesia",
+   "tagline": "Studio-quality presenter videos from a script.",
+   "desc": "Studio-quality presenter videos from a script.",
+   "icon": "assets/img/icons/synthesia.png",
+   "category": {
+    "slug": "video",
+    "name": "Video"
+   },
+   "tags": [
+    "Avatar",
+    "Video Generation"
+   ],
+   "maker": "",
+   "listed": "2026-10-01",
+   "website": "https://www.synthesia.io/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": true,
+   "shots": [],
+   "overview": [
+    "Studio-quality presenter videos from a script."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "suno",
+   "name": "Suno",
+   "tagline": "Make complete songs with vocals from a text prompt.",
+   "desc": "Make complete songs with vocals from a text prompt.",
+   "icon": "assets/img/icons/suno.png",
+   "category": {
+    "slug": "audio",
+    "name": "Voice & Music"
+   },
+   "tags": [
+    "Music"
+   ],
+   "maker": "",
+   "listed": "2026-09-28",
+   "website": "https://suno.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Make complete songs with vocals from a text prompt."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "udio",
+   "name": "Udio",
+   "tagline": "Create and remix music in any style.",
+   "desc": "Create and remix music in any style.",
+   "icon": "assets/img/icons/udio.png",
+   "category": {
+    "slug": "audio",
+    "name": "Voice & Music"
+   },
+   "tags": [
+    "Music"
+   ],
+   "maker": "",
+   "listed": "2026-09-26",
+   "website": "https://www.udio.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Create and remix music in any style."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "grammarly",
+   "name": "Grammarly",
+   "tagline": "Writing assistance everywhere you type.",
+   "desc": "Writing assistance everywhere you type.",
+   "icon": "assets/img/icons/grammarly.png",
+   "category": {
+    "slug": "writing",
+    "name": "Writing"
+   },
+   "tags": [
+    "Writing"
+   ],
+   "maker": "",
+   "listed": "2026-09-25",
+   "website": "https://www.grammarly.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Writing assistance everywhere you type."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "jasper",
+   "name": "Jasper",
+   "tagline": "On-brand marketing copy for teams.",
+   "desc": "On-brand marketing copy for teams.",
+   "icon": "assets/img/icons/jasper.png",
+   "category": {
+    "slug": "writing",
+    "name": "Writing"
+   },
+   "tags": [
+    "Writing"
+   ],
+   "maker": "",
+   "listed": "2026-09-23",
+   "website": "https://www.jasper.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": true,
+   "shots": [],
+   "overview": [
+    "On-brand marketing copy for teams."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "notion-ai",
+   "name": "Notion AI",
+   "tagline": "Search, write and summarize across your Notion workspace.",
+   "desc": "Search, write and summarize across your Notion workspace.",
+   "icon": "assets/img/icons/notion-ai.png",
+   "category": {
+    "slug": "productivity",
+    "name": "Productivity"
+   },
+   "tags": [
+    "Search",
+    "Writing"
+   ],
+   "maker": "Notion",
+   "listed": "2026-09-20",
+   "website": "https://www.notion.com/product/ai?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": true,
+   "shots": [],
+   "overview": [
+    "Search, write and summarize across your Notion workspace."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "otter",
+   "name": "Otter.ai",
+   "tagline": "Meeting notes, transcripts and summaries, automatically.",
+   "desc": "Meeting notes, transcripts and summaries, automatically.",
+   "icon": "assets/img/icons/otter.png",
+   "category": {
+    "slug": "productivity",
+    "name": "Productivity"
+   },
+   "tags": [
+    "Meeting"
+   ],
+   "maker": "",
+   "listed": "2026-09-19",
+   "website": "https://otter.ai/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Meeting notes, transcripts and summaries, automatically."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "elicit",
+   "name": "Elicit",
+   "tagline": "Find, summarize and extract data from research papers.",
+   "desc": "Find, summarize and extract data from research papers.",
+   "icon": "assets/img/icons/elicit.png",
+   "category": {
+    "slug": "research",
+    "name": "Search & Research"
+   },
+   "tags": [
+    "Search"
+   ],
+   "maker": "",
+   "listed": "2026-09-16",
+   "website": "https://elicit.com/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Find, summarize and extract data from research papers."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  },
+  {
+   "slug": "consensus",
+   "name": "Consensus",
+   "tagline": "Evidence-based answers drawn from scientific literature.",
+   "desc": "Evidence-based answers drawn from scientific literature.",
+   "icon": "assets/img/icons/consensus.png",
+   "category": {
+    "slug": "research",
+    "name": "Search & Research"
+   },
+   "tags": [
+    "Search"
+   ],
+   "maker": "",
+   "listed": "2026-09-14",
+   "website": "https://consensus.app/?utm_source=dir.shipany.site&utm_medium=referral&utm_campaign=listing&utm_content=website",
+   "featured": false,
+   "paid": false,
+   "shots": [],
+   "overview": [
+    "Evidence-based answers drawn from scientific literature."
+   ],
+   "steps": [],
+   "features": [],
+   "usecases": [],
+   "pros": [],
+   "cons": [],
+   "faq": []
+  }
+ ],
+ "categories": [
+  {
+   "slug": "chatbots",
+   "name": "AI Chatbots",
+   "desc": "General-purpose assistants you can talk to.",
+   "icon": "message-square",
+   "count": 5,
+   "tools": [
+    "chatgpt",
+    "claude",
+    "gemini",
+    "deepseek",
+    "ollama"
+   ]
+  },
+  {
+   "slug": "coding",
+   "name": "Coding",
+   "desc": "AI pair programmers, app builders and coding agents.",
+   "icon": "code",
+   "count": 6,
+   "tools": [
+    "cursor",
+    "claude-code",
+    "github-copilot",
+    "v0",
+    "bolt",
+    "replit"
+   ]
+  },
+  {
+   "slug": "image",
+   "name": "Image Generation",
+   "desc": "Create and edit images from text prompts.",
+   "icon": "image",
+   "count": 4,
+   "tools": [
+    "midjourney",
+    "ideogram",
+    "leonardo-ai",
+    "krea"
+   ]
+  },
+  {
+   "slug": "video",
+   "name": "Video",
+   "desc": "Generate, edit and translate video with AI.",
+   "icon": "video",
+   "count": 4,
+   "tools": [
+    "runway",
+    "pika",
+    "heygen",
+    "synthesia"
+   ]
+  },
+  {
+   "slug": "audio",
+   "name": "Voice & Music",
+   "desc": "Text-to-speech, voice cloning and AI music.",
+   "icon": "music",
+   "count": 3,
+   "tools": [
+    "elevenlabs",
+    "suno",
+    "udio"
+   ]
+  },
+  {
+   "slug": "writing",
+   "name": "Writing",
+   "desc": "Draft, rewrite and polish text.",
+   "icon": "pen-line",
+   "count": 2,
+   "tools": [
+    "grammarly",
+    "jasper"
+   ]
+  },
+  {
+   "slug": "productivity",
+   "name": "Productivity",
+   "desc": "Slides, notes and meetings, done faster.",
+   "icon": "layout-dashboard",
+   "count": 3,
+   "tools": [
+    "gamma",
+    "notion-ai",
+    "otter"
+   ]
+  },
+  {
+   "slug": "research",
+   "name": "Search & Research",
+   "desc": "Answer engines and research assistants.",
+   "icon": "search",
+   "count": 3,
+   "tools": [
+    "perplexity",
+    "elicit",
+    "consensus"
+   ]
+  }
+ ],
+ "tags": [
+  {
+   "name": "API",
+   "slug": "api",
+   "count": 6,
+   "tools": [
+    "chatgpt",
+    "claude",
+    "elevenlabs",
+    "gemini",
+    "deepseek",
+    "ollama"
+   ]
+  },
+  {
+   "name": "Agent",
+   "slug": "agent",
+   "count": 5,
+   "tools": [
+    "claude",
+    "cursor",
+    "claude-code",
+    "bolt",
+    "replit"
+   ]
+  },
+  {
+   "name": "Chatbot",
+   "slug": "chatbot",
+   "count": 5,
+   "tools": [
+    "chatgpt",
+    "claude",
+    "perplexity",
+    "gemini",
+    "deepseek"
+   ]
+  },
+  {
+   "name": "Video Generation",
+   "slug": "video-generation",
+   "count": 5,
+   "tools": [
+    "runway",
+    "krea",
+    "pika",
+    "heygen",
+    "synthesia"
+   ]
+  },
+  {
+   "name": "Image Generation",
+   "slug": "image-generation",
+   "count": 4,
+   "tools": [
+    "midjourney",
+    "ideogram",
+    "leonardo-ai",
+    "krea"
+   ]
+  },
+  {
+   "name": "Search",
+   "slug": "search",
+   "count": 4,
+   "tools": [
+    "perplexity",
+    "notion-ai",
+    "elicit",
+    "consensus"
+   ]
+  },
+  {
+   "name": "App Builder",
+   "slug": "app-builder",
+   "count": 3,
+   "tools": [
+    "v0",
+    "bolt",
+    "replit"
+   ]
+  },
+  {
+   "name": "Code Assistant",
+   "slug": "code-assistant",
+   "count": 3,
+   "tools": [
+    "cursor",
+    "claude-code",
+    "github-copilot"
+   ]
+  },
+  {
+   "name": "Writing",
+   "slug": "writing",
+   "count": 3,
+   "tools": [
+    "grammarly",
+    "jasper",
+    "notion-ai"
+   ]
+  },
+  {
+   "name": "Avatar",
+   "slug": "avatar",
+   "count": 2,
+   "tools": [
+    "heygen",
+    "synthesia"
+   ]
+  },
+  {
+   "name": "Music",
+   "slug": "music",
+   "count": 2,
+   "tools": [
+    "suno",
+    "udio"
+   ]
+  },
+  {
+   "name": "Open Source",
+   "slug": "open-source",
+   "count": 2,
+   "tools": [
+    "deepseek",
+    "ollama"
+   ]
+  },
+  {
+   "name": "Meeting",
+   "slug": "meeting",
+   "count": 1,
+   "tools": [
+    "otter"
+   ]
+  },
+  {
+   "name": "Presentation",
+   "slug": "presentation",
+   "count": 1,
+   "tools": [
+    "gamma"
+   ]
+  },
+  {
+   "name": "Text to Speech",
+   "slug": "text-to-speech",
+   "count": 1,
+   "tools": [
+    "elevenlabs"
+   ]
+  }
+ ],
+ "blog": [
+  {
+   "slug": "blocks-vs-components",
+   "title": "Blocks vs Components: What Survives a Rebrand",
+   "body": "<p >Every template promises \"easy customization,\" then makes you grep through twelve files to change a headline. ShipAny TanStack avoids that with one rule:</p>\n<blockquote >\n<p >A file that reads translations is a <strong >block</strong>. A file that takes all content via props is a <strong >component</strong>.</p>\n</blockquote>\n<h2 >Blocks are disposable</h2>\n<p >Blocks live in <code >src/blocks/</code> and are zero-config page sections — <code >&lt;Hero /&gt;</code>, <code >&lt;Pricing /&gt;</code>, <code >&lt;Footer /&gt;</code>. Each one reads i18n messages, builds a content config, and passes it to a component. They're the demo material: when you start a real project, you delete them and write your own.</p>\n<pre  tabindex=\"0\"><code >// src/blocks/header.tsx — a block: reads i18n, wires a component\nexport async function Header() {\n  const t = await getTranslations('landing');\n  const navLinks = [{ href: '/#features', label: t('nav.features') }];\n  return &lt;SiteHeader navLinks={navLinks} /&gt;;\n}</code></pre>\n<h2 >Components are durable</h2>\n<p >Components live in <code >src/components/</code> and never read translations. <code >SiteHeader</code>, <code >PricingTable</code>, <code >AppSidebar</code> — all content arrives via props. They don't know your app's name, your copy, or your locale. That's exactly why they survive every rebrand.</p>\n<h2 >Why the split matters</h2>\n<p >When you rebrand or start a new project from the template:</p>\n<ol >\n<li ><strong >Keep</strong> <code >src/components/*</code> — the chassis.</li>\n<li ><strong >Rewrite</strong> <code >src/blocks/*</code> — the content wiring.</li>\n<li ><strong >Rewrite</strong> the translation JSON files that feed the blocks.</li>\n</ol>\n<p >The page files themselves stay tiny — <code >page.tsx</code> is pure composition, a stack of blocks. Changing your entire landing page touches blocks and JSON, never the primitives. The split is not cosmetic; it's what makes customization a rewrite of intent instead of a fight with someone else's design decisions.</p>"
+  },
+  {
+   "slug": "what-is-shipany",
+   "title": "What is ShipAny TanStack",
+   "body": "<p >ShipAny TanStack is a <strong >headless SaaS engine</strong>: pre-wired business logic with minimal UI. Instead of shipping yet another themed template, it gives you the machinery every SaaS needs — authentication, payments, subscriptions, a credit system, role-based access control, and internationalization — and stays out of the way of your product pages.</p>\n<h2 >Why headless?</h2>\n<p >Most SaaS boilerplates couple their business logic to a specific landing page design. The moment you rebrand, you fight the template. ShipAny TanStack splits the codebase along a different line:</p>\n<ul >\n<li ><strong ><code >src/components/</code></strong> — durable primitives. Pricing tables, headers, sidebars, shadcn/ui. These survive a rebrand.</li>\n<li ><strong ><code >src/blocks/</code></strong> — disposable page sections. They read your translations and wire content into the primitives. Rewrite them per project.</li>\n<li ><strong ><code >src/modules/</code></strong> — pure business logic. Payments, credits, subscriptions, RBAC. Each module is a standalone service file you can delete without breaking the others.</li>\n</ul>\n<h2 >What's in the box</h2>\n<ol >\n<li ><strong >Authentication</strong> — email/password and OAuth via better-auth, with session management and account linking.</li>\n<li ><strong >Payments</strong> — Stripe, PayPal, and Creem providers behind a single <code >PaymentManager</code> interface.</li>\n<li ><strong >Credits</strong> — FIFO consumption, expiration, auto-grant on signup, and revocation for usage-based billing.</li>\n<li ><strong >RBAC</strong> — roles and permissions with wildcard matching, plus a full admin panel.</li>\n<li ><strong >Multi-database</strong> — Drizzle ORM with PostgreSQL, MySQL, SQLite, Turso, and Cloudflare D1 support.</li>\n<li ><strong >i18n</strong> — English and Chinese built in, locale-aware routing via next-intl.</li>\n</ol>\n<h2 >Getting started</h2>\n<pre  tabindex=\"0\"><code >pnpm install\ncp .env.example .env.development\npnpm db:push\npnpm dev</code></pre>\n<p >That's it — the engine runs on SQLite out of the box, and you can switch databases by changing one env var. Build your product on top, not the plumbing underneath.</p>"
+  }
+ ]
+}

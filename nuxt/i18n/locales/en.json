@@ -1,0 +1,14 @@
+{
+  "nav": {
+    "tools": "Browse",
+    "weekly": "Weekly board",
+    "pricing": "Pricing",
+    "submit": "Submit"
+  },
+  "cta": {
+    "submit": "Submit your product"
+  },
+  "home": {
+    "title": "Launch your product. Keep the backlink forever."
+  }
+}

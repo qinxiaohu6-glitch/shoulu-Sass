@@ -1,0 +1,54 @@
+/* ---------------------------------------------------------------------------
+   payment return page
+
+   One block, because that is all this page adds: the receipt the buyer sees
+   after the provider sends them back. Everything else on it — page head, the
+   status chip, the buttons — is already styled by the legacy sheet, and
+   re-drawing those would only make this page drift from the rest of the site.
+--------------------------------------------------------------------------- */
+
+.pay-summary {
+  max-width: 520px;
+  margin: 0 0 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.pay-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.pay-summary__row:last-child {
+  border-bottom: 0;
+}
+
+.pay-summary__row > span {
+  color: var(--muted-foreground);
+}
+
+.pay-summary__row > strong {
+  font-weight: 600;
+  /* An order id is a long hex string; let it wrap instead of pushing the row
+     wider than the card on a phone. */
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* `.step-actions` is `space-between`, built for the wizard's back/next pair —
+   with three buttons it scatters them across the page. This is the same row
+   without the justification. */
+.pay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+}

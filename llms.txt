@@ -1,0 +1,56 @@
+# Product Atlas
+
+> A hand-reviewed directory of products worth trying — AI tools, SaaS, indie apps and utilities — with bilingual (English / Chinese) listings, weekly community voting and paid placements.
+
+## Core pages
+- [All products](https://dirtool.com/tools.html): every listed product with category filters and sorting
+- [Categories](https://dirtool.com/categories.html): 8 categories
+- [Makers](https://dirtool.com/makers.html): one page per vendor, grouped by what they shipped
+- [Tags](https://dirtool.com/tags.html): 15 tags
+- [SEO check](https://dirtool.com/seo-check.html): free 20-point technical audit of any URL, plus an honest DR lookup
+- [Weekly leaderboard](https://dirtool.com/weekly.html): ranked by votes, resets every Monday
+- [Just added](https://dirtool.com/just-added.html): newest listings
+- [Submit a product](https://dirtool.com/submit.html): paste a URL, auto-fill, free or paid
+- [中文版](https://dirtool.com/zh/index.html)
+
+## Tools
+- [ChatGPT](https://dirtool.com/tools/chatgpt.html): OpenAI's assistant for writing, analysis, coding and everyday questions.
+- [Claude](https://dirtool.com/tools/claude.html): A thoughtful AI assistant for writing, research, coding and long documents.
+- [Cursor](https://dirtool.com/tools/cursor.html): The AI code editor: autocomplete, chat and agents across your codebase.
+- [Midjourney](https://dirtool.com/tools/midjourney.html): Striking, artistic images from text prompts.
+- [Runway](https://dirtool.com/tools/runway.html): Generate and edit video with state-of-the-art models.
+- [ElevenLabs](https://dirtool.com/tools/elevenlabs.html): Lifelike text-to-speech, voice cloning and dubbing.
+- [Gamma](https://dirtool.com/tools/gamma.html): Beautiful presentations, docs and sites, generated from a prompt.
+- [Perplexity](https://dirtool.com/tools/perplexity.html): An answer engine that searches the web and cites its sources.
+- [Gemini](https://dirtool.com/tools/gemini.html): Google's multimodal assistant, built into Search, Gmail and Docs.
+- [DeepSeek](https://dirtool.com/tools/deepseek.html): Open-weight reasoning models with a free chat app and a low-cost API.
+- [Ollama](https://dirtool.com/tools/ollama.html): Run open large language models locally with one command.
+- [Claude Code](https://dirtool.com/tools/claude-code.html): An agentic coding tool that works in your terminal, IDE and browser.
+- [GitHub Copilot](https://dirtool.com/tools/github-copilot.html): AI pair programmer inside VS Code, JetBrains and GitHub.
+- [v0](https://dirtool.com/tools/v0.html): Describe a UI or app and get working React code you can deploy.
+- [Bolt](https://dirtool.com/tools/bolt.html): Prompt, run, edit and deploy full-stack web apps in the browser.
+- [Replit](https://dirtool.com/tools/replit.html): Build and ship apps from a prompt with an AI agent and hosting built in.
+- [Ideogram](https://dirtool.com/tools/ideogram.html): Image generation that gets text and typography right.
+- [Leonardo.Ai](https://dirtool.com/tools/leonardo-ai.html): Generate production-ready art and assets with fine control.
+- [Krea](https://dirtool.com/tools/krea.html): Real-time image generation, upscaling and enhancement.
+- [Pika](https://dirtool.com/tools/pika.html): Turn ideas and images into short, playful videos.
+- [HeyGen](https://dirtool.com/tools/heygen.html): Talking AI avatars and video translation for any language.
+- [Synthesia](https://dirtool.com/tools/synthesia.html): Studio-quality presenter videos from a script.
+- [Suno](https://dirtool.com/tools/suno.html): Make complete songs with vocals from a text prompt.
+- [Udio](https://dirtool.com/tools/udio.html): Create and remix music in any style.
+- [Grammarly](https://dirtool.com/tools/grammarly.html): Writing assistance everywhere you type.
+- [Jasper](https://dirtool.com/tools/jasper.html): On-brand marketing copy for teams.
+- [Notion AI](https://dirtool.com/tools/notion-ai.html): Search, write and summarize across your Notion workspace.
+- [Otter.ai](https://dirtool.com/tools/otter.html): Meeting notes, transcripts and summaries, automatically.
+- [Elicit](https://dirtool.com/tools/elicit.html): Find, summarize and extract data from research papers.
+- [Consensus](https://dirtool.com/tools/consensus.html): Evidence-based answers drawn from scientific literature.
+
+## Categories
+- [AI Assistants](https://dirtool.com/categories/chatbots.html): General-purpose assistants you can talk to.
+- [Developer Tools](https://dirtool.com/categories/coding.html): Editors, coding agents and app builders.
+- [Design Tools](https://dirtool.com/categories/image.html): Image generation, UI and creative production.
+- [Video](https://dirtool.com/categories/video.html): Generate, edit and translate video.
+- [Audio & Music](https://dirtool.com/categories/audio.html): Text-to-speech, voice cloning and AI music.
+- [Writing](https://dirtool.com/categories/writing.html): Draft, rewrite and polish text.
+- [Productivity](https://dirtool.com/categories/productivity.html): Slides, notes and meetings, done faster.
+- [Research](https://dirtool.com/categories/research.html): Answer engines and research assistants.

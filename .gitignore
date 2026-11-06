@@ -1,0 +1,55 @@
+# ---------- 系统与编辑器 ----------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---------- 密钥与凭据（绝对不能提交） ----------
+data/admin-token.txt
+data/session-secret.txt
+data/google-oauth.json
+data/ip-salt.txt
+data/mail.json
+.env
+.env.*
+
+# ---------- 运行时用户数据 ----------
+data/submissions/*
+!data/submissions/.gitkeep
+data/votes/
+data/reports/
+data/ads.json
+data/tool-overrides.json
+data/site-origin.txt
+
+# ---------- 日志与临时文件 ----------
+*.log
+logs/
+tmp/
+*.tmp
+*.bak
+
+# 静态部署包（make_dist.py 生成）
+dist/
+
+# ---------- Nuxt 重建站 ----------
+nuxt/node_modules/
+nuxt/.nuxt/
+nuxt/.output/
+nuxt/.data/
+nuxt/.wrangler/
+nuxt/dist/
+nuxt/*.log
+# 本地 D1 模拟库（`nuxt dev` 自动生成，线上用 Cloudflare D1）
+nuxt/.data/local.sqlite*
+
+# 域名绑定快照，切域前备份用，不入库
+nuxt/.wrangler-domains-backup.json
