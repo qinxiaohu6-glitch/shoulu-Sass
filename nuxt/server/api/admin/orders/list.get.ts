@@ -81,13 +81,19 @@ export default defineEventHandler(async (event) => {
     params.push(status)
   }
   if (search) {
-    clauses.push('(o.id LIKE ? OR s.name LIKE ? OR s.owner_email LIKE ? OR s.owner_sub LIKE ?)')
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`)
+    clauses.push(
+      '(o.id LIKE ? OR s.name LIKE ? OR s.owner_email LIKE ? OR s.owner_sub LIKE ? OR b.name LIKE ?)',
+    )
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`)
   }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : ''
 
   const db = await useDb(event)
-  const from = 'FROM payment_order o LEFT JOIN submissions s ON s.id = o.submission_id'
+  // Ad orders have `submission_id = ''`, so without the second join they would
+  // show up in the console as a row of hex ids with an empty product name.
+  const from = `FROM payment_order o
+    LEFT JOIN submissions s ON s.id = o.submission_id
+    LEFT JOIN ad_booking b ON b.order_id = o.id`
 
   const total = Number(
     (await db.prepare(`SELECT COUNT(*) AS n ${from} ${where}`).bind(...params).first<{ n: number }>())?.n ?? 0,
@@ -98,7 +104,7 @@ export default defineEventHandler(async (event) => {
       `SELECT o.id, o.status, o.amount_cents, o.currency, o.provider,
               o.created_at, o.paid_at,
               COALESCE(s.id, '') AS submission_id,
-              COALESCE(s.name, '') AS submission_name,
+              COALESCE(NULLIF(s.name, ''), b.slot || ' · ' || b.start, '') AS submission_name,
               COALESCE(s.owner_sub, '') AS owner_sub,
               COALESCE(s.owner_email, '') AS owner_email
          ${from} ${where}

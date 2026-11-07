@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { CONTACT_EMAIL, contactHref } from '~~/shared/content/site-contact'
+import {
+  CONTACT_EMAIL,
+  SOCIAL_X_HANDLE,
+  SOCIAL_X_URL,
+  contactHref,
+} from '~~/shared/content/site-contact'
 
 const { locale, setLocale, pick } = useLang()
 
@@ -7,9 +12,13 @@ const { locale, setLocale, pick } = useLang()
  * The footer is where Waffo's reviewer looks for a real reporting channel.
  * With no mailbox configured we render nothing rather than a made-up address;
  * the legal documents fall back to the support ticket system until then.
+ * The X account is a second monitored channel, not six unmonitored placeholders
+ * — the Waffo TOS template explicitly prefers fewer real channels.
  */
 const contactMail = contactHref()
 const contactLabel = CONTACT_EMAIL
+const socialXUrl = SOCIAL_X_URL
+const socialXHandle = SOCIAL_X_HANDLE
 
 const colorMode = useColorMode()
 const route = useRoute()
@@ -146,6 +155,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('服务条款', 'Terms of Service'), to: '/terms-of-service' },
       { label: pick('可接受使用政策', 'Acceptable Use Policy'), to: '/terms-of-service', hash: 'acceptable-use' },
       { label: pick('举报与申诉', 'Report & appeal'), to: '/terms-of-service', hash: 'reporting' },
+      { label: pick('非生成平台声明', 'Not a generation platform'), to: '/terms-of-service', hash: 'no-generative-features' },
     ],
   },
   {
@@ -420,6 +430,14 @@ watch(() => route.fullPath, () => {
       <footer class="footer">
         <div class="footer__inner">
           <p class="footer__tagline">{{ pick('发布你的产品，反链永久保留。', 'Launch your product. Keep the backlink.') }}</p>
+          <!-- Site-wide disambiguation. Waffo's site check reads category labels
+               such as "Image Generation" / "Text to Speech" / "Video Generation"
+               as if they were features of this site. Stating the nature of the
+               service in the shared footer puts the correction on every page a
+               reviewer (or crawler) can open, without touching the catalogue. -->
+          <p style="margin: 6px 0 0; font-size: 12px; line-height: 1.6; opacity: .72">
+            {{ pick('Product Atlas 是第三方工具目录站，不提供任何内容生成功能，也不调用底层 AI 模型；站内「图像生成」「语音合成」「视频生成」等词均为第三方产品的分类标签。', 'Product Atlas is a directory of third-party tools. We provide no generation features and call no underlying AI model; labels such as "Image Generation", "Text to Speech" and "Video Generation" are third-party product categories, not features of this site.') }}
+          </p>
           <div class="footer__cols">
             <nav v-for="col in footerCols" :key="col.title" :aria-label="col.title">
               <h3>{{ col.title }}</h3>
@@ -434,9 +452,13 @@ watch(() => route.fullPath, () => {
         <div class="footer__bottom">
           <div class="footer__bottom-inner">
             <span>{{ pick('© 2026 Product Atlas 保留所有权利。', '© 2026 Product Atlas. All rights reserved.') }}</span>
-            <span v-if="contactMail">
+            <!-- Both channels are independent: clearing the mailbox must not
+                 silently remove the X contact from the footer as well. -->
+            <span v-if="contactMail || socialXUrl">
               {{ pick('联系与举报：', 'Contact & report:') }}
-              <a :href="contactMail">{{ contactLabel }}</a>
+              <a v-if="contactMail" :href="contactMail">{{ contactLabel }}</a>
+              <template v-if="contactMail && socialXUrl"> · </template>
+              <a v-if="socialXUrl" :href="socialXUrl" target="_blank" rel="noopener noreferrer">{{ socialXHandle }}</a>
             </span>
             <span v-else>{{ pick('免费提交 · 付费置顶', 'Free to submit · Paid to feature') }}</span>
           </div>

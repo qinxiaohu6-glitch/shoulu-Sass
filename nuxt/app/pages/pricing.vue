@@ -123,8 +123,15 @@ useSeo({
             </ul>
             <p class="mt-4 text-xs text-muted-foreground">{{ t(plan.bundle) }}</p>
             <div class="mt-auto pt-6">
+              <!--
+                Weekly slots are their own purchase: a date range, not a
+                submission. `/book-ad` reads the slot from the query and shows
+                only the weeks still open; sending this to `/submit` used to ask
+                for a product name and category for something that is not a
+                product, and could only ever charge the single legacy $29.
+              -->
               <NuxtLink
-                :to="{ path: '/submit', query: { plan: 'ad', slot: plan.id } }"
+                :to="`${localePath('/book-ad')}?slot=${plan.id}&weeks=1`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
               >
                 {{ pick('预订这个位置', 'Book this spot') }}
@@ -137,7 +144,7 @@ useSeo({
         </div>
 
         <p class="mt-8 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-          {{ pick('下单后我们人工确认排期与付款 —— 自动支付还没接。位置只有两个，同一周不会重复出售。', 'We confirm the slot and the payment by hand — checkout is not wired up yet. There are two positions, and neither is sold twice in the same week.') }}
+          {{ pick('在线选周、在线付款，付款成功后自动排期，不用提交产品。位置只有两个，同一周不会重复出售；已订满的周在预订页会自动标灰。', 'Pick a week and pay online — the placement is scheduled automatically once the payment clears, with no product submission. There are two positions and neither is sold twice in the same week; weeks that are gone are marked on the booking page.') }}
         </p>
       </div>
     </section>

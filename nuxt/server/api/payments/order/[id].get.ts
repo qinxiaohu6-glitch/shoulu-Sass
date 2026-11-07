@@ -13,6 +13,7 @@
 
 import { useDb } from '../../../utils/db'
 import { getSubmission } from '../../../utils/submissions'
+import { getAdBooking } from '../../../utils/ad-bookings'
 import { getOrder } from '../../../utils/payments/orders'
 
 export default defineEventHandler(async (event) => {
@@ -25,7 +26,10 @@ export default defineEventHandler(async (event) => {
   const order = await getOrder(db, id)
   if (!order) throw createError({ statusCode: 404, statusMessage: 'Not Found' })
 
-  const submission = await getSubmission(db, order.submission_id)
+  // An ad order has no submission; the return page shows its window instead.
+  // Nothing sensitive is exposed here — no email, no session id, no creative.
+  const booking = order.plan === 'ad' ? await getAdBooking(db, order.id) : null
+  const submission = order.submission_id ? await getSubmission(db, order.submission_id) : null
 
   return {
     ok: true,
@@ -37,11 +41,32 @@ export default defineEventHandler(async (event) => {
       currency: order.currency,
       created_at: order.created_at,
       paid_at: order.paid_at,
+      /**
+       * Carried so the return page can offer "try again" after a cancellation.
+       * It is the same capability the order id already is — the checkout route
+       * takes a submission id and charges the price on the server, so knowing
+       * it lets a buyer pay, not take.
+       */
+      submission_id: order.submission_id,
       // The listing's public identity, so the page can say which product this
-      // was without exposing the submitter's address.
-      name: submission?.name ?? '',
+      // was without exposing the submitter's address. For an ad order this is
+      // the slot and the rented window instead.
+      name: booking
+        ? `${booking.slot === 'board' ? 'Board slot' : 'Sidebar slot'} · ${booking.start} → ${booking.end}`
+        : (submission?.name ?? ''),
       slug: submission?.slug ?? '',
-      live: Boolean(submission?.status === 'approved' && submission?.paid_at),
+      live: booking
+        ? booking.status === 'live'
+        : Boolean(submission?.status === 'approved' && submission?.paid_at),
+      ad: booking
+        ? {
+            slot: booking.slot,
+            weeks: booking.weeks,
+            start: booking.start,
+            end: booking.end,
+            status: booking.status,
+          }
+        : null,
     },
   }
 })

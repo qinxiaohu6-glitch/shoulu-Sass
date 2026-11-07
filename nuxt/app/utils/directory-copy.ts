@@ -101,6 +101,15 @@ export const DIRECTORY_COPY = {
   'dir.submit.field_category_ph': { en: 'Pick a category', zh: '选择分类' },
   'dir.submit.field_intro': { en: 'Introduction (optional)', zh: '详细介绍（可选）' },
   'dir.submit.field_intro_ph': { en: 'Features, use cases, pricing… Markdown is supported.', zh: '功能特点、使用场景、定价模式……支持 Markdown 格式。' },
+  // Not in the source: it has an account system and reads the email from the
+  // signed-in user. This build accepts anonymous submissions, so a paid listing
+  // has no address to send the receipt to unless the form asks for one.
+  'dir.submit.field_email': { en: 'Email for the receipt', zh: '接收收据的邮箱' },
+  'dir.submit.field_email_ph': { en: 'you@example.com', zh: 'you@example.com' },
+  'dir.submit.error_email_required': {
+    en: 'Enter an email address that can receive mail — the receipt goes there.',
+    zh: '请填一个能收信的邮箱，付费收据会发到这个地址。',
+  },
   'dir.submit.preview_title': { en: 'Preview', zh: '预览' },
   'dir.submit.how_it_works': { en: 'How it works', zh: '流程' },
   'dir.submit.step_1': { en: 'Fill in your tool and submit it.', zh: '填写工具信息并提交。' },
@@ -108,6 +117,8 @@ export const DIRECTORY_COPY = {
   'dir.submit.step_3': { en: 'Once approved it goes live; track it in Settings → My Submissions.', zh: '审核通过后自动发布，可在「设置 → 我的提交」查看进度。' },
   'dir.submit.premium_skips_queue': { en: 'Premium skips the queue: the listing goes live as soon as payment succeeds.', zh: '付费收录无需排队，付款成功后立即发布。' },
   'dir.submit.listing_plan': { en: 'Listing plan', zh: '收录方案' },
+  'dir.submit.plan_from_pricing': { en: 'Selected on the pricing page: {name} · {price} (one-time). This is the amount you will be charged.', zh: '已按定价页选择：{name} · {price}（一次性）。提交后将按此金额收款。' },
+  'dir.submit.plan_clear': { en: 'Clear selection', zh: '清除选择' },
   'dir.submit.plan_standard': { en: 'Standard', zh: '标准收录' },
   'dir.submit.plan_premium': { en: 'Premium', zh: '付费收录' },
   'dir.submit.plan_free_f1': { en: 'Reviewed by the editors, usually within a week', zh: '由编辑逐条人工审核，通常一周内完成' },

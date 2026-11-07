@@ -141,13 +141,28 @@ export interface AdPlan {
   pitch: Pair
   bullets: PairList
   bundle: Pair
+  /**
+   * The same numbers as `price` / `bundle`, in minor units. Checkout reads
+   * these on the server; the strings above are for rendering only. Keeping
+   * both on the same object is what stops a copy edit from quietly changing
+   * the price without changing the charge.
+   */
+  weeklyCents: number
+  bundleWeeks: number
+  bundleCents: number
 }
+
+/** The only two purchase lengths the pricing page advertises. */
+export const AD_WEEK_OPTIONS = [1, 4] as const
 
 export const adPlans: AdPlan[] = [
   {
     id: 'board',
     name: { en: 'Board slot', zh: '榜单位' },
     price: '$29',
+    weeklyCents: 2900,
+    bundleWeeks: 4,
+    bundleCents: 9900,
     unit: { en: '/ week', zh: '/ 周' },
     where: { en: 'Between 3rd and 4th on this week’s board', zh: '本周榜单第 3、4 名之间' },
     pitch: {
@@ -168,6 +183,9 @@ export const adPlans: AdPlan[] = [
     id: 'sidebar',
     name: { en: 'Sidebar slot', zh: '右栏位' },
     price: '$19',
+    weeklyCents: 1900,
+    bundleWeeks: 4,
+    bundleCents: 6500,
     unit: { en: '/ week', zh: '/ 周' },
     where: {
       en: 'The rail on the homepage and the just-added feed',
@@ -340,7 +358,30 @@ const PLAN_ALIASES: Record<string, string> = { paid: 'featured' }
 
 export function planAmountCents(plan: string): number {
   const slug = PLAN_ALIASES[plan] ?? plan
-  if (slug === 'ad') return 2900
+  // A legacy `plan: 'ad'` submission has no slot and no week count, so the
+  // only price it can mean is one week of the board slot. Self-serve bookings
+  // do not go through this function — they use `adPriceCents(slot, weeks)`.
+  if (slug === 'ad') return adPlans.find((a) => a.id === 'board')?.weeklyCents ?? 0
   const tier = tiers.find((t) => t.id === slug)
   return tier ? tier.amountCents : 0
+}
+
+/**
+ * What a weekly placement costs, in minor units.
+ *
+ * Returns 0 for anything the pricing page does not sell — an unknown slot,
+ * three weeks, a negative number. `0` means "nothing to pay", and the checkout
+ * route turns that into a 409 instead of opening a session. The client sends
+ * `slot` and `weeks`, never an amount; this is the only place that decides it.
+ */
+export function adPriceCents(slot: string, weeks: number): number {
+  if (!Number.isInteger(weeks) || !(AD_WEEK_OPTIONS as readonly number[]).includes(weeks)) return 0
+  const plan = adPlans.find((a) => a.id === slot)
+  if (!plan) return 0
+  return weeks === plan.bundleWeeks ? plan.bundleCents : plan.weeklyCents * weeks
+}
+
+/** Display string for a computed charge, e.g. 9900 → "$99.00". */
+export function formatAdPrice(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`
 }

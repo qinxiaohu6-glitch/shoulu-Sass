@@ -18,6 +18,7 @@ const { pick } = useLang()
 const localePath = useLocalePath()
 const route = useRoute()
 const requestFetch = useRequestFetch()
+const { busy: payBusy, pay } = await usePayment()
 
 const orderId = computed(() => String(route.query.order || ''))
 const cancelled = computed(() => String(route.query.state || '') === 'cancelled')
@@ -32,9 +33,18 @@ type OrderView = {
     currency: string
     created_at: number
     paid_at: number | null
+    submission_id: string
     name: string
     slug: string
     live: boolean
+    /** Present only for a weekly ad booking; null for a listing payment. */
+    ad: {
+      slot: string
+      weeks: number
+      start: string
+      end: string
+      status: string
+    } | null
   }
 }
 
@@ -53,6 +63,35 @@ const { data, error, refresh } = await useAsyncData(
 
 const order = computed(() => data.value?.order ?? null)
 const status = computed(() => order.value?.status ?? 'unknown')
+const ad = computed(() => order.value?.ad ?? null)
+
+/** An abandoned ad checkout goes back to the booking page, not to a listing. */
+const rebookLink = computed(() =>
+  ad.value
+    ? `${localePath('/book-ad')}?slot=${ad.value.slot}&weeks=${ad.value.weeks}`
+    : '',
+)
+
+/**
+ * A cancelled or failed attempt can be restarted from here.
+ *
+ * The "My submissions" link only helps a signed-in buyer — an anonymous
+ * submission has no account and therefore no row in that list. This page is the
+ * one place every buyer reaches with proof of the order, so it carries the
+ * retry. A `pending` order is deliberately excluded: it may still be settling,
+ * and a second checkout is how someone pays twice.
+ */
+const canRetry = computed(() => {
+  if (!order.value?.submission_id) return false
+  return status.value === 'failed' || status.value === 'cancelled' || cancelled.value
+})
+
+async function retry() {
+  const submissionId = order.value?.submission_id
+  if (!submissionId) return
+  // `pay()` redirects on success and reports a provider failure as a toast.
+  await pay(submissionId)
+}
 
 /**
  * A webhook usually lands within a few seconds of the redirect. Forty-five
@@ -90,6 +129,20 @@ const heading = computed(() => {
 })
 
 const lead = computed(() => {
+  if (status.value === 'paid' && ad.value) {
+    if (ad.value.status === 'conflict') {
+      return pick(
+        '钱已收到，但这一周刚被别人订走了。请联系我们改期或退款，订单记录已保留。',
+        'We have the money, but that week was just booked by someone else. Contact us to reschedule or refund — the order record is kept.',
+      )
+    }
+    return order.value?.live
+      ? pick(
+          `广告位已排期：${ad.value.start} → ${ad.value.end}，届时自动上线、到期自动下架。`,
+          `Your placement is scheduled: ${ad.value.start} → ${ad.value.end}. It goes up and comes down automatically.`,
+        )
+      : pick('钱已收到，广告位正在排期，通常几秒内完成。', 'We have the money; the placement is being scheduled, usually within seconds.')
+  }
   if (status.value === 'paid') {
     return order.value?.live
       ? pick('收录已上线，详情页现在就能打开。', 'Your listing is live — the page is open now.')
@@ -106,8 +159,8 @@ const lead = computed(() => {
   }
   if (status.value === 'cancelled' || cancelled.value) {
     return pick(
-      '没有扣款。你可以回到「我的提交」重新发起付款，或者联系我们人工处理。',
-      'Nothing was charged. You can start the payment again from My submissions, or contact us.',
+      '没有扣款。可以直接点下面的「重新付款」再试一次，或者联系我们人工处理。',
+      'Nothing was charged. Use "Try the payment again" below, or contact us.',
     )
   }
   if (status.value === 'failed') {
@@ -141,8 +194,12 @@ useHead({
         <strong>{{ order.id }}</strong>
       </div>
       <div class="pay-summary__row">
-        <span>{{ pick('产品', 'Product') }}</span>
+        <span>{{ ad ? pick('位置', 'Placement') : pick('产品', 'Product') }}</span>
         <strong>{{ order.name || '—' }}</strong>
+      </div>
+      <div v-if="ad" class="pay-summary__row">
+        <span>{{ pick('投放周期', 'Window') }}</span>
+        <strong>{{ ad.start }} → {{ ad.end }} · {{ ad.weeks === 1 ? pick('1 周', '1 week') : pick('4 周', '4 weeks') }}</strong>
       </div>
       <div class="pay-summary__row">
         <span>{{ pick('金额', 'Amount') }}</span>
@@ -163,6 +220,31 @@ useHead({
     </div>
 
     <div class="pay-actions">
+      <button
+        v-if="canRetry"
+        type="button"
+        class="btn btn--primary"
+        :disabled="Boolean(payBusy)"
+        @click="retry"
+      >
+        {{ pick('重新付款', 'Try the payment again') }}
+      </button>
+      <!-- An ad has no submission to retry a charge against, so the buyer
+           restarts from the booking page where the open weeks are listed. -->
+      <NuxtLink
+        v-if="rebookLink && (status === 'failed' || status === 'cancelled' || cancelled)"
+        class="btn btn--primary"
+        :to="rebookLink"
+      >
+        {{ pick('重新选择广告位', 'Book another week') }}
+      </NuxtLink>
+      <NuxtLink
+        v-if="ad && status === 'paid' && order?.live"
+        class="btn btn--ghost"
+        :to="rebookLink"
+      >
+        {{ pick('续租下一周', 'Book the next week') }}
+      </NuxtLink>
       <NuxtLink
         v-if="order?.slug && order.live"
         class="btn btn--primary"

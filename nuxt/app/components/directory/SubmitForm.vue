@@ -17,24 +17,50 @@
  *   `categoryId`    `category`, a **slug** (the API validates against slugs)
  *   `tagline`       `short`
  *   `description`   `long`
- *   `plan`          `'free'`, or `'featured'` for the source's `'premium'`
+ *   `plan`          `'free'`, or one of `standard` / `featured` / `pro`
  *
  * That last line is the one mapping worth spelling out: the source's Premium tier
  * is $39 for 30 days of featured placement, and this site's `featured` plan is
  * $39 for a pinned placement. Same product, different word — so the button says
  * Premium (the source's copy) and the record says `featured` (this site's plan).
+ * `/pricing` has four columns, so it sends `?plan=`; the form keeps the source's
+ * two cards and only uses the parameter to choose which real plan is submitted
+ * and which price is shown. The amount is never taken from the URL — checkout
+ * reads `planAmountCents(plan)` on the server.
  *
  * Payment: the source opens a provider picker after a paid submit. This build
  * configures one provider server-side, so `usePayment().pay(id)` goes straight to
  * it — and when no provider is configured yet, the receipt keeps the manual
  * instructions instead of showing a button that cannot work.
  */
+import { tiers } from '~~/shared/content/pricing'
+import type { SubmitFaqItem } from '~/utils/directory-ui'
+
 const { lang, pick, isZh } = useLang()
 const localePath = useLocalePath()
+const route = useRoute()
+const router = useRouter()
 const t = useDirectoryCopy()
 
 const { categories: liveCategories } = useDirectoryMeta()
 const payment = await usePayment()
+
+/**
+ * The three one-time tiers `/pricing` can preselect. `ad` is deliberately not
+ * here: the pricing page still says those weekly slots are confirmed by hand,
+ * and `planAmountCents('ad')` is a single $29 price that cannot tell a $19
+ * sidebar from a $29 board. Wiring it to checkout would charge the wrong
+ * amount, so it stays on the manual path until that is decided.
+ */
+const PAYABLE_PLANS = ['standard', 'featured', 'pro'] as const
+
+function planFromQuery(raw: unknown): string {
+  const value = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim().toLowerCase()
+  return (PAYABLE_PLANS as readonly string[]).includes(value) ? value : ''
+}
+
+const requestedPlan = ref(planFromQuery(route.query.plan))
+const tier = ref<string>(requestedPlan.value ? 'premium' : 'free')
 
 const form = reactive({
   name: '',
@@ -43,13 +69,17 @@ const form = reactive({
   category: '',
   intro: '',
   tags: [] as string[],
+  // The source reads this from the signed-in account. Anonymous submissions
+  // have no account, and a paid listing without an address has nowhere to send
+  // the receipt — nor any way for us to reach the buyer if the charge is
+  // disputed. Optional on the free tier, required once money is involved.
+  email: '',
   // Filled by the URL preview only. `submissions` already has both columns;
   // the form never sent them, so an approved listing had no logo and no maker
   // line while a curated one had both.
   logo: '',
   maker: '',
 })
-const tier = ref<string>('free')
 const submitting = ref(false)
 const enriching = ref(false)
 const error = ref('')
@@ -109,11 +139,49 @@ const currentCategoryLabel = computed(
   () => categoryOptions.value.find((option) => option.value === form.category)?.label ?? '',
 )
 
-const selectedTier = computed(
+/** The real plan the server will store — not the two-card UI's word for it. */
+const selectedPlan = computed(() =>
+  tier.value === 'premium' ? requestedPlan.value || 'featured' : 'free',
+)
+
+const requestedTier = computed(
+  () => tiers.find((entry) => entry.id === requestedPlan.value) ?? null,
+)
+const requestedName = computed(() =>
+  requestedTier.value ? (isZh.value ? requestedTier.value.name.zh : requestedTier.value.name.en) : '',
+)
+
+/**
+ * The pricing table is the only source of prices. The source's two cards carry
+ * a hardcoded `$39`, which would mislead a buyer who arrived from the $19 or
+ * $69 column — the server would charge one amount while the button said another.
+ */
+const paidPrice = computed(() => {
+  const plan = requestedPlan.value || 'featured'
+  return tiers.find((entry) => entry.id === plan)?.price ?? '$39'
+})
+
+const selectedTier = computed(() => {
   // `SUBMIT_TIERS` is a two-element literal, so index 0 always exists; the `!`
   // is only there because `noUncheckedIndexedAccess` cannot know that.
-  () => SUBMIT_TIERS.find((entry) => entry.id === tier.value) ?? SUBMIT_TIERS[0]!,
-)
+  const base = SUBMIT_TIERS.find((entry) => entry.id === tier.value) ?? SUBMIT_TIERS[0]!
+  return tier.value === 'premium' ? { ...base, price: paidPrice.value } : base
+})
+
+/** The FAQ's `{price}` used to be a constant; it must follow the chosen tier. */
+function faqParams(item: SubmitFaqItem) {
+  return item.questionKey === 'dir.submit.faq_q2'
+    ? { ...item.params, price: paidPrice.value }
+    : item.params
+}
+
+/** Drop both the in-page choice and the query, so a reload cannot bring it back. */
+function clearPlan() {
+  requestedPlan.value = ''
+  const query = { ...route.query }
+  delete query.plan
+  router.replace({ path: route.path, query })
+}
 
 /** The source's `mapSubmitError()`: the API's code is translated, never shown raw. */
 function mapError(code?: string): string {
@@ -123,6 +191,8 @@ function mapError(code?: string): string {
     return t('dir.submit.error_invalid_url')
   if (code === 'bad_category' || code === 'invalid_category' || code === 'Invalid category')
     return t('dir.submit.error_invalid_category')
+  if (code === 'email_required' || code === 'bad_email')
+    return t('dir.submit.error_email_required')
   return t('dir.submit.error_failed')
 }
 
@@ -136,6 +206,12 @@ async function submit() {
     error.value = t('dir.submit.error_invalid_category')
     return
   }
+  // Only the paid tier needs an address: a free listing has no receipt and no
+  // charge to dispute, and forcing an email there would cost submissions.
+  if (tier.value === 'premium' && !form.email.trim()) {
+    error.value = t('dir.submit.error_email_required')
+    return
+  }
   submitting.value = true
   error.value = ''
   try {
@@ -147,7 +223,8 @@ async function submit() {
         short: form.tagline,
         long: form.intro,
         category: form.category,
-        plan: tier.value === 'premium' ? 'featured' : 'free',
+        plan: selectedPlan.value,
+        email: form.email.trim(),
         locale: isZh.value ? 'zh' : 'en',
         // Filled by the URL preview; the API keeps only tags the catalogue
         // already knows, so an unknown word is dropped rather than invented.
@@ -184,6 +261,7 @@ function reset() {
   form.category = ''
   form.intro = ''
   form.tags = []
+  form.email = ''
   form.logo = ''
   form.maker = ''
 }
@@ -310,6 +388,23 @@ function reset() {
               class="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </div>
+
+          <div class="space-y-2">
+            <label for="tool-email" class="text-sm leading-none font-medium">
+              {{ t('dir.submit.field_email') }}
+              <span v-if="tier !== 'premium'" class="font-normal text-muted-foreground">
+                {{ pick('（可选）', '(optional)') }}
+              </span>
+            </label>
+            <input
+              id="tool-email"
+              v-model="form.email"
+              type="email"
+              :required="tier === 'premium'"
+              :placeholder="t('dir.submit.field_email_ph')"
+              class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+          </div>
         </div>
 
         <div class="space-y-6">
@@ -371,6 +466,19 @@ function reset() {
 
       <section class="mt-10">
         <h2 class="mb-4 text-lg font-semibold">{{ t('dir.submit.listing_plan') }}</h2>
+        <div
+          v-if="requestedTier && tier === 'premium'"
+          class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm"
+        >
+          <span>{{ t('dir.submit.plan_from_pricing', { name: requestedName, price: paidPrice }) }}</span>
+          <button
+            type="button"
+            class="cursor-pointer text-xs underline underline-offset-2"
+            @click="clearPlan"
+          >
+            {{ t('dir.submit.plan_clear') }}
+          </button>
+        </div>
         <div class="grid gap-3 sm:grid-cols-2">
           <button
             v-for="option in SUBMIT_TIERS"
@@ -390,7 +498,7 @@ function reset() {
                 <Icon v-if="option.id === 'premium'" name="crown" :size="16" class="text-amber-500" />
                 <span>{{ t(option.nameKey) }}</span>
               </span>
-              <span class="text-sm font-semibold tabular-nums">{{ option.price }}</span>
+              <span class="text-sm font-semibold tabular-nums">{{ option.id === 'premium' ? paidPrice : option.price }}</span>
             </span>
             <ul class="mt-3 space-y-1.5 text-xs text-muted-foreground">
               <li v-for="key in option.featureKeys" :key="key" class="flex gap-1.5">
@@ -443,7 +551,7 @@ function reset() {
             v-if="openFaq === index"
             class="animate-in fade-in-50 pb-4 text-sm leading-relaxed text-muted-foreground duration-150"
           >
-            {{ t(item.answerKey, item.params) }}
+            {{ t(item.answerKey, faqParams(item)) }}
           </div>
         </div>
       </div>

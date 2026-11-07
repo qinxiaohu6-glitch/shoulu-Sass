@@ -15,9 +15,11 @@
  *    the flag is set.
  *
  * The pay button is rendered for a submission awaiting payment, as in the
- * source. There is no checkout provider in this build, so pressing it reports
- * the source's own `common.checkout_failed` inline instead of opening a picker
- * that cannot exist.
+ * source. Unlike the source — which opens a provider picker — this build
+ * configures one provider server-side, so the button goes straight to checkout.
+ * It used to report `common.checkout_failed` unconditionally, which made the
+ * cancel page's "start the payment again from My submissions" a dead end: the
+ * only place that could start a payment was the submit form itself.
  */
 import type { MySubmission } from '~/composables/useMySubmissions'
 import { Crown, ExternalLink } from 'lucide-vue-next'
@@ -26,6 +28,7 @@ const props = defineProps<{ items: MySubmission[] }>()
 
 const { t } = useSettingsI18n()
 const localePath = useLocalePath()
+const { ready: payReady, busy: payBusy, pay } = await usePayment()
 
 type Status = 'published' | 'pending_payment' | 'rejected' | 'pending'
 
@@ -48,8 +51,16 @@ const premiumPrice = '$39'
 
 const payError = ref('')
 
-function onPay() {
-  payError.value = t('common.checkout_failed')
+async function onPay(item: MySubmission) {
+  payError.value = ''
+  // `pay()` already reports a provider-side failure through the toast; this
+  // inline line only covers "no provider is switched on", which is a state the
+  // buyer can understand and the operator can fix.
+  if (!payReady.value) {
+    payError.value = t('common.checkout_failed')
+    return
+  }
+  await pay(item.id)
 }
 </script>
 
@@ -156,8 +167,9 @@ function onPay() {
           <button
             v-if="statusOf(item) === 'pending_payment'"
             type="button"
-            class="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full bg-primary px-2.5 text-xs font-medium text-primary-foreground transition hover:bg-primary/90"
-            @click="onPay"
+            :disabled="Boolean(payBusy)"
+            class="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full bg-primary px-2.5 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+            @click="onPay(item)"
           >
             <Crown class="size-3 text-amber-500" />
             <span>{{ t('dir.submit.btn_pay', { price: premiumPrice }) }}</span>

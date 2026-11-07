@@ -263,6 +263,11 @@ export function validate(payload: unknown): CleanSubmission {
   if (plan === 'paid') plan = 'featured' // what the form sent before Standard existed
   if (!(PLANS as readonly string[]).includes(plan)) plan = 'free'
 
+  // A paid listing without an address cannot be receipted and cannot be reached
+  // if the charge is disputed or refunded. The form asks for one; this is the
+  // server-side half, so a direct API call cannot skip it.
+  if (isPaidPlan(plan) && !email) throw new SubmissionError('email_required', 'email')
+
   let logo = String(body.logo ?? '').trim()
   if (logo && !/^https?:\/\//i.test(logo)) logo = ''
 
@@ -406,7 +411,11 @@ export async function createSubmission(
           body.long,
           body.category,
           JSON.stringify(body.tags),
-          body.email,
+          // The form's own field first, then the signed-in account. The source
+          // only ever had the second one, so a signed-in submitter who left the
+          // field blank would otherwise store an empty address and have nowhere
+          // to send the receipt.
+          body.email || opts.owner?.email || '',
           body.logo,
           body.maker,
           body.plan,

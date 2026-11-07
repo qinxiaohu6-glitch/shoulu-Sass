@@ -26,6 +26,11 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
   },
   bad_category: { status: 400, zh: '请选择一个分类。', en: 'Pick a category.' },
   bad_email: { status: 400, zh: '邮箱格式不对。', en: 'That email address is not valid.' },
+  email_required: {
+    status: 400,
+    zh: '请填一个能收信的邮箱，付费收据会发到这个地址。',
+    en: 'Enter an email address that can receive mail — the receipt goes there.',
+  },
   already_listed: { status: 409, zh: '这个站点已经在目录里了。', en: 'That site is already listed.' },
   duplicate: {
     status: 409,

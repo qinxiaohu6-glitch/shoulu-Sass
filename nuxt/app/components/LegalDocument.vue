@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import type { LegalDoc } from '~~/shared/content/legal'
+import { LEGAL_NAME } from '~~/shared/content/site-contact'
 
 const props = defineProps<{ doc: LegalDoc }>()
 
 const { isZh, pick } = useLang()
 const localePath = useLocalePath()
 
-type ParaPart = { text: string; href?: string }
+type ParaPart = { text: string; href?: string; external?: boolean; bold?: boolean }
 
 /**
  * Waffo's form only accepts two URLs — terms and privacy — so the AUP,
@@ -20,26 +21,58 @@ type ParaPart = { text: string; href?: string }
 const LINK_RE = /(https?:\/\/[^\s<>"'，。；、）)】,;]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g
 const SITE_ORIGIN = 'https://dirtool.com'
 
+function isExternal(raw: string): boolean {
+  return /^https?:\/\//i.test(raw) && !raw.startsWith(SITE_ORIGIN)
+}
+
 function localHref(raw: string): string {
   if (!raw.startsWith('http')) return `mailto:${raw}`
-  const rest = raw.startsWith(SITE_ORIGIN) ? raw.slice(SITE_ORIGIN.length) : raw
+  /**
+   * Only same-origin paths go through localePath. Sending an absolute
+   * third-party URL (the owner's X profile, for example) into localePath would
+   * try to prefix a /zh route onto it and break the link on the Chinese mirror.
+   */
+  if (isExternal(raw)) return raw
+  const rest = raw.slice(SITE_ORIGIN.length)
   const [path, hash] = rest.split('#')
   const base = String(localePath(path || '/'))
   return hash ? `${base}#${hash}` : base
 }
 
-function parts(text: string): ParaPart[] {
+function linkParts(text: string): ParaPart[] {
   const out: ParaPart[] = []
   let cursor = 0
   for (const match of text.matchAll(LINK_RE)) {
     const at = match.index ?? 0
     if (at > cursor) out.push({ text: text.slice(cursor, at) })
     const raw = match[0].replace(/[.,;:!?]+$/, '')
-    out.push({ text: raw, href: localHref(raw) })
+    out.push({ text: raw, href: localHref(raw), external: isExternal(raw) })
     cursor = at + raw.length
     if (match[0].length > raw.length) out.push({ text: match[0].slice(raw.length) })
   }
   if (cursor < text.length) out.push({ text: text.slice(cursor) })
+  return out
+}
+
+/**
+ * The copy uses `**bold**` for the commitments a reviewer needs to spot. The
+ * old renderer printed the asterisks as literal text, so a live legal page
+ * showed "本站所有付费项均为**一次性购买**" instead of emphasised words. Split
+ * on bold spans first, then tokenise links/emails inside each fragment; a bold
+ * span can still contain a URL.
+ */
+const BOLD_RE = /\*\*([^*]+)\*\*/g
+
+function parts(text: string): ParaPart[] {
+  const out: ParaPart[] = []
+  let cursor = 0
+  for (const match of text.matchAll(BOLD_RE)) {
+    const at = match.index ?? 0
+    if (at > cursor) out.push(...linkParts(text.slice(cursor, at)))
+    for (const piece of linkParts(match[1] ?? '')) out.push({ ...piece, bold: true })
+    cursor = at + match[0].length
+  }
+  if (cursor < text.length) out.push(...linkParts(text.slice(cursor)))
   return out.length ? out : [{ text }]
 }
 
@@ -70,8 +103,13 @@ const sections = computed(() =>
 
       <h1 class="page-title">{{ doc.title[isZh ? 'zh' : 'en'] }}</h1>
       <p class="page-sub">{{ doc.lead[isZh ? 'zh' : 'en'] }}</p>
+      <!-- Waffo's final pass asks for a version number and effective date, and
+           the template footer is "Last Updated: [DATE] · [Legal Name] · [URL]". -->
       <p class="stat-line" style="margin-top: 12px">
-        {{ pick('最后更新', 'Last updated') }}：{{ doc.updated }}
+        {{ pick('生效日期 / 最后更新', 'Effective / last updated') }}：{{ doc.updated }}
+        <template v-if="doc.version"> · {{ pick('版本', 'Version') }} {{ doc.version }}</template>
+        · {{ LEGAL_NAME }} ·
+        <NuxtLink :to="localePath('/')">https://dirtool.com</NuxtLink>
       </p>
 
       <div style="margin-top: 8px">
@@ -85,7 +123,13 @@ const sections = computed(() =>
           <h2>{{ section.heading }}</h2>
           <p v-for="(para, i) in section.paragraphs" :key="i">
             <template v-for="(part, j) in para" :key="j">
-              <a v-if="part.href" :href="part.href">{{ part.text }}</a>
+              <a
+                v-if="part.href"
+                :href="part.href"
+                :target="part.external ? '_blank' : undefined"
+                :rel="part.external ? 'noopener noreferrer' : undefined"
+              >{{ part.text }}</a>
+              <strong v-else-if="part.bold">{{ part.text }}</strong>
               <template v-else>{{ part.text }}</template>
             </template>
           </p>

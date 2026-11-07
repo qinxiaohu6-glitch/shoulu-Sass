@@ -308,6 +308,47 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_order_ref
   ON payment_order (provider, provider_ref) WHERE provider_ref <> '';
 
 -- ---------------------------------------------------------------------------
+-- self-serve weekly ad bookings
+--
+-- An ad is *rented*, not a listing: there is no submission behind it. Its
+-- `payment_order` row therefore carries `submission_id = ''` and `plan = 'ad'`,
+-- which lets the webhook reuse the same signature check, amount check and
+-- idempotent settle as a listing order. Everything that makes it an ad — which
+-- slot, which weeks, what creative, when it goes up — lives here, keyed by the
+-- order id.
+--
+-- `start` is always a Monday and `end` is `start + 7 * weeks - 1`, both
+-- inclusive, so two bookings overlap exactly when their date ranges do.
+-- `status` is the fulfilment state, separate from the order's payment state:
+-- a charge can be paid while the placement cannot be delivered (`conflict`).
+-- Keeping that distinction is what stops a double-booked week from being
+-- quietly marked "done".
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS ad_booking (
+  order_id     TEXT    PRIMARY KEY,
+  slot         TEXT    NOT NULL,
+  weeks        INTEGER NOT NULL,
+  start        TEXT    NOT NULL,
+  end          TEXT    NOT NULL,
+  name         TEXT    NOT NULL,
+  headline     TEXT    NOT NULL,
+  url          TEXT    NOT NULL,
+  logo         TEXT    NOT NULL DEFAULT '',
+  email        TEXT    NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  -- pending | live | conflict | cancelled | refunded
+  status       TEXT    NOT NULL DEFAULT 'pending',
+  -- The row in `ads` this booking published, once it has been paid for.
+  ad_id        TEXT    NOT NULL DEFAULT '',
+  created_at   INTEGER NOT NULL,
+  updated_at   INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_ad_booking_window ON ad_booking (slot, start, end);
+CREATE INDEX IF NOT EXISTS idx_ad_booking_status ON ad_booking (status);
+
+-- ---------------------------------------------------------------------------
 -- support tickets
 --
 -- One row per conversation between one signed-in account and the owner.

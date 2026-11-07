@@ -143,15 +143,17 @@ export async function settleOrder(
   db: Db,
   id: string,
   raw: string,
+  note?: string,
 ): Promise<{ order: PaymentOrder | null; alreadySettled: boolean }> {
   const ts = now()
   const result = await db
     .prepare(
       `UPDATE payment_order
-          SET status = 'paid', paid_at = ?, updated_at = ?, raw_event = ?
+          SET status = 'paid', paid_at = ?, updated_at = ?, raw_event = ?,
+              note = COALESCE(?, note)
         WHERE id = ? AND status = 'pending'`,
     )
-    .bind(ts, ts, raw, id)
+    .bind(ts, ts, raw, note ?? null, id)
     .run()
 
   const order = await getOrder(db, id)

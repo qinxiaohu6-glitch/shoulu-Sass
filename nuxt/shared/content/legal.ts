@@ -35,7 +35,7 @@ import { CONTACT_EMAIL, LEGAL_NAME, SOCIAL_X_HANDLE, SOCIAL_X_URL } from './site
  *    operator confirms payment. Delivery is by a human, not instantaneous.
  *  - Waffo Pancake is named as the processor (TOS checklist, Section 11).
  *
- * Have a lawyer read any further change — especially the refund window, the
+ * Have a lawyer read any further change — especially the refund policy, the
  * response/payout times and the governing-law wording. Those are operating
  * commitments, not just copy.
  */
@@ -277,6 +277,29 @@ export const termsOfService: LegalDoc = {
       },
     },
     {
+      id: 'no-generative-features',
+      heading: {
+        en: 'No Generative Features — Category Labels Are Not Site Capabilities',
+        zh: '本站不提供生成功能 —— 分类标签不是本站能力',
+      },
+      bullets: {
+        en: [
+          'Explicit statement. Product Atlas does NOT provide "Image Generation", "Image generation", "Text to Speech", "Text-to-speech", "Video Generation", "voice cloning" or any other content-generation feature. We publish an editorial directory of third-party software. There is no prompt box, no generation button, no model selector, no upload flow for photographs or voice recordings, and no generated image, audio, video or text anywhere on this site. Our only automated URL feature reads public page metadata to pre-fill a submission form; it executes nothing and generates nothing.',
+          'Where the flagged words come from. "Image Generation", "Video Generation" and "Text to Speech" are category and tag names in our catalogue, used to group third-party products such as Midjourney, Runway and ElevenLabs. The phrase "text-to-speech, voice cloning and dubbing" is the published description of the third-party product ElevenLabs, not a description of this site. These words describe products we link to; we neither host nor operate them, and following an outbound link leaves this service.',
+          'Why no underlying AI model is named. We call no model and depend on no model provider. We do not use Flux, Seedream, Nano Banana (Gemini), GPT Image, Veo, Kling, or any other image, video or speech model. Waffo\'s AUP template instructs merchants to "Delete any category, channel, or action that doesn\'t apply to your product"; naming a model we do not use would be a false description of the service and a misrepresentation to our customers. There is therefore no model list to publish on an about page, a pricing page, a listing page or a generation interface — this site has no generation interface.',
+          'What is actually sold. One-time editorial listings, a permanent dofollow outbound link, a fixed 7-day or 90-day pinned position, and fixed 7-day or four-week advertising slots. See https://dirtool.com/pricing and the Billing, Refunds and Cancellation section at https://dirtool.com/terms-of-service#billing. There is no subscription, no credits and no metered generation.',
+          'Content rules still apply. Although we generate nothing, the six prohibited categories, the zero-tolerance list, our human submission screening, the reporting channel and the enforcement ladder are published in the Acceptable Use Policy at https://dirtool.com/terms-of-service#acceptable-use and apply to every listing, description, icon, screenshot and outbound link on this site.',
+        ],
+        zh: [
+          '明确声明。Product Atlas 不提供「Image Generation / 图像生成」「Text to Speech / 语音合成」「Video Generation / 视频生成」「voice cloning / 声音克隆」或任何内容生成功能。本站发布的是第三方软件的编辑型目录：站内没有提示词输入框、没有生成按钮、没有模型切换列表、没有真人照片或语音上传通道，也不产出任何生成的图像、音频、视频或文本。唯一的自动化 URL 功能是读取公开网页元信息以预填提交表单，该过程不执行代码、不生成内容。',
+          '被标记的这些词来自哪里。「Image Generation」「Video Generation」「Text to Speech」是我们产品库中的分类名与标签，用于归类 Midjourney、Runway、ElevenLabs 等第三方产品；「text-to-speech, voice cloning and dubbing」出现在第三方产品 ElevenLabs 的简介里，不是对本站的描述。这些词描述的是我们外链到的产品，我们不托管、不运营它们，点击外链即离开本服务。',
+          '为什么不披露底层 AI 模型。本站不调用任何模型，也不依赖任何模型服务商；我们没有使用 Flux、Seedream、Nano Banana (Gemini)、GPT Image、Veo、Kling 或任何其他图像／视频／语音模型。Waffo 的 AUP 模板要求「删除任何不适用于你产品的类别、渠道或动作」；列出我们并未使用的模型名称，会构成对本站服务的虚假描述与对用户的误导。因此关于页、定价页、收录页或所谓「生成界面」都不存在模型清单 —— 本站根本没有生成界面。',
+          '本站实际售卖的内容。一次性编辑型收录、永久 dofollow 外链、固定 7 天或 90 天的置顶位置，以及固定 7 天／4 周窗口的广告位。见 https://dirtool.com/pricing 与 https://dirtool.com/terms-of-service#billing 的「计费、退款与取消」。没有订阅、没有积分、没有按量计费的生成服务。',
+          '内容规则依然适用。虽然本站不生成任何内容，六类禁止内容、零容忍清单、人工提交筛查、举报渠道与处置阶梯仍完整发布于 https://dirtool.com/terms-of-service#acceptable-use 的可接受使用政策中，并适用于站内每一条收录、描述、图标、截图与外链。',
+        ],
+      },
+    },
+    {
       heading: { en: 'Use of the Service', zh: '服务使用' },
       body: {
         en: 'Use the service lawfully and keep your account secure. Sign-in uses Google OAuth, so we never hold a password for you; you are responsible for activity under your account and for keeping your billing email current. Report unauthorised use to {contact}. If you submit on behalf of a company, you confirm you have authority to bind it. Your submissions and listings must comply with the Acceptable Use Policy in the later section of this page (https://dirtool.com/terms-of-service#acceptable-use), which forms part of these Terms.',
@@ -300,8 +323,8 @@ export const termsOfService: LegalDoc = {
           'Payment processor. Online payments for this merchant account are handled by Waffo Pancake as the payment processor; Stripe and Creem are optional alternative providers in our code. When no processor is enabled, the operator confirms receipt of payment by hand and no card data reaches this site. Payment card data is collected exclusively by the processor and is never stored on our servers. See the Privacy Policy at https://dirtool.com/privacy-policy. Prices are exclusive of applicable taxes unless stated otherwise at checkout.',
           'Delivery. What is delivered is an editorial listing, a change of the outbound link attribute from nofollow to dofollow, a pinned position (7 or 90 days, depending on the tier), or an advertising slot for a fixed seven-day or four-week window. Free submissions enter a manual review queue that usually takes 7–14 days and is not guaranteed; paid placements go live on the day the operator confirms receipt of payment. Delivery is performed by a human and is not instantaneous.',
           'Link attributes and SEO. Paid tiers change the outbound link from nofollow to permanent dofollow, exactly as described on the pricing page. We do not promise any search-engine ranking, traffic, indexing, domain-authority increase or other SEO outcome. The fee buys on-site editorial display and the stated link attribute, not a guaranteed result.',
-          'Refund window and eligible cases. We do not apply a blanket "no refunds" policy. A full refund is available to first-time buyers who request it within 7 days of the initial charge, and at any time before a paid listing goes live. After that window a full refund is still given for a duplicate charge, a payment made in error, a submission refused at review, a placement we cannot deliver, or a verified service outage of 72 hours or more. Mandatory statutory withdrawal rights, including the 14-day right in the EU and UK, are preserved.',
-          'Non-refundable cases. A placement already displayed beyond the 7-day refund window, and a paid placement removed because it violates the Acceptable Use Policy at https://dirtool.com/terms-of-service#acceptable-use, are not refunded.',
+          'Refund policy and eligible cases. Paid placements are one-time purchases. Fees are generally non-refundable once the purchased placement has been delivered — that is, once the listing has been published under the purchased plan, or once the purchased pin, feature or advertising period has started. A full refund is given only for a confirmed duplicate charge or a payment made in error, or if we fail to deliver the purchased placement (including if we decline the submission at review before any paid placement starts, or if a paid pin or listing never goes live for a reason attributable to us). Nothing in these Terms limits any non-waivable withdrawal or refund right that applicable law grants you.',
+          'Non-refundable cases. After delivery, the following are not refunded: a change of mind; dissatisfaction with traffic, ranking, clicks or results; partial use of a period that has already started; inaccurate information you submitted; and a paid placement removed because it violates the Acceptable Use Policy at https://dirtool.com/terms-of-service#acceptable-use.',
           'How to apply. Write to {contact} (or send a DM to {x} at {xUrl}) with the subject line "Refund request", your account email, transaction ID, order reference, listing URL and the reason. You can also open a ticket at https://dirtool.com/settings/tickets. An unpaid order needs no cancellation — simply do not complete the payment, because we never charge automatically; you can check its status at https://dirtool.com/settings/submissions.',
           'Response and payout time. We acknowledge every refund or cancellation request within 2 business days, complete the review within 5 business days, and initiate approved refunds within 5–10 business days. Refunds go back to the original payment method; the time until the credit appears on your statement depends on your bank or card issuer and is outside our control.',
           'Billing disputes. If you believe a charge is wrong or you do not recognise it, contact {contact} before disputing it with your bank: we respond within 2 business days and resolve confirmed billing errors within 5 business days. The same monitored inbox handles general support, billing, refunds, legal, privacy and security reports; we list only channels we actually read.',
@@ -312,8 +335,8 @@ export const termsOfService: LegalDoc = {
           '支付处理方。本站商户账号的在线支付由 Waffo Pancake 处理；代码中另保留 Stripe、Creem 作为可选替代处理方。未启用在线支付时由站长人工确认收款，卡资料不进入本站。银行卡资料由 PCI-DSS 认证的处理方独家收集，本站服务器不存储。隐私政策见 https://dirtool.com/privacy-policy。除结账页另有说明外，价格不含适用税费。',
           '交付内容。交付的是约定期限内的编辑型收录、外链由 nofollow 变更为 dofollow、置顶位置（按档位 7 天或 90 天），或固定 7 天／4 周窗口内的广告位。免费提交进入人工审核队列，通常需 7–14 天且不保证；付费收录在站长确认收款当天上线。交付由人工完成，并非即时交付，本站也不作即时交付的宣称。',
           '链接属性与 SEO。付费档会把外链从 nofollow 变更为永久 dofollow，与定价页描述一致。我们不承诺任何搜索排名、流量、收录、域名权重提升或其他 SEO 效果；费用购买的是站内编辑展示位与上述链接属性，而非保证的结果。',
-          '退款期限与可退情形。本站**不采用「概不退款」政策**。首次购买者自首次扣款起 **7 天内**申请，可获全额退款；付费收录上线之前，随时可申请全额退款。超过该期限，以下情形仍全额退款：重复扣款、误付、审核未通过的提交、本站无法交付的展示，以及经确认持续 72 小时以上的服务中断。法律强制赋予的撤回权（如欧盟／英国的 14 天撤回权）予以保留。',
-          '不予退款的情形。已展示超过 7 天退款窗口的收录，以及因违反可接受使用政策（https://dirtool.com/terms-of-service#acceptable-use）被下架的付费收录，不予退款。',
+          '退款政策与可退情形。付费项均为一次性购买。**一旦已购展示已经交付，原则上不予退款** —— 交付是指付费收录已按所购档位发布，或所购置顶／精选／广告周期已经开始。全额退款仅适用于：经确认的重复扣款或误扣；以及本站未能兑现已购展示（包括付费提交在任何付费展示开始前被审核拒绝，或因本站原因导致付费置顶／收录始终未能上线）。本条款不限制适用法律强制赋予、不可放弃的撤回或退款权利。',
+          '不予退款的情形。交付之后，以下情形不予退款：改主意；对流量、排名、点击或效果不满意；已开始的展示周期只用了一部分；你提交的信息不准确；以及因违反可接受使用政策（https://dirtool.com/terms-of-service#acceptable-use）被下架的付费收录。',
           '申请方式。发邮件至 {contact}，或私信 {x}（{xUrl}），标题写「Refund request」，并附账号邮箱、交易 ID、订单号、收录网址与原因。也可在 https://dirtool.com/settings/tickets 开工单。**未付款的订单无需取消** —— 不完成付款即可，本站从不自动扣款；订单状态可在 https://dirtool.com/settings/submissions 查看。',
           '响应与到账时间。退款／取消申请在 **2 个工作日内**确认收到，**5 个工作日内**完成审核，审核通过的退款在 **5–10 个工作日内**发起。退款原路退回；到账时间取决于你的银行或发卡机构，不在本站可控范围内。',
           '账单争议。若认为扣款有误或不认识某笔扣款，请先联系 {contact} 再向银行发起拒付：我们在 2 个工作日内回复，并在 5 个工作日内解决确认属实的账单错误。一般支持、账单、退款、法务、隐私与安全举报共用同一个有人查看的邮箱；我们只公布确实会查看的渠道。',
