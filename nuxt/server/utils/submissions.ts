@@ -263,10 +263,11 @@ export function validate(payload: unknown): CleanSubmission {
   if (plan === 'paid') plan = 'featured' // what the form sent before Standard existed
   if (!(PLANS as readonly string[]).includes(plan)) plan = 'free'
 
-  // A paid listing without an address cannot be receipted and cannot be reached
-  // if the charge is disputed or refunded. The form asks for one; this is the
+  // Every listing needs a reachable address: the receipt, the review outcome
+  // and any refund all go there, and a free listing with no email can never be
+  // told it was rejected. The form marks the field required; this is the
   // server-side half, so a direct API call cannot skip it.
-  if (isPaidPlan(plan) && !email) throw new SubmissionError('email_required', 'email')
+  if (!email) throw new SubmissionError('email_required', 'email')
 
   let logo = String(body.logo ?? '').trim()
   if (logo && !/^https?:\/\//i.test(logo)) logo = ''

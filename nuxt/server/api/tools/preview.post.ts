@@ -120,6 +120,57 @@ function titleOf(html: string): string {
   return match ? tidy(decodeEntities(match[1] ?? '')) : ''
 }
 
+/**
+ * The square icon declared in the page head, if there is one.
+ *
+ * `og:image` is a 1200×630 banner: cropping it into a 44px listing card leaves
+ * an unreadable stripe, which is why a pasted link used to produce no usable
+ * logo. A declared icon is already square. Prefer `apple-touch-icon` (usually
+ * 180×180) and larger `sizes`; an SVG (`sizes="any"`) counts as large.
+ */
+function iconOf(html: string, base: string): string {
+  const ranked: { href: string; score: number }[] = []
+
+  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) {
+    const attrs = attrsOf(tag)
+    const rel = (attrs.get('rel') || '').toLowerCase()
+    if (!rel) continue
+
+    const apple = rel.includes('apple-touch-icon')
+    const icon = /(?:^|\s)(?:shortcut\s+)?icon(?:\s|$)/.test(rel)
+    if (!apple && !icon) continue
+
+    const href = (attrs.get('href') || '').trim()
+    // Inline `data:` icons are 16px glyphs and too long to store usefully.
+    if (!href || /^data:/i.test(href)) continue
+
+    let resolved: URL
+    try {
+      resolved = new URL(href, base)
+    } catch {
+      continue
+    }
+    if (!/^https?:$/.test(resolved.protocol)) continue
+
+    const sizes = (attrs.get('sizes') || '').toLowerCase()
+    const side = sizes.match(/(\d+)x(\d+)/)
+    const score = (side ? Number(side[1]) : sizes === 'any' ? 512 : 0) + (apple ? 24 : 0)
+    ranked.push({ href: resolved.href, score })
+  }
+
+  ranked.sort((a, b) => b.score - a.score)
+  return ranked[0]?.href ?? ''
+}
+
+/** `/favicon.ico` on the site's own origin — the conventional last resort. */
+function fallbackIcon(url: string): string {
+  try {
+    return `${new URL(url).origin}/favicon.ico`
+  } catch {
+    return ''
+  }
+}
+
 /** "Foo — The best bar" → "Foo"; a title with no separator stays whole. */
 function brandOf(title: string): string {
   // Marketing boilerplate is not a product name: "Welcome to Python.org"
@@ -233,16 +284,21 @@ export default defineEventHandler(async (event) => {
   // empty for the submitter to fill in themselves.
   const long = description.length >= 120 ? clip(description, MAX_LONG) : ''
 
-  let logo = ''
+  // Order matters: a declared square icon, then the social banner (better than
+  // nothing when a site ships no icon), then the conventional /favicon.ico.
+  // The card hides a broken image and falls back to initials, so a 404 on the
+  // last resort costs nothing.
+  let ogImage = ''
   const rawLogo = meta.get('og:image') || meta.get('twitter:image') || ''
   if (rawLogo) {
     try {
       const resolved = new URL(rawLogo, url)
-      if (/^https?:$/.test(resolved.protocol)) logo = resolved.href
+      if (/^https?:$/.test(resolved.protocol)) ogImage = resolved.href
     } catch {
       // A malformed `og:image` is not worth failing the whole preview over.
     }
   }
+  const logo = iconOf(html, url) || ogImage || fallbackIcon(url)
 
   // `maker` and `logo` already have columns in `submissions` — the submit form
   // simply never sent them. Without them a published listing renders with a

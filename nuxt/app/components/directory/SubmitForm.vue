@@ -47,12 +47,13 @@ const payment = await usePayment()
 
 /**
  * The three one-time tiers `/pricing` can preselect. `ad` is deliberately not
- * here: the pricing page still says those weekly slots are confirmed by hand,
- * and `planAmountCents('ad')` is a single $29 price that cannot tell a $19
- * sidebar from a $29 board. Wiring it to checkout would charge the wrong
- * amount, so it stays on the manual path until that is decided.
+ * here: those weekly slots are sold on `/book-ad` with their own week picker,
+ * and `planAmountCents('ad')` cannot tell a $19 sidebar from a $29 board.
  */
 const PAYABLE_PLANS = ['standard', 'featured', 'pro'] as const
+
+/** $39 Featured. Every new submission starts here unless the URL says otherwise. */
+const DEFAULT_PLAN = 'featured'
 
 function planFromQuery(raw: unknown): string {
   const value = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim().toLowerCase()
@@ -60,7 +61,8 @@ function planFromQuery(raw: unknown): string {
 }
 
 const requestedPlan = ref(planFromQuery(route.query.plan))
-const tier = ref<string>(requestedPlan.value ? 'premium' : 'free')
+/** The plan actually selected in the form — one of `tiers`' ids, free included. */
+const plan = ref<string>(requestedPlan.value || DEFAULT_PLAN)
 
 const form = reactive({
   name: '',
@@ -85,6 +87,14 @@ const enriching = ref(false)
 const error = ref('')
 const done = ref<{ id: string; paid: boolean } | null>(null)
 const openFaq = ref<number | null>(null)
+/** A preview icon that 404s falls back to initials instead of a broken image. */
+const logoBroken = ref(false)
+watch(
+  () => form.logo,
+  () => {
+    logoBroken.value = false
+  },
+)
 
 type Preview = {
   ok: boolean
@@ -139,9 +149,26 @@ const currentCategoryLabel = computed(
   () => categoryOptions.value.find((option) => option.value === form.category)?.label ?? '',
 )
 
-/** The real plan the server will store — not the two-card UI's word for it. */
-const selectedPlan = computed(() =>
-  tier.value === 'premium' ? requestedPlan.value || 'featured' : 'free',
+/** The plan the server will store — the id from `tiers`, never a UI label. */
+const selectedPlan = computed(() => plan.value)
+
+/**
+ * Every tier is shown, not just the two the source shipped. A buyer who lands
+ * on `/submit` should be able to pick $19 / $39 / $69 (or free) without going
+ * back to `/pricing` — and the price on each card comes from `tiers`, so the
+ * button can never quote an amount the server will not charge.
+ */
+const planOptions = computed(() =>
+  tiers.map((entry) => ({
+    id: entry.id,
+    name: isZh.value ? entry.name.zh : entry.name.en,
+    price: entry.price,
+    unit: isZh.value ? entry.unit.zh : entry.unit.en,
+    // Four bullets keep four cards readable; the full list is on `/pricing`.
+    features: (isZh.value ? entry.features.zh : entry.features.en).slice(0, 4),
+    badge: entry.badge ? (isZh.value ? entry.badge.zh : entry.badge.en) : '',
+    paid: entry.amountCents > 0,
+  })),
 )
 
 const requestedTier = computed(
@@ -151,22 +178,9 @@ const requestedName = computed(() =>
   requestedTier.value ? (isZh.value ? requestedTier.value.name.zh : requestedTier.value.name.en) : '',
 )
 
-/**
- * The pricing table is the only source of prices. The source's two cards carry
- * a hardcoded `$39`, which would mislead a buyer who arrived from the $19 or
- * $69 column — the server would charge one amount while the button said another.
- */
-const paidPrice = computed(() => {
-  const plan = requestedPlan.value || 'featured'
-  return tiers.find((entry) => entry.id === plan)?.price ?? '$39'
-})
-
-const selectedTier = computed(() => {
-  // `SUBMIT_TIERS` is a two-element literal, so index 0 always exists; the `!`
-  // is only there because `noUncheckedIndexedAccess` cannot know that.
-  const base = SUBMIT_TIERS.find((entry) => entry.id === tier.value) ?? SUBMIT_TIERS[0]!
-  return tier.value === 'premium' ? { ...base, price: paidPrice.value } : base
-})
+const selectedTier = computed(() => tiers.find((entry) => entry.id === plan.value) ?? tiers[0]!)
+const paidPrice = computed(() => selectedTier.value.price)
+const isFreePlan = computed(() => selectedTier.value.amountCents === 0)
 
 /** The FAQ's `{price}` used to be a constant; it must follow the chosen tier. */
 function faqParams(item: SubmitFaqItem) {
@@ -178,6 +192,7 @@ function faqParams(item: SubmitFaqItem) {
 /** Drop both the in-page choice and the query, so a reload cannot bring it back. */
 function clearPlan() {
   requestedPlan.value = ''
+  plan.value = DEFAULT_PLAN
   const query = { ...route.query }
   delete query.plan
   router.replace({ path: route.path, query })
@@ -202,13 +217,22 @@ async function submit() {
   // has no other way to get one.
   if (form.website && (!form.name || !form.tagline || !form.category)) await enrich()
 
+  if (!form.name.trim() || !form.tagline.trim()) {
+    error.value = t('dir.submit.error_missing_fields')
+    return
+  }
+  if (!form.website.trim()) {
+    error.value = t('dir.submit.error_invalid_url')
+    return
+  }
   if (!form.category) {
     error.value = t('dir.submit.error_invalid_category')
     return
   }
-  // Only the paid tier needs an address: a free listing has no receipt and no
-  // charge to dispute, and forcing an email there would cost submissions.
-  if (tier.value === 'premium' && !form.email.trim()) {
+  // Every listing needs a reachable address: it is where the receipt, the
+  // review outcome and any refund go. Required on the free tier too, so nobody
+  // submits a listing that can never be answered.
+  if (!form.email.trim()) {
     error.value = t('dir.submit.error_email_required')
     return
   }
@@ -296,7 +320,9 @@ function reset() {
   </div>
 
   <template v-else>
-    <form @submit.prevent="submit">
+    <!-- `novalidate`: every rule is enforced in `submit()` so the message is
+         ours (bilingual, next to the button) instead of the browser's bubble. -->
+    <form novalidate @submit.prevent="submit">
       <section class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div class="space-y-5">
           <div class="space-y-2">
@@ -351,12 +377,15 @@ function reset() {
           <div class="space-y-2">
             <label for="tool-category" class="text-sm leading-none font-medium">
               {{ t('dir.submit.field_category') }}
+              <span class="text-destructive" aria-hidden="true">*</span>
             </label>
-            <UiSelect v-model="form.category">
+            <UiSelect v-model="form.category" required>
               <UiSelectTrigger
                 id="tool-category"
                 size="sm"
                 class="h-8 w-full"
+                :class="form.category ? '' : 'border-destructive/50'"
+                :aria-invalid="!form.category"
                 :aria-label="t('dir.submit.field_category')"
               >
                 <UiSelectValue
@@ -392,15 +421,13 @@ function reset() {
           <div class="space-y-2">
             <label for="tool-email" class="text-sm leading-none font-medium">
               {{ t('dir.submit.field_email') }}
-              <span v-if="tier !== 'premium'" class="font-normal text-muted-foreground">
-                {{ pick('（可选）', '(optional)') }}
-              </span>
+              <span class="text-destructive" aria-hidden="true">*</span>
             </label>
             <input
               id="tool-email"
               v-model="form.email"
               type="email"
-              :required="tier === 'premium'"
+              required
               :placeholder="t('dir.submit.field_email_ph')"
               class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             >
@@ -414,7 +441,17 @@ function reset() {
               <div class="group relative flex flex-col rounded-xl border border-border bg-card p-4 transition">
                 <div class="flex items-start gap-3">
                   <div class="size-11 shrink-0 overflow-hidden rounded-lg border border-border/60 bg-secondary/50">
+                    <!-- The square icon the preview endpoint found. A 404 (a
+                         guessed /favicon.ico) falls back to initials. -->
+                    <img
+                      v-if="form.logo && !logoBroken"
+                      :src="form.logo"
+                      alt=""
+                      class="size-full object-cover"
+                      @error="logoBroken = true"
+                    >
                     <div
+                      v-else
                       class="grid size-full place-items-center bg-gradient-to-br from-primary/15 to-primary/5 text-primary"
                     >
                       <span class="text-sm font-semibold">
@@ -467,7 +504,7 @@ function reset() {
       <section class="mt-10">
         <h2 class="mb-4 text-lg font-semibold">{{ t('dir.submit.listing_plan') }}</h2>
         <div
-          v-if="requestedTier && tier === 'premium'"
+          v-if="requestedTier && plan === requestedPlan"
           class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm"
         >
           <span>{{ t('dir.submit.plan_from_pricing', { name: requestedName, price: paidPrice }) }}</span>
@@ -481,29 +518,37 @@ function reset() {
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
           <button
-            v-for="option in SUBMIT_TIERS"
+            v-for="option in planOptions"
             :key="option.id"
             type="button"
-            :aria-pressed="tier === option.id"
+            :aria-pressed="plan === option.id"
             class="flex cursor-pointer flex-col rounded-xl border p-4 text-left transition"
             :class="
-              tier === option.id
+              plan === option.id
                 ? 'border-primary ring-2 ring-primary/30'
                 : 'border-border hover:border-primary/40'
             "
-            @click="tier = option.id"
+            @click="plan = option.id"
           >
-            <span class="flex items-center justify-between gap-2">
-              <span class="flex items-center gap-1.5 text-sm font-semibold">
-                <Icon v-if="option.id === 'premium'" name="crown" :size="16" class="text-amber-500" />
-                <span>{{ t(option.nameKey) }}</span>
+            <span class="flex items-start justify-between gap-2">
+              <span class="flex flex-col gap-0.5">
+                <span class="flex items-center gap-1.5 text-sm font-semibold">
+                  <Icon v-if="option.id === 'featured'" name="crown" :size="16" class="text-amber-500" />
+                  <span>{{ option.name }}</span>
+                </span>
+                <span v-if="option.badge" class="text-[11px] font-medium text-amber-600">
+                  {{ option.badge }}
+                </span>
               </span>
-              <span class="text-sm font-semibold tabular-nums">{{ option.id === 'premium' ? paidPrice : option.price }}</span>
+              <span class="text-right">
+                <span class="block text-sm font-semibold tabular-nums">{{ option.price }}</span>
+                <span class="block text-[11px] font-normal text-muted-foreground">{{ option.unit }}</span>
+              </span>
             </span>
             <ul class="mt-3 space-y-1.5 text-xs text-muted-foreground">
-              <li v-for="key in option.featureKeys" :key="key" class="flex gap-1.5">
+              <li v-for="feature in option.features" :key="feature" class="flex gap-1.5">
                 <Icon name="check" :size="14" class="mt-px shrink-0" />
-                <span>{{ t(key) }}</span>
+                <span>{{ feature }}</span>
               </li>
             </ul>
           </button>
@@ -520,9 +565,9 @@ function reset() {
         {{
           submitting
             ? t('common.pricing.processing')
-            : tier === 'premium'
-              ? t('dir.submit.btn_pay', { price: selectedTier.price })
-              : t('dir.submit.btn_review')
+            : isFreePlan
+              ? t('dir.submit.btn_review')
+              : t('dir.submit.btn_pay', { price: selectedTier.price })
         }}
       </button>
     </form>

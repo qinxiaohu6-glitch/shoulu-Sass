@@ -102,13 +102,14 @@ export const DIRECTORY_COPY = {
   'dir.submit.field_intro': { en: 'Introduction (optional)', zh: '详细介绍（可选）' },
   'dir.submit.field_intro_ph': { en: 'Features, use cases, pricing… Markdown is supported.', zh: '功能特点、使用场景、定价模式……支持 Markdown 格式。' },
   // Not in the source: it has an account system and reads the email from the
-  // signed-in user. This build accepts anonymous submissions, so a paid listing
-  // has no address to send the receipt to unless the form asks for one.
+  // signed-in user. This build accepts anonymous submissions, so without an
+  // address there is nowhere to send the receipt — or to say the listing was
+  // rejected. Required on every plan, free included.
   'dir.submit.field_email': { en: 'Email for the receipt', zh: '接收收据的邮箱' },
   'dir.submit.field_email_ph': { en: 'you@example.com', zh: 'you@example.com' },
   'dir.submit.error_email_required': {
-    en: 'Enter an email address that can receive mail — the receipt goes there.',
-    zh: '请填一个能收信的邮箱，付费收据会发到这个地址。',
+    en: 'Enter an email address that can receive mail — the receipt and the review outcome go there.',
+    zh: '请填一个能收信的邮箱，收据和审核结果都会发到这个地址。',
   },
   'dir.submit.preview_title': { en: 'Preview', zh: '预览' },
   'dir.submit.how_it_works': { en: 'How it works', zh: '流程' },
@@ -143,7 +144,7 @@ export const DIRECTORY_COPY = {
   'dir.submit.faq_a7': { en: 'As many as you like. Up to {max} can wait in review at the same time.', zh: '数量不限，同时最多 {max} 个处于待审核状态。' },
   'dir.submit.btn_pay': { en: 'Pay {price} & submit', zh: '去付款 · {price}' },
   'dir.submit.btn_review': { en: 'Submit for review', zh: '提交审核' },
-  'dir.submit.error_missing_fields': { en: 'Please fill in name, website, tagline and category.', zh: '请填写名称、官网、标语和分类。' },
+  'dir.submit.error_missing_fields': { en: 'Please fill in name, website, tagline, category and email.', zh: '请填写名称、官网、标语、分类和邮箱。' },
   'dir.submit.error_invalid_url': { en: 'Enter a valid website URL.', zh: '请输入有效的官网地址。' },
   'dir.submit.error_invalid_category': { en: 'Pick a valid category.', zh: '请选择有效分类。' },
   'dir.submit.error_failed': { en: 'Could not submit the tool. Please try again.', zh: '提交失败，请重试。' },
