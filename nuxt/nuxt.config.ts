@@ -46,14 +46,26 @@ export default defineNuxtConfig({
     // assert on the payload without sending mail. Empty means the real API.
     mailEndpoint: '',
 
-    // Domain Rating data source for /seo-check. Both empty means the box
-    // answers `not_configured`, which is the honest answer and the one the
-    // page is designed to render. Ahrefs answers DR (0–100); Open PageRank
-    // answers PR (0–10) — a different metric, labelled as such.
+    // Domain Rating for /seo-check, via Ahrefs' FREE DR4 endpoint:
+    //   GET https://api.ahrefs.com/v3/public/domain-rating-free
+    //       ?target=<domain>&version=dr4&output=json
+    //   Authorization: Bearer <APIv3 key>
     //
-    //   NUXT_AHREFS_TOKEN=…
-    //   NUXT_OPENPAGERANK_KEY=…
+    // The endpoint is free (no paid plan, no API units) but NOT keyless:
+    // APIv3 keys are free to generate from a free Ahrefs account at
+    // Account settings → API keys. Empty means /api/dr answers
+    // `not_configured` and the page says so honestly instead of guessing.
+    //
+    //   NUXT_AHREFS_TOKEN=<free APIv3 key>
+    //
+    // `ahrefsDrEndpoint` is a local test seam only, like googleAuthUrl below:
+    // point it at a stub to assert the payload without calling Ahrefs. Empty
+    // means the real free endpoint.
     ahrefsToken: '',
+    ahrefsDrEndpoint: '',
+    // Deprecated and unused. Open PageRank answered PR (0–10), which is not
+    // DR; DR4 is now the only metric this page shows. Kept declared so an old
+    // secret in an existing environment does not break a deploy.
     openPagerankKey: '',
 
     // Online payment. Empty means the manual flow — tell the submitter to pay,

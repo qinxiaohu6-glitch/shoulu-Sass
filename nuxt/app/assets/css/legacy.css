@@ -4822,6 +4822,58 @@ kbd {
   font-size: 12.5px;
   color: var(--muted-foreground);
 }
+/* Licence-required attribution, kept clear and legible next to the value. */
+.dr-attribution {
+  margin-top: 8px;
+  font-size: 12px;
+}
+.dr-attribution a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+/* DR3 -> DR4 comparison, rendered only when the visitor asks for it. */
+.dr-compare {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+}
+.dr-compare__head {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.dr-compare__row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dr-compare__row b {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.dr-compare__label,
+.dr-compare__arrow,
+.dr-compare__delta {
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+}
+.dr-compare__delta {
+  margin-left: auto;
+  font-weight: 600;
+}
+.dr-compare__btn {
+  margin-top: 12px;
+}
+.dr-compare .dr-note {
+  margin-top: 10px;
+  background: var(--card);
+}
 .dr-note {
   margin-top: 8px;
   padding: 8px 10px;

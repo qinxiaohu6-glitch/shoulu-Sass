@@ -47,16 +47,28 @@ interface AuditReport {
   title: string
 }
 
+/** Only present when the visitor asks for the DR3 → DR4 comparison. */
+interface DrComparison {
+  dr3: { value: number; cached: boolean }
+  dr4: { value: number; cached: boolean }
+  /** dr4 minus dr3 — negative means DR4 scores the domain lower. */
+  delta: number
+}
+
 interface DrAnswer {
   ok: boolean
   reason?: string
   domain?: string
-  provider?: string
-  metric?: 'DR' | 'PR'
+  provider?: 'ahrefs'
+  /** Always 'dr4' — the current Ahrefs Domain Rating version. */
+  version?: string
   value?: number
-  rank?: number | string
   checked_at?: number
   cached?: boolean
+  license?: string
+  upstream_status?: number
+  compare?: DrComparison
+  failed_version?: 'dr3' | 'dr4'
 }
 
 const url = ref('')
@@ -118,7 +130,13 @@ async function runAudit() {
   }
 }
 
-async function lookUpDr() {
+/**
+ * `withCompare` is opt-in. Vue passes the event object to a bare `@submit`
+ * handler, so every call site passes an explicit argument — otherwise a form
+ * submit would arrive here as a truthy object and silently double the number
+ * of upstream calls.
+ */
+async function lookUpDr(withCompare = false) {
   if (drBusy.value) return
 
   const raw = domain.value.trim()
@@ -134,7 +152,10 @@ async function lookUpDr() {
   drStatus.value = pick('正在查询…', 'Looking up…')
 
   try {
-    const res = await $fetch<DrAnswer>('/api/dr', { method: 'POST', body: { domain: raw } })
+    const res = await $fetch<DrAnswer>('/api/dr', {
+      method: 'POST',
+      body: { domain: raw, ...(withCompare ? { compare: true } : {}) },
+    })
 
     // `invalid_domain` is the one state that belongs next to the input rather
     // than in the result box — it is a correction, not an answer.
@@ -192,32 +213,68 @@ const statusIcon = (s: CheckStatus) => (s === 'pass' ? '✓' : s === 'warn' ? '!
 
 /* ----------------------------------------------------------------- dr view */
 
-const drMetric = computed(() => (drAnswer.value?.metric === 'PR' ? 'PR' : 'DR'))
-
-const drProvider = computed(() =>
-  drAnswer.value?.provider === 'openpagerank' ? 'Open PageRank' : 'Ahrefs',
-)
-
 const drWhen = computed(() => {
   const at = drAnswer.value?.checked_at
   if (!at) return ''
   return new Date(at * 1000).toLocaleDateString(isZh.value ? 'zh-CN' : 'en-US')
 })
 
-const drHeadline = computed(() =>
-  drAnswer.value?.reason === 'not_configured'
-    ? pick('我们还没有接通 DR 数据源，所以现在读不到真实数值。', 'We have not wired up a DR data source yet, so we cannot read a real value.')
-    : pick('数据源这次没有返回结果（可能限流或网络问题）。', 'The data source returned nothing this time (rate limit or network).'),
-)
+const drDeltaLabel = computed(() => {
+  const delta = drAnswer.value?.compare?.delta
+  if (delta === undefined) return ''
+  if (delta === 0) return pick('持平', 'no change')
+  return delta > 0 ? `+${delta}` : `${delta}`
+})
 
-const drLead = computed(() =>
-  drAnswer.value?.reason === 'not_configured'
-    ? pick(
-        '我们不会给你一个估出来的数字——你十秒钟就能在 Ahrefs 上验证，编错了只会砸自己的招牌。先用官方的免费查询：',
-        'We will not hand you an estimate. You can verify the real number in Ahrefs in ten seconds, and a wrong one only burns trust. Use the official free checkers:',
+/**
+ * Every empty state is written to keep the visitor on this page. There is no
+ * "go check it on Ahrefs" fallback any more: the lookup and its answer both
+ * happen here, and a missing number is a missing number, not a redirect.
+ */
+const drHeadline = computed(() => {
+  switch (drAnswer.value?.reason) {
+    case 'not_configured':
+      return pick('DR4 查询还没接通', 'The DR4 lookup is not wired up yet')
+    case 'bad_key':
+      return pick('数据源凭据暂时不可用', 'The data source credentials are not accepted right now')
+    case 'rate_limited':
+      return pick('查询太频繁了', 'Too many lookups')
+    case 'no_data':
+      return pick('这个域名暂时没有 DR4 数据', 'No DR4 data for this domain yet')
+    default:
+      return pick('数据源这次没有返回结果', 'The data source returned nothing this time')
+  }
+})
+
+const drLead = computed(() => {
+  switch (drAnswer.value?.reason) {
+    case 'not_configured':
+      return pick(
+        '本站的 DR4 查询需要一把免费的 Ahrefs API key；接通后会直接在这个框里显示真实数值。我们不会编一个数字，也不会把你送去别的站。',
+        'Our DR4 lookup needs a free Ahrefs API key. Once it is connected, the real number appears right here. We will not invent one, and we will not send you to another site.',
       )
-    : pick('稍后重试，或直接用官方查询核对：', 'Try again later, or verify with the official checkers:'),
-)
+    case 'bad_key':
+      return pick(
+        '本站的查询凭据被数据源拒绝了，我们会尽快修复。请稍后重试，结果仍会显示在本页。',
+        'Our lookup credentials were rejected by the data source and we will fix it shortly. Please try again later — the answer still shows up on this page.',
+      )
+    case 'rate_limited':
+      return pick(
+        '免费接口有频率限制，稍等一会儿再查就行。查询和结果都留在本页。',
+        'The free endpoint has a rate limit. Wait a moment and try again — the lookup and the answer both stay on this page.',
+      )
+    case 'no_data':
+      return pick(
+        'Ahrefs 的索引里还没有这个域名的 DR4 数值，可以换个域名，或过几天再查。我们不会用一个估出来的值补空。',
+        'Ahrefs does not have a DR4 value for this domain yet. Try another domain or check back in a few days; we will not fill the gap with an estimate.',
+      )
+    default:
+      return pick(
+        '可能限流或网络波动，稍后重试即可。查询和结果都留在本页，不会跳到外部网站。',
+        'Probably a rate limit or a network hiccup — try again shortly. The lookup and the answer both stay on this page, with no jump to an external site.',
+      )
+  }
+})
 
 const dims = computed(() => [
   {
@@ -488,15 +545,15 @@ useSeo({
     <section id="dr" class="tool-section">
       <div class="section-head">
         <div class="section-head__title">
-          <h2>{{ pick('Domain Rating（DR）', 'Domain Rating (DR)') }}</h2>
+          <h2>{{ pick('Domain Rating（DR4）', 'Domain Rating (DR4)') }}</h2>
           <p>{{ isZh
-            ? 'DR 是 Ahrefs 的指标，0–100，衡量有多少个不同域名链向你。它不是 Google 排名，也不该被当成排名来卖。'
-            : 'DR is an Ahrefs metric on a 0–100 scale: how many distinct domains link to you. It is not a Google ranking, and should not be sold as one.' }}</p>
+            ? 'DR 是 Ahrefs 的指标，0–100，衡量有多少个不同域名链向你；DR4 是它当前最新的版本。本站直接调用 Ahrefs 官方免费接口取真实数值，输入、查询、结果都留在这一页，不会把你送去别的网站。它不是 Google 排名。'
+            : 'DR is an Ahrefs 0–100 metric for how many distinct domains link to you, and DR4 is its current version. We call the official free Ahrefs endpoint and keep the input, the lookup and the answer on this page — you are never sent elsewhere. It is not a Google ranking.' }}</p>
         </div>
       </div>
 
       <div class="dr-card">
-        <form class="tool-form" novalidate @submit.prevent="lookUpDr">
+        <form class="tool-form" novalidate @submit.prevent="lookUpDr()">
           <div class="tool-form__field">
             <span class="tool-form__ico"><Icon name="globe" /></span>
             <input
@@ -519,49 +576,58 @@ useSeo({
 
         <div v-if="drAnswer" class="dr-result">
           <template v-if="drAnswer.ok">
-            <div class="dr-value" :data-metric="drMetric">
-              <b>{{ drAnswer.value }}</b><span>{{ drMetric }}</span>
+            <div class="dr-value" data-metric="DR">
+              <b>{{ drAnswer.value }}</b><span>DR</span>
             </div>
+            <!-- Ahrefs' Domain Rating License requires this exact attribution,
+                 adjacent to the value, with a functional link. It is a credit,
+                 not a lookup step: our own page never navigates away. -->
+            <p class="dr-meta dr-attribution">
+              Domain Rating by <a href="https://ahrefs.com/" target="_blank" rel="noopener">Ahrefs</a>
+            </p>
             <p class="dr-meta">
-              {{ drAnswer.domain }} · {{ pick('数据来源', 'Source') }}：{{ drProvider }}
+              {{ drAnswer.domain }} · DR4 · {{ pick('数据来源', 'Source') }}：Ahrefs
               <template v-if="drWhen"> · {{ pick('查询时间', 'Checked') }} {{ drWhen }}</template>
+              <template v-if="drAnswer.cached"> · {{ pick('缓存', 'Cached') }}</template>
             </p>
-            <p v-if="drMetric === 'PR'" class="dr-note">
-              {{ pick(
-                '注意：这是 Open PageRank 的 PR 值（0–10），不是 Ahrefs 的 DR（0–100）。两个不是一回事。',
-                'Note: this is Open PageRank (PR, 0-10), not Ahrefs DR (0-100). They are different metrics.',
-              ) }}
-            </p>
+
+            <!-- On demand only: a comparison is two upstream calls, so a plain
+                 lookup must not silently pay for it. -->
+            <div v-if="drAnswer.compare" class="dr-compare">
+              <p class="dr-compare__head">{{ pick('DR3 → DR4 对照', 'DR3 → DR4 comparison') }}</p>
+              <div class="dr-compare__row">
+                <span class="dr-compare__label">DR3</span><b>{{ drAnswer.compare.dr3.value }}</b>
+                <span class="dr-compare__arrow" aria-hidden="true">→</span>
+                <span class="dr-compare__label">DR4</span><b>{{ drAnswer.compare.dr4.value }}</b>
+                <span class="dr-compare__delta">{{ drDeltaLabel }}</span>
+              </div>
+              <p class="dr-note">{{ isZh
+                ? 'Ahrefs 后台在 2026 年 12 月 1 日之前仍显示 DR3，所以这里的数字和 Ahrefs 界面上可能不同；DR4 还会给子域名单独计分。'
+                : "Ahrefs' own interface still shows DR3 until December 1, 2026, so the number there can differ. DR4 also scores subdomains separately." }}</p>
+            </div>
+            <button
+              v-else
+              class="btn btn--outline btn--sm dr-compare__btn"
+              type="button"
+              :disabled="drBusy"
+              @click="lookUpDr(true)"
+            >
+              {{ pick('对比 DR3 → DR4', 'Compare DR3 → DR4') }}
+            </button>
           </template>
 
-          <!-- Not configured is not an error state: it is the honest answer,
-               and it comes with the official checkers so the visit is not a
-               dead end. -->
+          <!-- No external checker links, in any state. "We have no number" is
+               an answer rendered here, not a reason to send the visitor away. -->
           <div v-else class="dr-empty">
             <p class="dr-empty__head">{{ drHeadline }}</p>
             <p class="dr-empty__body">{{ drLead }}</p>
-            <div class="dr-links">
-              <p>{{ pick('官方免费查询', 'Official free checkers') }}</p>
-              <ul>
-                <li>
-                  <a href="https://ahrefs.com/website-authority-checker" target="_blank" rel="noopener">
-                    Ahrefs Website Authority Checker <span>DR 0–100</span>
-                  </a>
-                </li>
-                <li>
-                  <a href="https://www.domcop.com/openpagerank/what-is-openpagerank" target="_blank" rel="noopener">
-                    Open PageRank <span>PR 0–10</span>
-                  </a>
-                </li>
-              </ul>
-            </div>
             <button
               v-if="drAnswer.reason !== 'not_configured'"
               id="dr-retry"
               class="btn btn--outline btn--sm"
               type="button"
               :disabled="drBusy"
-              @click="lookUpDr"
+              @click="lookUpDr()"
             >
               {{ pick('重试', 'Retry') }}
             </button>
@@ -570,8 +636,8 @@ useSeo({
         <p class="dr-disclaimer">
           <Icon name="info" />
           <span>{{ isZh
-            ? '我们只显示数据源真实返回的数字。拿不到，就告诉你拿不到——不给你一个估出来的值。'
-            : 'We only ever show a number a data source actually returned. If we cannot get one, we say so — we will not hand you an estimate dressed up as a fact.' }}</span>
+            ? '我们只显示 Ahrefs 免费 DR4 接口真实返回的数字。查询和结果都留在本站；拿不到就告诉你拿不到，不给你估出来的值，也不把你送去别的站。'
+            : 'We only show numbers the free Ahrefs DR4 endpoint actually returned. The lookup and the answer both stay on this site: if we cannot get one, we say so — no estimate dressed up as a fact, and no trip to another site.' }}</span>
         </p>
       </div>
     </section>

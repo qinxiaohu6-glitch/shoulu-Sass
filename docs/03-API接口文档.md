@@ -776,22 +776,61 @@ cookie，**没带就返回 404**，与「没有这个路由」无法区分。
 
 三次 SSRF 防护（详见 `server/utils/audit.ts` 头部注释）：只允许 http(s)、拒绝私网字面量、重定向后**再查一遍**最终地址。Workers 没有 socket 也没有 DNS 解析，所以这一层是字面量检查；真正兜底的是 Workers 的出口到不了私网。
 
-### 39. `POST /api/dr`
+### 39. `POST /api/dr`（DR4，全站内闭环）
+
+> 2026-11-08 更新并上线。旧的「Ahrefs 付费 API / Open PageRank 免费兜底」描述已作废。
+> 生产 Worker `product-atlas` 已配 `NUXT_AHREFS_TOKEN` 并部署（Version `c36758ff-b671-40a1-81a8-9dd04a3e4e41`），
+> 线上实测 `example.com` DR4=93 / DR3=94（Δ−1），`dirtool.com` DR4=0。
+
+请求体：
 
 ```json
 { "domain": "your-product.com" }
+{ "domain": "your-product.com", "compare": true }
 ```
 
-**四种状态都返回 200**，因为它们是答案，不是错误：
+`compare` 可选，触发 DR3 → DR4 对照（见下）。
+
+**唯一数据源**：Ahrefs 官方免费公共端点
+
+```text
+GET https://api.ahrefs.com/v3/public/domain-rating-free
+    ?target=<domain>&version=dr4&output=json
+Authorization: Bearer <NUXT_AHREFS_TOKEN>
+```
+
+- 官方文档原话：「Requests to this endpoint are free, yet require an APIv3 key」「APIv3 keys are free to generate and use」。免费 = 不要付费套餐、不消耗 API units；**不等于无 key**。不带 key 实测返回 403 `["Error","Forbidden"]`。
+- key 由站点方生成，放在运行时 / Cloudflare secret，浏览器永远拿不到；访客无需账号。
+- **注册地址**（2026-11-08 复核官网）：`https://ahrefs.com/signup?plan=awt`（页面标题「Sign up for Ahrefs Free」，免费账号），或从 `https://ahrefs.com/` 点 Start for Free；官方文档给的注册入口就是 `https://ahrefs.com/`。
+- **创建 key**：`https://app.ahrefs.com/account/api-keys`（帐号设置 → API密钥）→ 点「**为公共端点生成 API 密钥**」（中文界面实际按钮名；英文文档写作 Create API Key (APIv3)）→ 请求头 `Authorization: Bearer <key>`。本站用的 `/v3/public/domain-rating-free` 正是 public endpoint，所以走这个入口最对路，生成的是免费 key、不消耗付费 API units。注意官方限制：**只有 workspace owner / admin 能进这个页面**；key 可设过期时间（今天起最长 10 年），创建者被移出 workspace 时 key 会失效；密钥串通常只完整显示一次，生成后立刻复制保存。
+- 官方文档：<https://docs.ahrefs.com/en/api/reference/public/get-domain-rating-free>、<https://docs.ahrefs.com/en/api/docs/api-keys-creation-and-management>。
+- **已移除**付费 `site-explorer/domain-rating`、Open PageRank（PR 0–10）兜底与 `rank` 字段。本站只报 DR，不再出现 PR。
+
+**所有结果都是 HTTP 200**，因为「拿不到数字」是一个答案，不是异常：
 
 ```json
-{ "ok": true, "domain": "…", "provider": "ahrefs", "metric": "DR", "value": 42, "rank": 1284, "checked_at": 1793861271, "cached": false }
-{ "ok": false, "reason": "provider_error", "detail": "ahrefs: Error" }
-{ "ok": false, "reason": "not_configured", "providers": ["ahrefs", "openpagerank"] }
-{ "ok": false, "reason": "invalid_domain" }
+{ "ok": true, "domain": "example.com", "provider": "ahrefs", "metric": "DR",
+  "version": "dr4", "value": 62, "checked_at": 1793861271, "cached": false,
+  "license": "https://ahrefs.com/legal/domain-rating-license" }
+{ "ok": false, "reason": "not_configured", "version": "dr4" }
+{ "ok": false, "reason": "invalid_domain", "version": "dr4" }
 ```
 
-- 数据源：`NUXT_AHREFS_TOKEN` → DR（0–100）；`NUXT_OPENPAGERANK_KEY` → PR（0–10）
-- `metric` 必须跟 `value` 一起读：**PR 不是 DR**。页面按 `metric` 决定标签，绝不把 PR 当 DR 显示
-- 两个都没配就是 `not_configured`——这是当前线上状态，页面如实说「读不到」，并给官方免费查询入口，不编数字
-- **没有缓存**。旧站用 `data/dr-cache.json` 存 24h，Workers 没有文件系统。接真实数据源之前应先补一张 D1 缓存表，否则每次点击都在烧 API 配额
+`reason` 取值：`not_configured | invalid_domain | bad_key | rate_limited | no_data | provider_error | timeout | network_error | bad_response`。失败时可带 `upstream_status`（上游 HTTP 码）与 `failed_version`（对照模式里失败的是 `dr3` 还是 `dr4`）。**永不回显 key、上游地址或上游原始响应体。**
+
+`compare: true` 时同一端点分别以 `version=dr3` / `version=dr4` 各调一次，成功响应多一段：
+
+```json
+"compare": { "dr3": { "value": 95, "cached": false },
+             "dr4": { "value": 93, "cached": false }, "delta": -2 }
+```
+
+`delta = dr4 − dr3`。Ahrefs 自家界面在 **2026-12-01 之前仍显示 DR3**，两个数字可以合法地不一致；DR4 下子域名单独计分。
+
+**约束与防滥用**：
+
+- 域名规范化：小写 / 去协议 / 去路径 / 去端口 / 去 `www.` / 去尾部点，保留子域；拒绝 IP 字面量、非法标签、超长域名。
+- 24 小时内存 memo（键为 `${domain}|${version}`，最多 500 条），响应带 `cached`。Workers 没有文件系统，所以沿用内存缓存而非旧站的 `data/dr-cache.json`；license 禁止批量抓取，因此**不建 D1 缓存表、不做批量查询**。
+- 每 IP 12 次 / 10 分钟；`compare` 记 2 次（它就是两次上游调用）。
+- 响应 `Cache-Control: no-store`。
+- 输入、查询、结果、失败态**全留在本站**，任何状态都不再给外部 checker 链接。按 Ahrefs Domain Rating License，数值旁显示 `Domain Rating by Ahrefs`，其中 `Ahrefs` 是指向 `https://ahrefs.com/` 的有效链接；这是署名，不是查询步骤。
