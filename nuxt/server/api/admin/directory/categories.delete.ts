@@ -29,12 +29,16 @@ export default defineEventHandler(async (event) => {
   try {
     return { ok: true, ...(await deleteAdminCategory(db, id)) }
   } catch (error) {
+    const message = (error as Error).message
+    const builtin = /catalogue|built-in/i.test(message)
     throw createError({
       statusCode: 400,
       statusMessage: 'Bad Request',
       data: {
-        message_en: (error as Error).message,
-        message_zh: '该分类下仍有关联工具，请先把它们改到其他分类再删除。',
+        message_en: message,
+        message_zh: builtin
+          ? '这是前台正在用的内置分类，不能删除。可以直接改名称和图标。'
+          : '该分类下仍有关联工具，请先把它们改到其他分类再删除。',
       },
     })
   }

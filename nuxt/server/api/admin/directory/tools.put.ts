@@ -13,7 +13,7 @@
 
 import { isAdmin } from '../../../utils/admin'
 import { useDb } from '../../../utils/db'
-import { setAdminToolStatus, updateAdminTool } from '../../../utils/admin-directory'
+import { saveAdminListing, setAdminToolStatus } from '../../../utils/admin-directory'
 
 function readInput(body: Record<string, unknown>) {
   const str = (key: string) => String(body?.[key] ?? '').trim()
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
       return { ok: true, ...(await setAdminToolStatus(db, id, body.status)) }
     }
 
-    return { ok: true, ...(await updateAdminTool(db, id, readInput(body))) }
+    return { ok: true, ...(await saveAdminListing(db, id, readInput(body))) }
   } catch (error) {
     throw createError({
       statusCode: 400,

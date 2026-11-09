@@ -35,6 +35,7 @@
  */
 import { tiers } from '~~/shared/content/pricing'
 import type { SubmitFaqItem } from '~/utils/directory-ui'
+import { legalLogoUrl } from '~~/shared/utils/logo'
 
 const { lang, pick, isZh } = useLang()
 const localePath = useLocalePath()
@@ -208,6 +209,8 @@ function mapError(code?: string): string {
     return t('dir.submit.error_invalid_category')
   if (code === 'email_required' || code === 'bad_email')
     return t('dir.submit.error_email_required')
+  if (code === 'logo_required') return t('dir.submit.error_logo_required')
+  if (code === 'bad_logo') return t('dir.submit.error_bad_logo')
   return t('dir.submit.error_failed')
 }
 
@@ -234,6 +237,16 @@ async function submit() {
   // submits a listing that can never be answered.
   if (!form.email.trim()) {
     error.value = t('dir.submit.error_email_required')
+    return
+  }
+  // The preview may fill this in. An empty or non-http value is refused here
+  // and again by `validate()` so a direct API call cannot skip it.
+  if (!form.logo.trim()) {
+    error.value = t('dir.submit.error_logo_required')
+    return
+  }
+  if (!legalLogoUrl(form.logo)) {
+    error.value = t('dir.submit.error_bad_logo')
     return
   }
   submitting.value = true
@@ -416,6 +429,22 @@ function reset() {
               :placeholder="t('dir.submit.field_intro_ph')"
               class="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
             />
+          </div>
+
+          <div class="space-y-2">
+            <label for="tool-logo" class="text-sm leading-none font-medium">
+              {{ t('dir.submit.field_logo') }}
+              <span class="text-destructive" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="tool-logo"
+              v-model="form.logo"
+              type="url"
+              required
+              :placeholder="t('dir.submit.field_logo_ph')"
+              class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+            <p class="text-xs text-muted-foreground">{{ t('dir.submit.field_logo_hint') }}</p>
           </div>
 
           <div class="space-y-2">

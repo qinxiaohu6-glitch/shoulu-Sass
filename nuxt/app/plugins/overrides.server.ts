@@ -13,7 +13,7 @@ import type { OverrideView } from '~~/shared/utils/catalog'
  * and hydration picks it up without a second request.
  */
 export default defineNuxtPlugin(async () => {
-  const state = useState<OverrideView>('overrides', () => ({ pinned: {}, hidden: [] }))
+  const state = useState<OverrideView>('overrides', () => ({ pinned: {}, hidden: [], sort: {} }))
 
   /**
    * Bound to the incoming request, not the global `$fetch`.
@@ -28,14 +28,16 @@ export default defineNuxtPlugin(async () => {
 
   try {
     const res = await requestFetch<Partial<OverrideView>>('/api/overrides')
+    const sort = res?.sort
     state.value = {
       pinned: res?.pinned && typeof res.pinned === 'object' ? res.pinned : {},
       hidden: Array.isArray(res?.hidden) ? res.hidden : [],
+      sort: sort && typeof sort === 'object' && !Array.isArray(sort) ? sort : {},
     }
   } catch {
     // Empty is the safe direction on both switches: a lost pin just means a
     // listing is not promoted, a lost hide means a page stays reachable. Neither
     // is worth failing a render over.
-    state.value = { pinned: {}, hidden: [] }
+    state.value = { pinned: {}, hidden: [], sort: {} }
   }
 })

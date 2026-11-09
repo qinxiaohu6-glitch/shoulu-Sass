@@ -111,6 +111,20 @@ export const DIRECTORY_COPY = {
     en: 'Enter an email address that can receive mail — the receipt and the review outcome go there.',
     zh: '请填一个能收信的邮箱，收据和审核结果都会发到这个地址。',
   },
+  'dir.submit.field_logo': { en: 'Logo URL', zh: 'Logo 网址' },
+  'dir.submit.field_logo_ph': { en: 'https://…/logo.png', zh: 'https://…/logo.png' },
+  'dir.submit.field_logo_hint': {
+    en: 'Required. Paste an https image URL, or keep the one found from the website.',
+    zh: '必填。填写 https 图片网址，或保留从官网抓到的那张。',
+  },
+  'dir.submit.error_logo_required': {
+    en: 'Add a logo image URL starting with https://.',
+    zh: '请填写产品 logo 的图片网址（以 https:// 开头）。',
+  },
+  'dir.submit.error_bad_logo': {
+    en: 'The logo must be an http(s) image URL.',
+    zh: 'logo 必须是 http 或 https 图片网址。',
+  },
   'dir.submit.preview_title': { en: 'Preview', zh: '预览' },
   'dir.submit.how_it_works': { en: 'How it works', zh: '流程' },
   'dir.submit.step_1': { en: 'Fill in your tool and submit it.', zh: '填写工具信息并提交。' },
