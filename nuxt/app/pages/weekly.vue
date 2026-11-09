@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { WEEKLY_EMPTY_COPY } from '~~/shared/content/weekly-empty'
 import { rankedBoard } from '~~/shared/utils/listing-desk'
 
 const { lang, isZh, pick } = useLang()
@@ -165,7 +166,16 @@ useSeo({
     </nav>
 
     <div class="week-panel is-active">
-      <table class="rank-table">
+      <!-- No rows: the header alone reads as a broken table. Same placeholder
+           for the open week and for an archived week that is also empty. -->
+      <div v-if="!panel.rows.length" class="board-empty">
+        <p class="board-empty__title">{{ pick(WEEKLY_EMPTY_COPY.title.zh, WEEKLY_EMPTY_COPY.title.en) }}</p>
+        <p class="board-empty__body">{{ pick(WEEKLY_EMPTY_COPY.body.zh, WEEKLY_EMPTY_COPY.body.en) }}</p>
+        <NuxtLink class="board-empty__cta" :to="localePath('/submit')">
+          {{ pick(WEEKLY_EMPTY_COPY.cta.zh, WEEKLY_EMPTY_COPY.cta.en) }}
+        </NuxtLink>
+      </div>
+      <table v-if="panel.rows.length" class="rank-table">
         <thead>
           <tr>
             <th>#</th>
@@ -239,6 +249,50 @@ useSeo({
 </template>
 
 <style scoped>
+/* Same stroke as the homepage open ad slot: dark gray in both themes. */
+.board-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 196px;
+  padding: 36px 24px 32px;
+  text-align: center;
+  border: 2px dashed oklch(40% 0.025 70);
+  border-radius: 18px;
+  background: var(--card);
+}
+
+.board-empty__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.board-empty__body {
+  margin: 6px 0 0;
+  max-width: 28rem;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.board-empty__cta {
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--foreground);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.board-empty__cta:hover {
+  color: var(--primary);
+}
+
 /* The board slot only exists while a campaign is booked, so none of this is
    reachable in the default state — the row is simply absent. */
 .rank-ad td {
