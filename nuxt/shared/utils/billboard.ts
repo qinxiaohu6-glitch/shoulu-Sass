@@ -3,12 +3,7 @@
  * on the same rows. A request that has not been paid is not a row.
  */
 
-import {
-  BILLBOARD_TIERS,
-  billboardTier,
-  isBillboardTier,
-  type BillboardTierId,
-} from '../content/billboard.ts'
+import { billboardTier, isBillboardTier, type BillboardTierId } from '../content/billboard.ts'
 
 export type BillboardStatus = 'requested' | 'pending' | 'live' | 'removed'
 
@@ -20,10 +15,15 @@ export type BillboardRow = {
   url: string
   logo: string
   screenshot: string
-  /** Unix seconds. Required before a row can be public. */
+  /**
+   * Unix seconds of the earliest confirmed payment for this website.
+   * Same total: earlier payment ranks higher.
+   */
   paidAt: number
+  /** Most recent confirmed payment. Used for "just landed", not for ties. */
+  latestPaidAt?: number
   status: BillboardStatus
-  /** Charged cents. 0 when an older row has no amount stored. */
+  /** Total backed cents for this website. 0 when an older row has no amount stored. */
   amountCents?: number
 }
 
@@ -31,7 +31,55 @@ export type BillboardCell<T> =
   | { kind: 'live'; rank: number; placement: T }
   | { kind: 'empty'; rank: number }
 
-const TIER_RANK = new Map(BILLBOARD_TIERS.map((tier) => [tier.id, tier.rank]))
+/** Stored cents, or the legacy tier list price when a live row never recorded an amount. */
+export function backingCents(row: { amountCents?: number; tier: string }): number {
+  const stored = row.amountCents
+  if (typeof stored === 'number' && Number.isFinite(stored) && stored > 0) return stored
+  return billboardTier(row.tier)?.amountCents ?? 0
+}
+
+function looksLikeThumbnail(value: string): boolean {
+  const v = value.trim()
+  if (!v || v.length > 500) return false
+  if (/^https?:\/\//i.test(v)) return true
+  return /\.(png|jpe?g|webp|gif|avif)$/i.test(v)
+}
+
+/**
+ * One spot per website. Extra payments for the same URL add to `amountCents`.
+ * The spot stays after it is outbid — nothing here deletes a live row.
+ */
+export function stackBillboard<T extends BillboardRow>(rows: readonly T[]): T[] {
+  const groups = new Map<string, T[]>()
+  for (const row of rows) {
+    const key = samePlacementUrl(row.url) || row.id
+    const list = groups.get(key) ?? []
+    list.push(row)
+    groups.set(key, list)
+  }
+  const stacked: T[] = []
+  for (const list of groups.values()) {
+    const ordered = [...list].sort((a, b) => a.paidAt - b.paidAt || (a.id < b.id ? -1 : 1))
+    const earliest = ordered[0]!
+    const latest = ordered[ordered.length - 1]!
+    const withShot = [...ordered].reverse().find((row) => looksLikeThumbnail(row.screenshot))
+    const withLogo = [...ordered].reverse().find((row) => row.logo.trim())
+    stacked.push({
+      ...latest,
+      id: earliest.id,
+      name: latest.name || earliest.name,
+      tagline: latest.tagline || earliest.tagline,
+      logo: withLogo?.logo ?? '',
+      screenshot: withShot?.screenshot ?? '',
+      url: earliest.url || latest.url,
+      paidAt: earliest.paidAt,
+      latestPaidAt: latest.paidAt,
+      amountCents: ordered.reduce((sum, row) => sum + backingCents(row), 0),
+      status: 'live',
+    })
+  }
+  return stacked
+}
 
 /** Live rows only. Invoice requests and unpaid rows stay off the board. */
 export function publicBillboardRows<T extends { status?: string; paidAt?: number | null; tier: string }>(
@@ -47,15 +95,13 @@ export function publicBillboardRows<T extends { status?: string; paidAt?: number
 }
 
 /**
- * Prime, then Standard, then Entry. Inside a tier, the earlier confirmed
- * payment is higher. This is not a bid.
+ * Highest total backed first. The same total keeps the earlier payment ahead.
+ * Rows that share a URL are one spot: their amounts add.
  */
-export function rankBillboard<T extends { id: string; tier: BillboardTierId; paidAt: number }>(
-  rows: readonly T[],
-): T[] {
-  return [...rows].sort((a, b) => {
-    const byTier = (TIER_RANK.get(b.tier) ?? 0) - (TIER_RANK.get(a.tier) ?? 0)
-    if (byTier) return byTier
+export function rankBillboard<T extends BillboardRow>(rows: readonly T[]): T[] {
+  return stackBillboard(rows).sort((a, b) => {
+    const byAmount = backingCents(b) - backingCents(a)
+    if (byAmount) return byAmount
     if (a.paidAt !== b.paidAt) return a.paidAt - b.paidAt
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
   })

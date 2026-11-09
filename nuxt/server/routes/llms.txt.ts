@@ -36,8 +36,6 @@ export default defineEventHandler(async (event) => {
   const featured = effectiveQuote('listing', 'featured')
   const pro = effectiveQuote('listing', 'pro')
   const entry = effectiveQuote('billboard', 'entry')
-  const board = effectiveQuote('billboard', 'standard')
-  const prime = effectiveQuote('billboard', 'prime')
   const week = effectiveQuote('sidebar', '1')
   const month = effectiveQuote('sidebar', '4')
   const saleNote = campaignActive()
@@ -59,7 +57,7 @@ export default defineEventHandler(async (event) => {
     `- Free listings on Product Atlas are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
     `- Listing plans on Product Atlas are one-time, not subscriptions: free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel}.${saleNote} ([pricing](${SITE}/pricing))`,
     `- On Product Atlas, paid listings are published automatically as soon as payment succeeds — a verified payment webhook settles the order and publishes the page, with no manual confirmation. ([pricing](${SITE}/pricing))`,
-    `- Billboard on Product Atlas is a one-time placement, not a weekly rental: Entry ${entry.priceLabel}, Standard ${board.priceLabel}, Prime ${prime.priceLabel}. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. Payment publishes the placement. Unpaid rows are not public.${saleNote} ([billboard](${SITE}/billboard))`,
+    `- Billboard on Product Atlas is a one-time name-your-price placement from ${entry.priceLabel}, ranked by total backed. Black Friday does not lower that floor. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. A confirmed payment publishes the placement. Unconfirmed rows are not public. ([billboard](${SITE}/billboard))`,
     `- The Product Atlas weekly board resets every Monday and records one vote per signed-in person per product per week; a vote is not a rating. ([weekly board](${SITE}/weekly))`,
     `- Paid placement on Product Atlas never changes a product's rank on the weekly board. ([ranking rules](${SITE}/rules))`,
     '',
@@ -86,7 +84,7 @@ export default defineEventHandler(async (event) => {
     `- [Just added](${SITE}/just-added): newest listings first`,
     `- [Ranking rules](${SITE}/rules): how the board, votes and links work, in full`,
     `- [Questions](${SITE}/faq): how listing, votes, links, pricing and ad slots work, in short answers`,
-    `- [Billboard](${SITE}/billboard): one-time Entry ${entry.priceLabel}, Standard ${board.priceLabel}, Prime ${prime.priceLabel}, same list as the homepage Top 10`,
+    `- [Billboard](${SITE}/billboard): one-time name-your-price from ${entry.priceLabel}, same Top 10 as the homepage`,
     `- [Pricing](${SITE}/pricing): free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel} one-time tiers, plus Billboard and a weekly sidebar`,
     `- [Advertise](${SITE}/advertise): where Billboard, the sidebar, a written review and a featured listing are described`,
     `- [Stats](${SITE}/stats): live counts from the directory. Every number on that page comes from the same source`,

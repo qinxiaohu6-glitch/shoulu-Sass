@@ -230,11 +230,11 @@ export const pricingBillboardBlurb: Record<string, Pair> = {
 }
 
 export const pricingBillboardChecks: Pair[] = [
-  { en: 'Live the second you pay', zh: '付款即上线' },
-  { en: 'Guaranteed homepage Top 10 placement', zh: '首页 Top 10 展示' },
+  { en: 'Name your price, from $15', zh: '自己出价，从 $15 起' },
+  { en: 'Top 10 on the homepage', zh: '前 10 名出现在首页' },
   { en: 'One-time payment', zh: '一次付清' },
-  { en: 'Higher tiers rank first', zh: '高档优先排序' },
-  { en: 'Permanent listing', zh: '长期展示' },
+  { en: 'Pay again and the amount stacks', zh: '再付一次，金额累加' },
+  { en: 'Outbid drops rank only', zh: '被超过只掉名次' },
 ]
 
 export const pricingFaq: { q: Pair; a: Pair }[] = [

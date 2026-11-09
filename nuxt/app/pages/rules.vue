@@ -159,8 +159,8 @@ const sections = computed<RuleSection[]>(() => [
     ),
     items: [
       pick(
-        'Billboard 入门 $15、标准 $29、优先 $49，都是一次性。标准档替代原来的榜单周租。它不插进每周投票榜。',
-        'Billboard Entry is $15, Standard $29, Prime $49, all one-time. Standard replaces the old weekly board rental. It is not inserted into the weekly vote list.',
+        'Billboard 从 $15 起自己出价，一次付清。按累计金额排名，不插进每周投票榜。',
+        'Billboard is name-your-price from $15, one-time. Rank follows total backed. It is not inserted into the weekly vote list.',
       ),
       pick(
         '右栏位 $19/周，出现在首页与「最新收录」页的右栏；连投 4 周 $65。',

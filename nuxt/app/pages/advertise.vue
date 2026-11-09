@@ -12,8 +12,6 @@ const localePath = useLocalePath()
 
 const cards = computed(() => {
   const entry = effectiveQuote('billboard', 'entry')
-  const standard = effectiveQuote('billboard', 'standard')
-  const prime = effectiveQuote('billboard', 'prime')
   const side = effectiveQuote('sidebar', '1')
   const featured = effectiveQuote('listing', 'featured')
   return [
@@ -21,14 +19,14 @@ const cards = computed(() => {
       id: 'billboard',
       kicker: 'BILLBOARD',
       title: pick('首页 Top 10', 'Homepage Top 10'),
-      price: `${entry.priceLabel} / ${standard.priceLabel} / ${prime.priceLabel}`,
-      when: pick('付款成功后自动上板', 'Live when payment succeeds'),
+      price: pick(`从 ${entry.priceLabel} 起`, `From ${entry.priceLabel}`),
+      when: pick('确认后上线', 'Live when the payment is confirmed'),
       body: pick(
-        '固定三档，一次付清。和首页 Top 10 是同一份已付款名单。',
-        'Three fixed tiers, one payment. The same paid list as the homepage Top 10.',
+        '自己出价，一次付清。和首页 Top 10 是同一份已确认名单。',
+        'Name your price, one payment. The same confirmed list as the homepage Top 10.',
       ),
       to: `${localePath('/billboard')}#claim`,
-      cta: pick('去付款', 'Pay now'),
+      cta: pick('认领展示位', 'Claim a spot'),
       preview: 'billboard' as const,
     },
     {

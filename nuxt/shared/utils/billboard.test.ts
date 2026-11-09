@@ -88,21 +88,27 @@ test('campaign strikes the list price and stops at the deadline', () => {
   assert.equal(saleCents(0), 0)
 })
 
-test('rank is tier then first confirmed payment, and unpaid rows stay off', () => {
+test('rank is total backed, earlier payment wins a tie, and the same URL stacks', () => {
   const rows = [
-    row({ id: 'e1', tier: 'entry', paidAt: 10 }),
-    row({ id: 's-late', tier: 'standard', paidAt: 50 }),
-    row({ id: 's-early', tier: 'standard', paidAt: 20 }),
-    row({ id: 'p', tier: 'prime', paidAt: 90 }),
-    row({ id: 'wait', tier: 'prime', paidAt: 1, status: 'requested' }),
+    row({ id: 'low', tier: 'entry', paidAt: 10, amountCents: 1500, url: 'https://low.example' }),
+    row({ id: 'high-late', tier: 'entry', paidAt: 50, amountCents: 3100, url: 'https://late.example' }),
+    row({ id: 'high-early', tier: 'standard', paidAt: 20, amountCents: 3100, url: 'https://early.example' }),
+    row({ id: 'stack-a', tier: 'entry', paidAt: 5, amountCents: 1500, url: 'https://stack.example/a' }),
+    row({ id: 'stack-b', tier: 'entry', paidAt: 40, amountCents: 2000, url: 'https://stack.example/a' }),
+    row({ id: 'legacy', tier: 'prime', paidAt: 3, url: 'https://legacy.example' }),
+    row({ id: 'wait', tier: 'prime', paidAt: 1, status: 'requested', amountCents: 9000 }),
     row({ id: 'removed', tier: 'prime', paidAt: 1, status: 'removed' }),
   ]
   const live = publicBillboardRows(rows)
-  assert.deepEqual(live.map((item) => item.id), ['e1', 's-late', 's-early', 'p'])
+  assert.equal(live.some((item) => item.id === 'wait' || item.id === 'removed'), false)
+  const ranked = rankBillboard(live)
   assert.deepEqual(
-    rankBillboard(live).map((item) => item.id),
-    ['p', 's-early', 's-late', 'e1'],
+    ranked.map((item) => item.id),
+    ['legacy', 'stack-a', 'high-early', 'high-late', 'low'],
   )
+  assert.equal(ranked[0]?.amountCents, 4900)
+  assert.equal(ranked[1]?.amountCents, 3500)
+  assert.equal(ranked[1]?.paidAt, 5)
   assert.equal(tierPriceLabel('prime'), '$49')
   assert.equal(tierPriceLabel('nope'), '')
 })
@@ -156,8 +162,15 @@ test('an invoice request cannot publish itself or name a checkout', () => {
   assert.match(page, /Request invoice/)
   assert.match(page, /索取发票/)
   assert.match(page, /\/api\/billboard\/invoice/)
+  assert.match(page, /Name your price/)
   assert.equal(page.includes('/api/payments/'), false)
   assert.equal(page.includes('Stripe'), false)
-  assert.equal(page.includes('Name your price'), false)
+  assert.equal(page.includes('AHREFS'), false)
   assert.equal(home.includes('$27'), false)
+  for (const gone of ['交付的就是这三件事', '这些位置可以订', '按分类浏览', '最新收录']) {
+    assert.equal(home.includes(gone), false, gone)
+  }
+  const layout = readFileSync(join(here, '../../app/layouts/default.vue'), 'utf8')
+  assert.equal(layout.includes('免费目录页会留下来'), false)
+  assert.match(layout, /BlackFridayBar/)
 })

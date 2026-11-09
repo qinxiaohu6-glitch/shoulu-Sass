@@ -10,7 +10,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const before = Date.parse('2026-12-01T06:58:59+08:00')
 const atEnd = Date.parse(CAMPAIGN.endsAt)
 
-test('effectiveAmountCents is the sale price for listing, sidebar and billboard', () => {
+test('effectiveAmountCents discounts listing and sidebar, and leaves the Billboard floor', () => {
   assert.equal(campaignActive(before), true)
   assert.equal(effectiveAmountCents('listing', 'free', before), 0)
   assert.equal(effectiveAmountCents('listing', 'standard', before), 1300)
@@ -18,12 +18,14 @@ test('effectiveAmountCents is the sale price for listing, sidebar and billboard'
   assert.equal(effectiveAmountCents('listing', 'pro', before), 4800)
   assert.equal(effectiveAmountCents('sidebar', '1', before), 1300)
   assert.equal(effectiveAmountCents('sidebar', '4', before), 4600)
-  assert.equal(effectiveAmountCents('billboard', 'entry', before), 1100)
-  assert.equal(effectiveAmountCents('billboard', 'standard', before), 2000)
-  assert.equal(effectiveAmountCents('billboard', 'prime', before), 3400)
+  assert.equal(effectiveAmountCents('billboard', 'entry', before), 1500)
+  assert.equal(effectiveAmountCents('billboard', 'standard', before), 2900)
+  assert.equal(effectiveAmountCents('billboard', 'prime', before), 4900)
   assert.equal(effectiveQuote('listing', 'featured', before).priceLabel, '$27')
   assert.equal(effectiveQuote('listing', 'featured', before).strikeLabel, '$39')
-  assert.equal(effectiveQuote('billboard', 'entry', before).priceLabel, '$11')
+  assert.equal(effectiveQuote('billboard', 'entry', before).priceLabel, '$15')
+  assert.equal(effectiveQuote('billboard', 'entry', before).strikeLabel, null)
+  assert.equal(effectiveQuote('billboard', 'prime', before).priceLabel, '$49')
 })
 
 test('the campaign clock falls back to the list price', () => {
@@ -34,15 +36,18 @@ test('the campaign clock falls back to the list price', () => {
   assert.equal(campaignActive(before, false), false)
 })
 
-test('checkout routes charge effectiveAmountCents and do not read a client amount', () => {
+test('fixed checkouts ignore a client amount; Billboard clamps a bid and does not discount it', () => {
   const listing = readFileSync(join(here, '../../server/api/payments/checkout.post.ts'), 'utf8')
   const ad = readFileSync(join(here, '../../server/api/payments/ad-checkout.post.ts'), 'utf8')
   const board = readFileSync(join(here, '../../server/api/billboard/checkout.post.ts'), 'utf8')
-  for (const source of [listing, ad, board]) {
+  for (const source of [listing, ad]) {
     assert.match(source, /effectiveAmountCents\(/)
     assert.equal(/body\??\.(amount|price|amount_cents)/.test(source), false)
   }
   assert.match(listing, /amount_cents: amountCents/)
+  assert.match(board, /billboardBidDraft\(/)
   assert.match(board, /plan: 'billboard'/)
   assert.match(board, /published: false/)
+  assert.equal(/effectiveAmountCents\(/.test(board), false)
+  assert.equal(/saleCents\(/.test(board), false)
 })

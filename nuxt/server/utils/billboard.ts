@@ -132,14 +132,32 @@ export async function insertBillboardCheckout(
 
 export async function insertBillboardRequest(
   db: Db,
-  input: { id: string; tier: BillboardTierId; name: string; url: string; email: string; now: number },
+  input: {
+    id: string
+    tier: BillboardTierId
+    name: string
+    tagline?: string
+    url: string
+    email: string
+    amountCents: number
+    now: number
+  },
 ): Promise<void> {
   await db
     .prepare(
       `INSERT INTO billboard_placement
-        (id, tier, name, tagline, url, logo, screenshot, email, status, paid_at, created_at, note)
-       VALUES (?, ?, ?, '', ?, '', '', ?, 'requested', NULL, ?, '')`,
+        (id, tier, name, tagline, url, logo, screenshot, email, status, paid_at, created_at, note, amount_cents)
+       VALUES (?, ?, ?, ?, ?, '', '', ?, 'requested', NULL, ?, '', ?)`,
     )
-    .bind(input.id, input.tier, input.name, input.url, input.email, input.now)
+    .bind(
+      input.id,
+      input.tier,
+      input.name,
+      (input.tagline ?? '').slice(0, 140),
+      input.url,
+      input.email,
+      input.now,
+      input.amountCents,
+    )
     .run()
 }

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 /**
- * Homepage Top 10. Prices come from the Billboard tier table. Empty cells are
- * a dashed claim, not a sample product and not a bid ladder.
+ * Homepage Top 10. The price pill is the website's current backing.
+ * Empty cells are a dashed claim from $15. No stock screenshot is invented.
  */
-import { tierPriceLabel, type BillboardCell, type BillboardRow } from '~~/shared/utils/billboard'
+import { BILLBOARD_FLOOR_CENTS, backingLabel, faviconForUrl, isHomepageThumbnail } from '~~/shared/utils/billboard-bid'
+import { centsLabel } from '~~/shared/content/campaign'
+import type { BillboardCell, BillboardRow } from '~~/shared/utils/billboard'
 
 defineProps<{
   cells: BillboardCell<BillboardRow>[]
@@ -12,9 +14,14 @@ defineProps<{
 const { pick } = useLang()
 const localePath = useLocalePath()
 const claimTo = computed(() => `${localePath('/billboard')}#claim`)
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
-function priceOf(tier: string): string {
-  return tierPriceLabel(tier)
+function shotOf(row: BillboardRow): string {
+  return isHomepageThumbnail(row.screenshot) ? row.screenshot : ''
+}
+
+function logoOf(row: BillboardRow): string {
+  return row.logo || faviconForUrl(row.url)
 }
 </script>
 
@@ -34,7 +41,7 @@ function priceOf(tier: string): string {
           class="bb-card"
           :class="{
             'bb-card--empty': cell.kind === 'empty',
-            'bb-card--prime': cell.kind === 'live' && cell.placement.tier === 'prime',
+            'bb-card--top': cell.kind === 'live' && cell.rank === 1,
           }"
         >
           <template v-if="cell.kind === 'live'">
@@ -45,8 +52,8 @@ function priceOf(tier: string): string {
               rel="sponsored nofollow noopener"
             >
               <img
-                v-if="cell.placement.screenshot"
-                :src="logoSrc(cell.placement.screenshot)"
+                v-if="shotOf(cell.placement)"
+                :src="logoSrc(shotOf(cell.placement))"
                 alt=""
                 loading="lazy"
               >
@@ -54,7 +61,7 @@ function priceOf(tier: string): string {
             </a>
             <div class="bb-foot">
               <span class="bb-logo">
-                <ToolLogo :logo="cell.placement.logo" :name="cell.placement.name" :size="28" decorative />
+                <ToolLogo :logo="logoOf(cell.placement)" :name="cell.placement.name" :size="28" decorative />
               </span>
               <span class="bb-meta">
                 <strong>
@@ -63,18 +70,18 @@ function priceOf(tier: string): string {
                 </strong>
                 <span>{{ cell.placement.tagline }}</span>
               </span>
-              <span class="bb-price">{{ priceOf(cell.placement.tier) }}</span>
+              <span class="bb-price">{{ backingLabel(cell.placement) }}</span>
             </div>
           </template>
           <NuxtLink v-else class="bb-empty" :to="claimTo">
-            <span class="bb-shot bb-shot--dashed">{{ pick('投放广告', 'Advertise') }}</span>
+            <span class="bb-shot bb-shot--dashed">{{ pick('空位', 'Open') }}</span>
             <span class="bb-foot">
               <span class="bb-logo bb-logo--empty">+</span>
               <span class="bb-meta">
                 <strong>{{ pick('认领这个空位', 'Claim this spot') }}</strong>
-                <span>{{ pick('确认收款后才上榜', 'Goes live after payment') }}</span>
+                <span>{{ pick(`从 ${floorLabel} 起`, `From ${floorLabel}`) }}</span>
               </span>
-              <span class="bb-price">Claim</span>
+              <span class="bb-price">{{ pick(`认领 · ${floorLabel} 起`, `Claim · from ${floorLabel}`) }}</span>
             </span>
           </NuxtLink>
         </article>
@@ -83,8 +90,8 @@ function priceOf(tier: string): string {
     <p class="bb-note">
       {{
         pick(
-          '价签是已确认档位的表价：入门 $15、标准 $29、优先 $49。未确认收款的申请不会出现在这里。',
-          'Price tags are the confirmed tier’s list price: Entry $15, Standard $29, Prime $49. An unconfirmed request is not shown.',
+          `价签是该网站当前累计金额。新认领从 ${floorLabel} 起。未确认的申请不会出现在这里。`,
+          `Price tags are the current backing for that website. New claims start at ${floorLabel}. An unconfirmed request is not shown.`,
         )
       }}
     </p>

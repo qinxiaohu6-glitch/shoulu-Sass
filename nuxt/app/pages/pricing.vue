@@ -23,18 +23,13 @@
  */
 import type { PricingGroup, PricingPlan } from '~/utils/directory-ui'
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
-import {
-  BILLBOARD_TIERS,
-  campaignActive,
-  campaignDeadlineShanghai,
-} from '~~/shared/content/billboard'
+import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/billboard'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { contactHref } from '~~/shared/content/site-contact'
 import {
   adPlans,
   comparison,
   listingBenefits,
-  pricingBillboardBlurb,
   pricingBillboardChecks,
   pricingFaq,
   tiers,
@@ -65,10 +60,6 @@ function listingCta(id: string, name: { en: string; zh: string }) {
   if (id === 'free') return pick('免费提交', 'Submit free')
   if (paymentReady.value) return pick(`去付款 · ${name.zh}`, `Pay · ${name.en}`)
   return pick(`索取发票 · ${name.zh}`, `Request invoice · ${name.en}`)
-}
-
-function billboardOffer(id: string) {
-  return pricingBillboardBlurb[id] ?? pricingBillboardBlurb.entry
 }
 
 function invoiceMail(plan: string) {
@@ -136,12 +127,12 @@ const steps = computed(() => [
     n: '2',
     title: pick('被看到', 'Get seen'),
     price: pick(
-      `Billboard ${band('billboard', ['entry', 'standard', 'prime'])} · 右栏 ${skuQuote('sidebar', '1').priceLabel}/周`,
-      `Billboard ${band('billboard', ['entry', 'standard', 'prime'])} · sidebar ${skuQuote('sidebar', '1').priceLabel}/wk`,
+      `Billboard 从 $15 起 · 右栏 ${skuQuote('sidebar', '1').priceLabel}/周`,
+      `Billboard from $15 · sidebar ${skuQuote('sidebar', '1').priceLabel}/wk`,
     ),
     body: pick(
-      '一次付清。付款即上线。Top 10 同步首页。右栏仍按周。',
-      'One-time payment. Live the second you pay. Top 10 on the home page. Sidebar stays weekly.',
+      '自己出价，从 $15 起，一次付清。黑五不降低 Billboard 地板价。右栏仍按周。',
+      'Name your price from $15, one-time. Black Friday does not lower the Billboard floor. Sidebar stays weekly.',
     ),
     cta: pick('看 Billboard', 'See Billboard'),
     to: '#ads',
@@ -357,42 +348,48 @@ useHead({
           </p>
         </div>
 
-        <div id="black-friday" class="mb-8 text-sm leading-relaxed text-muted-foreground">
+        <div
+          id="black-friday"
+          class="mb-8 scroll-mt-24 rounded-3xl px-6 py-8 text-stone-100 sm:px-8"
+          :class="promoOn ? 'bg-zinc-950' : 'bg-muted text-foreground'"
+        >
           <template v-if="promoOn">
-            <p>
-              {{
-                pick(
-                  `Black Friday · 约 30% OFF。划线是表价，页面价格即为实付。截止 ${deadline} Asia/Shanghai。`,
-                  `Black Friday · ~30% off. The struck price is the list price. The price on the page is what you pay. Ends ${deadline} Asia/Shanghai.`,
-                )
-              }}
+            <p class="inline-flex items-center rounded-full bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-zinc-950">
+              {{ pick('黑色星期五 · 约 30% OFF', 'Black Friday · ~30% off') }}
             </p>
-            <ul class="mt-3 flex flex-wrap gap-2">
+            <h2 class="mt-4 max-w-2xl font-serif text-3xl tracking-tight text-white sm:text-4xl">
+              {{ pick('划线是表价。页面价格是实付。', 'Struck price is the list price. The page price is what you pay.') }}
+            </h2>
+            <p class="mt-3 text-sm text-stone-300">
+              {{ pick(`截止 ${deadline} Asia/Shanghai。Billboard 地板价仍是 $15。`, `Ends ${deadline} Asia/Shanghai. The Billboard floor stays $15.`) }}
+            </p>
+            <ul class="mt-5 flex flex-wrap gap-2 text-sm">
               <li
                 v-for="tier in tiers.filter((item) => item.amountCents > 0)"
                 :key="tier.id"
-                class="rounded-full border border-border px-3 py-1"
+                class="rounded-full border border-white/15 bg-white/5 px-3 py-1"
               >
+                <span class="mr-2 rounded-full bg-amber-300 px-1.5 text-[10px] font-bold text-zinc-950">SAVE</span>
                 {{ t(tier.name) }}
-                <s class="text-muted-foreground">{{ skuQuote('listing', tier.id).listLabel }}</s>
+                <s class="mx-1 text-stone-400">{{ skuQuote('listing', tier.id).listLabel }}</s>
                 {{ skuQuote('listing', tier.id).priceLabel }}
               </li>
-              <li
-                v-for="plan in adPlans"
-                :key="plan.id"
-                class="rounded-full border border-border px-3 py-1"
-              >
-                {{ t(plan.name) }}
-                <s class="text-muted-foreground">{{ skuQuote('sidebar', '1').listLabel }}</s>
+              <li class="rounded-full border border-white/15 bg-white/5 px-3 py-1">
+                <span class="mr-2 rounded-full bg-amber-300 px-1.5 text-[10px] font-bold text-zinc-950">SAVE</span>
+                {{ pick('右栏', 'Sidebar') }}
+                <s class="mx-1 text-stone-400">{{ skuQuote('sidebar', '1').listLabel }}</s>
                 {{ skuQuote('sidebar', '1').priceLabel }}{{ pick('/周', '/wk') }}
+              </li>
+              <li class="rounded-full border border-white/15 bg-white/5 px-3 py-1">
+                Billboard {{ pick('从 $15 起', 'from $15') }}
               </li>
             </ul>
           </template>
-          <p v-else>
+          <p v-else class="text-sm leading-relaxed">
             {{
               pick(
-                '下面是表价。页面价格即为实付。Billboard 一次付清。',
-                'Prices below are the list prices, and the price on the page is what you pay. Billboard is a one-time payment.',
+                '下面是表价。页面价格即为实付。Billboard 从 $15 起，一次付清。',
+                'Prices below are the list prices, and the price on the page is what you pay. Billboard is name-your-price from $15.',
               )
             }}
           </p>
@@ -439,29 +436,25 @@ useHead({
           </NuxtLink>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <article
-            v-for="tier in BILLBOARD_TIERS"
-            :key="tier.id"
-            class="flex flex-col rounded-2xl border border-border bg-background p-6"
-          >
+        <div class="grid gap-6 sm:grid-cols-2">
+          <article class="flex flex-col rounded-2xl border border-border bg-background p-6">
             <div class="mb-2 flex items-baseline justify-between gap-3">
-              <span class="text-sm font-medium">{{ t(tier.name) }}</span>
+              <span class="text-sm font-medium">Billboard</span>
               <span class="text-right">
-                <span
-                  v-if="skuQuote('billboard', tier.id).strikeLabel"
-                  class="mr-2 text-sm text-muted-foreground line-through"
-                >{{ skuQuote('billboard', tier.id).strikeLabel }}</span>
-                <span class="font-serif text-3xl tracking-tight">
-                  {{ skuQuote('billboard', tier.id).priceLabel }}
-                </span>
+                <span class="text-sm text-muted-foreground">{{ pick('从', 'from') }}</span>
+                <span class="ml-1 font-serif text-3xl tracking-tight">$15</span>
               </span>
             </div>
-            <p v-if="skuQuote('billboard', tier.id).active" class="text-[11px] font-semibold tracking-wide text-primary">
-              {{ pick('BLACK FRIDAY · 约 30% OFF', 'BLACK FRIDAY · ~30% OFF') }}
+            <p class="text-[11px] font-semibold tracking-wide text-muted-foreground">
+              {{ pick('自己出价 · 黑五不减地板价', 'Name your price · Black Friday does not cut the floor') }}
             </p>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {{ t(billboardOffer(tier.id)) }}
+              {{
+                pick(
+                  '一次付清。按累计金额排名。前 10 名同步首页。同一网站再付会累加。',
+                  'One-time. Ranked by total backed. Top 10 on the homepage. Another payment for the same website stacks.',
+                )
+              }}
             </p>
             <div class="mt-auto pt-6">
               <NuxtLink
@@ -469,18 +462,22 @@ useHead({
                 :to="`${localePath('/billboard')}#claim`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
-                {{ pick('认领展示位', 'Claim your spot') }}
+                {{ pick('认领展示位 · $15 起', 'Claim your spot · from $15') }}
               </NuxtLink>
               <a
                 v-else
-                :href="invoiceMail(t(tier.name))"
+                :href="invoiceMail('Billboard')"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
-                {{ pick('索取发票', 'Request invoice') }}
+                {{ pick('索取发票 · $15 起', 'Request invoice · from $15') }}
               </a>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
-              {{ pick('一次付清。付款即上线。', 'One-time payment. Live the second you pay.') }}
+              {{
+                paymentReady
+                  ? pick('一次付清。付款即上线。', 'One-time payment. Live the second you pay.')
+                  : pick('一次付清。发票确认后上线。', 'One-time payment. Live after the invoice is confirmed.')
+              }}
             </p>
           </article>
           <article

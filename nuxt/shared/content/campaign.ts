@@ -7,7 +7,13 @@
  * their own, using the server clock.
  */
 
-export const CAMPAIGN_SCOPE = ['listing', 'sidebar', 'billboard'] as const
+/**
+ * Billboard is pay-what-you-want from $15. The campaign does not discount
+ * that floor. Launch listings and the sidebar still take the sale price.
+ * The homepage promo bar may still *display* Prime $49 → $34 as a narrative
+ * strikethrough; that figure is not a Billboard charge.
+ */
+export const CAMPAIGN_SCOPE = ['listing', 'sidebar'] as const
 export type CampaignScope = (typeof CAMPAIGN_SCOPE)[number]
 
 export const CAMPAIGN = {

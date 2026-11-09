@@ -111,16 +111,19 @@ CREATE TABLE IF NOT EXISTS ads (
 CREATE INDEX IF NOT EXISTS idx_ads_slot ON ads (slot, active);
 
 -- ---------------------------------------------------------------------------
--- Billboard placements — one-time, not the weekly `ads` table.
+-- Billboard placements — one-time pay-what-you-want, not the weekly `ads` table.
 --
--- `requested` is an operator invoice backfill. `pending` is a checkout that
--- has not been paid. Neither is public. `live` requires `paid_at`. `removed`
--- is the takedown switch and does not rewrite paid_at.
+-- Public rank is the sum of `amount_cents` on live rows that share a URL
+-- (a later payment stacks; being outbid does not delete the row). `tier` is
+-- only a storage label (entry / standard / prime) derived from the amount.
+-- `requested` is an invoice that is not public. `pending` is an unpaid
+-- checkout. `live` requires `paid_at`. `removed` is the takedown switch.
 -- Homepage Top 10 and /billboard read the same live rows.
+-- No new column: stacking uses `amount_cents` (see migrations/2026-11-09).
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS billboard_placement (
   id           TEXT    PRIMARY KEY,
-  -- entry | standard | prime
+  -- entry | standard | prime — label only, not the sort key
   tier         TEXT    NOT NULL,
   name         TEXT    NOT NULL DEFAULT '',
   tagline      TEXT    NOT NULL DEFAULT '',

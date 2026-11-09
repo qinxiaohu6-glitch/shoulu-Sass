@@ -1,9 +1,11 @@
 /**
  * Billboard — the one price table for the homepage Top 10 and /billboard.
  *
- * Entry $15 / Standard $29 / Prime $49 are one-time. Standard replaces the
- * old board rental ($29/week). Nothing here is a bid ladder, and the list
- * price is never raised so a campaign can draw a strikethrough under it.
+ * The live board is pay-what-you-want from $15 (`shared/utils/billboard-bid.ts`).
+ * These three tiers are no longer the claim UI. `tierForBid` still stores one
+ * of these ids on a row so older reads keep a label; public order is the
+ * summed `amount_cents`, not the tier. Black Friday does not discount the
+ * $15 floor. The promo bar's Prime $49 → $34 line is display-only.
  *
  * Set `BLACK_FRIDAY.enabled` to false to hide the promo bar and the strikes
  * immediately. After `endsAt` they hide on their own.
