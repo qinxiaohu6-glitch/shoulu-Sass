@@ -8,6 +8,7 @@ import {
   categoryBrowseModel,
   emptyCategoryLinks,
   homeOfferSlots,
+  offerSpotLine,
   type BrowseTool,
   type OfferListing,
 } from './home-offers.ts'
@@ -120,6 +121,15 @@ test('offer slots keep the published prices and stay empty without a real order'
   assert.deepEqual(slots[3]?.href, { path: '/book-ad', query: { slot: 'sidebar', weeks: '1' } })
   assert.equal(slots[0]?.detail.zh, '7 天置顶 + 首页卡')
   assert.equal(slots[1]?.detail.zh, '分类置顶 90 天')
+  assert.equal(offerSpotLine(slots[0]!, 'zh'), '精选 $39 一次性')
+  assert.equal(offerSpotLine(slots[0]!, 'en'), 'Featured $39 one-time')
+  assert.equal(offerSpotLine(slots[1]!, 'zh'), '专业 $69 一次性')
+  assert.equal(offerSpotLine(slots[1]!, 'en'), 'Pro $69 one-time')
+  assert.equal(offerSpotLine(slots[2]!, 'zh'), '榜单位 $29/周')
+  assert.equal(offerSpotLine(slots[2]!, 'en'), 'Board slot $29/week')
+  assert.equal(offerSpotLine(slots[3]!, 'zh'), '右栏位 $19/周')
+  assert.equal(offerSpotLine(slots[3]!, 'en'), 'Sidebar slot $19/week')
+  assert.equal(slots.some((slot) => /spots left|\d+\/\d+/.test(offerSpotLine(slot, 'en'))), false)
 })
 
 test('catalogue seed and unpaid intent do not fill a spot; a paid order does', () => {
@@ -193,8 +203,16 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   assert.equal(home.includes('收录后你能得到什么'), false)
   assert.equal(home.includes('cat-card__mix-empty'), false)
   assert.equal(home.includes('这些位置可以订'), true)
-  assert.equal(home.includes('你的产品'), true)
-  assert.equal(home.includes('这个位置可订'), true)
+  const offers = home.slice(home.indexOf('id="home-offers"'), home.indexOf('id="browse-by-category"'))
+  assert.equal(offers.includes('投放广告'), true)
+  assert.equal(offers.includes('Advertise'), true)
+  assert.equal(offers.includes('megaphone'), true)
+  assert.equal(offers.includes('offer-card--open'), true)
+  assert.equal(offers.includes('is-taken'), true)
+  assert.equal(offers.includes('你的产品'), false)
+  assert.equal(offers.includes('Your product'), false)
+  assert.equal(offers.includes('spots left'), false)
+  assert.equal(offers.includes('Your ad here'), false)
   assert.equal(home.includes('成为该分类第一个'), true)
   assert.equal(home.includes('赞助这个分类'), true)
   assert.equal(pricing.includes('收录后你能得到什么'), true)

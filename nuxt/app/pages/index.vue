@@ -383,8 +383,8 @@ useHead({
               <p>
                 {{
                   pick(
-                    '有真实订单就展示那个产品。空着写「你的产品」，不放示例。',
-                    'A paid order shows that product. An empty spot says “Your product” and is not filled with a sample.',
+                    '有真实订单就展示那个产品。空位只写档位和价格，不放示例。',
+                    'A paid order shows that product. An empty spot shows the tier and its price, not a sample.',
                   )
                 }}
               </p>
@@ -418,20 +418,26 @@ useHead({
                 </span>
               </a>
               <NuxtLink
+                v-else-if="!offer.occupant"
+                class="offer-card offer-card--open"
+                :to="localePath(offer.href)"
+              >
+                <Icon name="megaphone" :size="22" />
+                <strong>{{ pick('投放广告', 'Advertise') }}</strong>
+                <span class="offer-card__sub">{{ offerSpotLine(offer, lang) }}</span>
+              </NuxtLink>
+              <NuxtLink
                 v-else
-                class="offer-card"
-                :class="{ 'is-taken': Boolean(offer.occupant) }"
-                :to="localePath(offer.occupant ? offer.occupant.href : offer.href)"
+                class="offer-card is-taken"
+                :to="localePath(offer.occupant.href)"
               >
                 <span class="offer-card__logo">
                   <ToolLogo
-                    v-if="offer.occupant"
                     :logo="offer.occupant.logo"
                     :name="offer.occupant.name"
                     :size="40"
                     decorative
                   />
-                  <span v-else class="offer-card__ghost" aria-hidden="true">+</span>
                 </span>
                 <span class="offer-card__body">
                   <span class="offer-card__kicker">
@@ -439,17 +445,11 @@ useHead({
                     <b>{{ offer.price }}</b>
                     <small>{{ pick(offer.unit.zh, offer.unit.en) }}</small>
                   </span>
-                  <strong>{{ offer.occupant ? offer.occupant.name : pick('你的产品', 'Your product') }}</strong>
-                  <span class="offer-card__line">
-                    {{
-                      offer.occupant
-                        ? offer.occupant.line
-                        : pick('这个位置可订', 'This spot is open')
-                    }}
-                  </span>
+                  <strong>{{ offer.occupant.name }}</strong>
+                  <span v-if="offer.occupant.line" class="offer-card__line">{{ offer.occupant.line }}</span>
                   <span class="offer-card__detail">{{ pick(offer.detail.zh, offer.detail.en) }}</span>
                   <span class="offer-card__cta">
-                    {{ offer.occupant ? pick('查看', 'View') : pick('预订这个位置', 'Book this spot') }}
+                    {{ pick('查看', 'View') }}
                     <Icon name="arrow-right" :size="14" />
                   </span>
                 </span>

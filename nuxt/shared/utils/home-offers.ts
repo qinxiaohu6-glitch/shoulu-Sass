@@ -132,6 +132,18 @@ export type HomeOfferSlot = {
   occupant: OfferOccupant | null
 }
 
+/**
+ * Empty-slot subtitle. Name and price come from the pricing tables.
+ * There is no inventory count here — a "spots left" line waits until a
+ * real remaining-capacity number exists.
+ */
+export function offerSpotLine(slot: Pick<HomeOfferSlot, 'name' | 'price' | 'unit'>, locale: 'zh' | 'en'): string {
+  const unit = slot.unit[locale].replace(/\s+/g, '')
+  const name = slot.name[locale]
+  if (unit.startsWith('/')) return `${name} ${slot.price}${unit}`
+  return `${name} ${slot.price} ${unit}`
+}
+
 function paidListing(listings: OfferListing[], plan: 'featured' | 'pro'): OfferListing | undefined {
   return listings.find((tool) => tool.plan === plan && tool.is_paid && tool.slug && tool.name)
 }
