@@ -68,9 +68,10 @@ export default defineNuxtConfig({
     // secret in an existing environment does not break a deploy.
     openPagerankKey: '',
 
-    // Online payment. Empty means the manual flow — tell the submitter to pay,
-    // confirm by hand in the console — which is how the site works today and
-    // how it keeps working if a merchant account is refused.
+    // Online payment. When a provider is configured, a signed webhook settles
+    // the order and publishes the listing / schedules the ad automatically.
+    // Empty degrades to the manual fallback (operator confirms in the console),
+    // which is only used when no processor is enabled or a webhook was lost.
     //
     //   NUXT_PAYMENT_PROVIDER=stripe
     //   NUXT_STRIPE_SECRET_KEY=sk_live_…        (sk_test_… while testing)

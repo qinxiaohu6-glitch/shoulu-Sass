@@ -110,8 +110,8 @@ export function submittedMail(row: SubmissionRow, site: string): MailMessage {
     text:
       `Thanks — we received ${name}.\n\n` +
       `${status}. Free listings are usually reviewed in 7–14 days; that is not ` +
-      `guaranteed, and busy periods can take longer. Paid placements go live the ` +
-      `same day the site owner confirms the payment.\n\n` +
+      `guaranteed, and busy periods can take longer. Paid placements are published ` +
+      `automatically as soon as the payment succeeds — no manual confirmation.\n\n` +
       `You can follow it here: ${site}/settings/submissions\n\n` +
       `— Product Atlas\n`,
   }

@@ -181,7 +181,7 @@ cron 归档过的**最新一周**，形状是 catalog 的 `Week`。
 }
 ```
 
-`next` 告诉表单显示哪个屏幕：`review`（免费档，进审核队列）或 `paid`（付费档，等站长确认收款）。
+`next` 告诉表单显示哪个屏幕：`review`（免费档，进人工审核队列）或 `paid`（付费档，待在线付款完成）。**付费档付款成功后由 Waffo 回调验签 → `settleOrder()` → `confirmPayment()` 自动发布上线，不需要站长确认收款**；后台的「确认收款」只用于回调丢失等异常兜底。
 
 **响应里没有的东西，是刻意没有的：** `email`、`ip_hash`、`notes`、`paid_at`、`payment_ref`。
 

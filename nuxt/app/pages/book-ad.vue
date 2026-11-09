@@ -15,6 +15,11 @@
  *
  * Markup follows the public site (`.src-page`, the pill buttons and fields of
  * /submit), not the admin console.
+ *
+ * Added 2026-11-08 from the launchit.fast billboard teardown (docs/10, §4.3):
+ * a live "weeks still open" line, three trust badges and a visible FAQ with
+ * matching FAQPage markup. No bidding, no stackable payments and no "no review"
+ * claim — this site keeps its conflict checks and its Acceptable Use Policy.
  */
 import {
   AD_WEEK_OPTIONS,
@@ -22,6 +27,7 @@ import {
   adPriceCents,
   formatAdPrice,
 } from '~~/shared/content/pricing'
+import { openAdWeeks } from '~/composables/useAds'
 
 const { pick, isZh } = useLang()
 const localePath = useLocalePath()
@@ -67,9 +73,67 @@ const { data } = await useAsyncData<Availability>(
 
 const starts = computed(() => data.value?.starts ?? [])
 const available = computed(() => data.value?.available ?? {})
+const openWeeks = computed(() => openAdWeeks(data.value))
 const plan = computed(() => adPlans.find((entry) => entry.id === slot.value) ?? adPlans[0]!)
 const priceCents = computed(() => adPriceCents(slot.value, weeks.value))
 const price = computed(() => formatAdPrice(priceCents.value))
+
+const openWeeksLine = computed(() =>
+  pick(
+    `未来 6 周还有 ${openWeeks.value.length} 周可订${openWeeks.value[0] ? ` · 最早 ${openWeeks.value[0]}` : ''}`,
+    `Next 6 weeks: ${openWeeks.value.length} still open${openWeeks.value[0] ? ` · earliest ${openWeeks.value[0]}` : ''}`,
+  ),
+)
+
+const trust = computed(() => [
+  { icon: 'circle-check', label: pick('付款成功自动排期', 'Scheduled on payment') },
+  { icon: 'receipt', label: pick('一次性付款，不自动续费', 'One payment, no renewal') },
+  { icon: 'shield-check', label: pick('同一周不会超卖', 'Never oversold') },
+])
+
+/** Visible FAQ. The JSON-LD below is built from this exact array. */
+const bookFaq = computed(() => [
+  {
+    q: pick('付款后多久上线？', 'How soon does it go live?'),
+    a: pick(
+      '付款成功后支付回调自动验签并完成订单，系统立即把广告排进你选的周次，不需要人工确认，也不用提交产品。收据发到你填的邮箱。',
+      'A verified payment webhook settles the order and schedules the ad in the week you picked as soon as payment succeeds. No manual confirmation and no product submission. The receipt goes to the email you entered.',
+    ),
+  },
+  {
+    q: pick('同一周会被卖两次吗？', 'Can the same week be sold twice?'),
+    a: pick(
+      '不会。下单时先做一次冲突检测并预留 30 分钟，付款成功时系统再核对一次；极少数并发情况下，后付款的订单会被标记冲突，由站长退款或改期。',
+      'No. Booking runs a conflict check and holds the week for 30 minutes; the webhook repeats the check when payment succeeds. In the rare case of a simultaneous payment, the later order is flagged as a conflict and refunded or rescheduled by the operator.',
+    ),
+  },
+  {
+    q: pick('会影响搜索排名吗？', 'Will this affect search rankings?'),
+    a: pick(
+      '我们不承诺任何搜索排名、流量、收录或域名权重提升。卖的是站内展示位置与看到它的读者；广告链接带 rel="sponsored"，并明确标注为赞助内容。',
+      'We make no claims about rankings, traffic, indexing or domain authority. What we sell is on-site placement and the readers who see it. Ad links carry rel="sponsored" and are clearly marked as sponsored.',
+    ),
+  },
+  {
+    q: pick('会一直显示吗？', 'Does it stay up forever?'),
+    a: pick(
+      '不会。位置按周出租，周一起算、到期自动下架；1 周展示 7 天，连投 4 周展示 28 天。想续租，直接选后面的周再订一次，没有自动续费。',
+      'No. Slots are rented by the week, starting Monday, and come down on their own: 7 days for one week, 28 for four. To renew, book a later week — there is no auto-renewal.',
+    ),
+  },
+])
+
+const faqSchema = computed(() =>
+  JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: bookFaq.value.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  }),
+)
 
 /** Keep the chosen Monday valid when the slot, length or availability changes. */
 watch(
@@ -140,6 +204,10 @@ useSeo({
     ),
   ),
 })
+
+useHead({
+  script: [{ type: 'application/ld+json', innerHTML: faqSchema }],
+})
 </script>
 
 <template>
@@ -158,6 +226,17 @@ useSeo({
             'Slots are rented by the week, starting Monday, and come down on their own when the window ends. One position is never sold twice for the same week. Payment schedules it automatically — no product submission and no manual confirmation. To renew, simply book a later week.',
           )
         }}
+      </p>
+
+      <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
+        <li v-for="item in trust" :key="item.label" class="inline-flex items-center gap-1.5">
+          <Icon :name="item.icon" :size="14" />
+          {{ item.label }}
+        </li>
+      </ul>
+      <p v-if="openWeeks.length" class="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs">
+        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+        {{ openWeeksLine }}
       </p>
     </header>
 
@@ -362,5 +441,26 @@ useSeo({
         </NuxtLink>
       </aside>
     </form>
+
+    <!-- Visible FAQ; the FAQPage schema above is generated from bookFaq. -->
+    <section class="mt-14 border-t border-border pt-10">
+      <div class="max-w-3xl">
+        <h2 class="font-serif text-2xl font-normal tracking-tight">
+          {{ pick('预订前常见问答', 'Before you book') }}
+        </h2>
+        <dl class="mt-6 space-y-6">
+          <div v-for="item in bookFaq" :key="item.q">
+            <dt class="text-sm font-medium">{{ item.q }}</dt>
+            <dd class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ item.a }}</dd>
+          </div>
+        </dl>
+        <NuxtLink
+          :to="localePath('/faq')"
+          class="mt-8 inline-block text-xs text-muted-foreground underline underline-offset-4"
+        >
+          {{ pick('更多问题见 /faq', 'More questions on /faq') }} →
+        </NuxtLink>
+      </div>
+    </section>
   </div>
 </template>

@@ -796,7 +796,7 @@ export const SETTINGS_MESSAGES: Record<string, Msg> = {
   "dir.submit.premium_skips_queue": { en: "Premium skips the queue: the listing goes live as soon as payment succeeds.", zh: "付费收录无需排队，付款成功后立即发布。" },
   "dir.submit.preview_title": { en: "Preview", zh: "预览" },
   "directory.about_p1": { en: "We collect AI tools that are worth your time and sort them by what they help you do, so you can compare a few good options instead of wading through hundreds.", zh: "我们收录值得花时间的 AI 工具，并按用途分类整理。你只需比较几个好选择，不用在几百个工具里大海捞针。" },
-  "directory.about_p2": { en: "Every listing is reviewed by hand before it goes live. Makers can submit for free; featured placements are clearly marked.", zh: "每个工具上线前都经过人工审核。开发者可以免费提交，付费精选位都会明确标注。" },
+  "directory.about_p2": { en: "Free listings are reviewed by a person before they go live; paid listings publish automatically once payment succeeds. Makers can submit for free; paid placements are clearly marked.", zh: "免费收录上线前经过人工审核；付费收录付款成功后由系统自动发布。开发者可以免费提交，付费展示位都会明确标注。" },
   "directory.about_title": { en: "About ShipAny Dir", zh: "关于 ShipAny Dir" },
   "directory.ad_manage_btn": { en: "Manage My Sponsor Ads", zh: "管理我的广告" },
   "directory.ad_success_desc": { en: "Your reservation for {name} as a {tier} has been created.", zh: "您为 {name} 预订的 {tier} 席位已就绪。" },

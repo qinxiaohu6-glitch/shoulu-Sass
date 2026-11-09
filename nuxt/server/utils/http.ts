@@ -54,8 +54,8 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
   bad_action: { status: 400, zh: '未知的操作。', en: 'Unknown action.' },
   payment_required: {
     status: 409,
-    zh: '付费档须先确认收款，才能公开详情。',
-    en: 'Confirm payment before a paid listing can go live.',
+    zh: '付费档在付款成功后由系统自动发布，请先完成付款。',
+    en: 'A paid listing publishes automatically once payment succeeds. Complete the payment first.',
   },
   storage_unavailable: {
     status: 503,

@@ -21,9 +21,9 @@ export type MySubmission = {
   slot: string
   status: 'pending' | 'approved' | 'rejected'
   awaiting_payment: boolean
-  /** Unix seconds; `null` until the owner confirms the money arrived. */
+  /** Unix seconds; `null` until the payment settles (the webhook publishes automatically). */
   paid_at: number | null
-  /** Whatever the owner typed when confirming; empty for free listings. */
+  /** Whatever was recorded when the payment settled; empty for free listings. */
   payment_ref: string
   /** Owner-only: the settings list draws this as the row's 40px thumb. */
   logo: string

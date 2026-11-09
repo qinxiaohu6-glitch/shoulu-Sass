@@ -1,12 +1,12 @@
 /**
  * Which provider, if any, is switched on.
  *
- * `null` is a first-class answer, not a failure. The site has taken money
- * without a provider since it launched: the submitter is told to pay, the
- * operator confirms by hand, `confirmPayment()` publishes. That path must keep
- * working while a merchant account is being approved, and it must keep working
- * if the account is ever frozen — so "no provider" degrades to the manual flow
- * rather than to a broken checkout button.
+ * `null` is a first-class answer, not a failure. With a provider configured the
+ * signed webhook settles the order and publishes automatically (`confirmPayment()`
+ * / `activateAdBooking()`), with no operator in the loop. If no provider is
+ * enabled, or a webhook was lost, the operator can still call `confirmPayment()`
+ * by hand in the console — that fallback must keep working while a merchant
+ * account is being approved and if it is ever frozen.
  *
  * Selection is by name in `NUXT_PAYMENT_PROVIDER`, not by "whichever secrets
  * happen to be present". A half-configured provider that silently activates is

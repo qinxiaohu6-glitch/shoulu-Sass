@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
+import { adPlans } from '~~/shared/content/pricing'
+
 const { lang, isZh, pick } = useLang()
 
 const router = useRouter()
 // @nuxtjs/i18n v10 exposes this as a composable rather than an auto-import,
 // so it has to be pulled in during setup — not inside the submit handler.
 const localePath = useLocalePath()
+const requestFetch = useRequestFetch()
 
 // Community listings, so the "products listed" figure and the newest strip
 // agree with /tools and /just-added rather than quietly undercounting.
@@ -19,6 +23,56 @@ const { categories: liveCategories, tags: liveTags } = useDirectoryMeta()
 
 // A booked sidebar placement renders above the rail; `null` renders nothing.
 const { sidebar: sidebarAd } = await useAds()
+
+/**
+ * The sidebar slot's price, read from the same table `/pricing` renders so the
+ * two can never quote different numbers. `sidebar` is a fixed member of
+ * `adPlans`, but the lookup stays defensive: a missing row must hide the promo
+ * card, not crash the homepage.
+ */
+const sidebarPlan = adPlans.find((plan) => plan.id === 'sidebar') ?? null
+
+/**
+ * Price-forward placement band. Both slots are advertised with their real
+ * prices before a visitor has to go looking, and the open-week count comes
+ * from the same read-only endpoint /book-ad uses. A failed read hides the
+ * count rather than inventing one.
+ */
+const { data: homeSpots } = await useAsyncData<{
+  board: AdAvailability
+  sidebar: AdAvailability
+}>(
+  'home-spot-availability',
+  async () => {
+    const [board, sidebar] = await Promise.all([
+      requestFetch<AdAvailability>('/api/ads/availability?slot=board&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
+      requestFetch<AdAvailability>('/api/ads/availability?slot=sidebar&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
+    ])
+    return { board, sidebar }
+  },
+  { default: () => ({ board: EMPTY_AD_AVAILABILITY, sidebar: EMPTY_AD_AVAILABILITY }) },
+)
+
+const spotStrip = computed(() =>
+  adPlans.map((entry) => {
+    const payload = entry.id === 'board' ? homeSpots.value?.board : homeSpots.value?.sidebar
+    const open = openAdWeeks(payload)
+    return {
+      id: entry.id,
+      name: isZh.value ? entry.name.zh : entry.name.en,
+      price: entry.price,
+      unit: isZh.value ? entry.unit.zh : entry.unit.en,
+      where: isZh.value ? entry.where.zh : entry.where.en,
+      openCount: open.length,
+      hasLive: Boolean(payload?.ok),
+    }
+  }),
+)
+
+/** Kept out of the template so the string builder stays plain TypeScript. */
+function spotOpenLabel(count: number): string {
+  return pick(`未来 6 周 ${count} 周可订`, `${count} of the next 6 weeks open`)
+}
 
 const all = computed(() =>
   mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value),
@@ -106,7 +160,7 @@ const stats = computed(() => [
 const proofs = computed(() => [
   pick('30 秒提交', '30-second submit'),
   pick('付费收录 dofollow', 'Dofollow on paid'),
-  pick('确认收款当天上线', 'Live once payment is confirmed'),
+  pick('付款成功自动上线', 'Live automatically on payment'),
 ])
 
 const benefits = computed(() => [
@@ -149,11 +203,11 @@ const faq = computed(() =>
     ? [
         {
           q: '提交要花钱吗？',
-          a: '免费收录 0 元，进人工审核队列，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow。标准一次性 $19：付款确认后当天上线（人工确认收款）、永久 dofollow、目录页排在免费收录之前。精选 $39：再加目录页和分类页置顶 7 天、首页精选卡。专业 $69：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。',
+          a: '免费收录 0 元，进人工审核队列，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow。标准一次性 $19：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 $39：再加目录页和分类页置顶 7 天、首页精选卡。专业 $69：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。',
         },
         {
           q: '多久能上线？',
-          a: '付费档在站长确认收款后当天上线（人工确认收款）。免费收录由人工审核，通常 7–14 天，不保证；高峰可能更长。',
+          a: '付费档付款成功后由支付回调自动验签、自动发布上线，不需要人工确认收款。免费收录由人工审核，通常 7–14 天，不保证；高峰可能更长。',
         },
         {
           q: '免费收录的链接是 nofollow 吗？',
@@ -167,11 +221,11 @@ const faq = computed(() =>
     : [
         {
           q: 'How much does it cost?',
-          a: 'A free listing costs nothing, waits in the review queue (usually 7–14 days, not guaranteed; busy periods can take longer), and carries a nofollow link. Standard is a one-time $19: live the same day payment is confirmed (we confirm receipt by hand), permanent dofollow, listed above every free submission. Featured is $39 and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is $69 for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription.',
+          a: 'A free listing costs nothing, waits in the review queue (usually 7–14 days, not guaranteed; busy periods can take longer), and carries a nofollow link. Standard is a one-time $19: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is $39 and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is $69 for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription.',
         },
         {
           q: 'How fast does my listing go live?',
-          a: 'Live the same day payment is confirmed (we confirm receipt by hand). Free listings are reviewed by a person, usually 7–14 days, not guaranteed; busy periods can take longer.',
+          a: 'Paid listings are published automatically as soon as payment succeeds — a signed webhook settles the order and publishes the page, with no manual confirmation. Free listings are reviewed by a person, usually 7–14 days, not guaranteed; busy periods can take longer.',
         },
         {
           q: 'Is the free link nofollow?',
@@ -302,6 +356,48 @@ useHead({
         <TopPicks :limit="5" />
       </aside>
     </div>
+
+    <!-- ── Both placements, priced up front ──────────────────────────────── -->
+    <section class="home-spots" aria-labelledby="home-spots-title">
+      <div class="home-spots__head">
+        <div>
+          <p class="home-spots__eyebrow">{{ pick('本周还有位置', 'SPOTS OPEN THIS WEEK') }}</p>
+          <h2 id="home-spots-title">{{ pick('两个位置，明码标价', 'Two placements, priced up front') }}</h2>
+        </div>
+        <p class="home-spots__note">
+          {{
+            pick(
+              '可订周次实时读取排期表。付款成功后系统自动排期，同一周不会卖两次。',
+              'Open weeks come from the live schedule. Payment schedules it automatically and no week is sold twice.',
+            )
+          }}
+        </p>
+      </div>
+      <div class="home-spots__grid">
+        <NuxtLink
+          v-for="spot in spotStrip"
+          :key="spot.id"
+          class="home-spot"
+          :to="`${localePath('/book-ad')}?slot=${spot.id}&weeks=1`"
+        >
+          <span class="home-spot__top">
+            <b>{{ spot.name }}</b>
+            <span class="home-spot__price">{{ spot.price }}<small>{{ spot.unit }}</small></span>
+          </span>
+          <span class="home-spot__where">{{ spot.where }}</span>
+          <span class="home-spot__foot">
+            <span v-if="spot.hasLive">
+              {{ spotOpenLabel(spot.openCount) }}
+            </span>
+            <span v-else>{{ pick('在线选周', 'Pick a week online') }}</span>
+            <span class="home-spot__cta">
+              {{ pick('选周次', 'Pick a week') }}
+              <Icon name="arrow-right" :size="14" />
+            </span>
+          </span>
+        </NuxtLink>
+      </div>
+    </section>
 
     <!-- ── Main + rail ──────────────────────────────────────────────────── -->
     <div class="home-layout">
@@ -534,6 +630,36 @@ useHead({
       <aside class="rail">
         <AdSlot slot="sidebar" :ad="sidebarAd" />
 
+        <!--
+          The empty state of the sidebar slot.
+
+          `AdSlot` renders nothing while no campaign is booked, on purpose: the
+          original site has no empty frame there. But a slot nobody can see is a
+          slot nobody books, so the empty state sells the next one instead of
+          leaving a hole — price first, from `adPlans`, so it cannot drift from
+          `/pricing`.
+        -->
+        <section v-if="!sidebarAd && sidebarPlan" class="rail-for-rent">
+          <p class="rail-for-rent__tag">{{ pick('这个位置招租', 'This spot is for rent') }}</p>
+          <p class="rail-for-rent__price">
+            <b>{{ sidebarPlan.price }}</b>
+            <span>{{ pick(sidebarPlan.unit.zh, sidebarPlan.unit.en) }}</span>
+          </p>
+          <p class="rail-for-rent__meta">
+            {{ pick(sidebarPlan.bundle.zh, sidebarPlan.bundle.en) }}
+          </p>
+          <p class="rail-for-rent__where">
+            {{ pick(sidebarPlan.where.zh, sidebarPlan.where.en) }}
+          </p>
+          <NuxtLink
+            class="rail-for-rent__cta"
+            :to="`${localePath('/book-ad')}?slot=sidebar&weeks=1`"
+          >
+            {{ pick('选一个周次', 'Pick a week') }}
+            <Icon name="arrow-right" :size="14" />
+          </NuxtLink>
+        </section>
+
         <RailHeat />
 
         <section class="paid-card">
@@ -547,11 +673,11 @@ useHead({
           </div>
           <h2>{{ pick('让更多人先看到你', 'Get seen first') }}</h2>
           <p class="paid-card__sub">
-            {{ pick('付款确认后当天上线（人工确认收款）。', 'Live the same day payment is confirmed (we confirm receipt by hand).') }}
+            {{ pick('付款成功后自动收录发布。', 'Published automatically as soon as payment succeeds.') }}
           </p>
           <ul class="paid-feats">
             <li><Icon name="circle-check" /><span>{{ pick('永久 dofollow 反链，不挂 badge', 'Permanent dofollow link, no badge') }}</span></li>
-            <li><Icon name="circle-check" /><span>{{ pick('付款确认后当天上线（人工确认收款）', 'Live the same day payment is confirmed (we confirm receipt by hand)') }}</span></li>
+            <li><Icon name="circle-check" /><span>{{ pick('付款成功后自动收录发布', 'Published automatically as soon as payment succeeds') }}</span></li>
             <li><Icon name="circle-check" /><span>{{ pick('目录页排在免费收录之前', 'Listed above every free submission') }}</span></li>
             <li><Icon name="circle-check" /><span>{{ pick('想再往前：精选 $39 加置顶 7 天', 'Want the top? Featured adds a 7-day pin for $39') }}</span></li>
           </ul>

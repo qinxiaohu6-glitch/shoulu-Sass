@@ -63,13 +63,13 @@ export const tiers: PriceTier[] = [
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: [
-        'Live the same day payment is confirmed (we confirm receipt by hand)',
+        'Published automatically as soon as payment succeeds',
         'Permanent dofollow, no badge, no re-checking',
         'Listed above every free submission',
         'Stays online, competes on the weekly board',
       ],
       zh: [
-        '付款确认后当天上线（人工确认收款）',
+        '付款成功后自动收录发布，不用等人工确认',
         '永久 dofollow 反链，不挂 badge、不复查',
         '目录页排在免费收录之前',
         '永久保留，可参与每周榜单',
@@ -213,9 +213,9 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
     label: { en: 'Goes live', zh: '上线时间' },
     values: [
       { en: 'Usually 7–14 days, not guaranteed', zh: '通常 7–14 天，不保证' },
-      { en: 'Day payment is confirmed', zh: '确认收款当天' },
-      { en: 'Day payment is confirmed', zh: '确认收款当天' },
-      { en: 'Day payment is confirmed', zh: '确认收款当天' },
+      { en: 'Right after payment', zh: '付款成功即上线' },
+      { en: 'Right after payment', zh: '付款成功即上线' },
+      { en: 'Right after payment', zh: '付款成功即上线' },
     ],
   },
   {
@@ -294,15 +294,15 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'What do I get by paying?', zh: '免费和付费差在哪？' },
     a: {
-      en: 'Three things: how long you wait, what kind of link you get, and where you appear. Free waits usually 7–14 days with a nofollow link. Paid goes live the day payment is confirmed, with a permanent dofollow link, listed above free submissions.',
-      zh: '三件事：等待时间、链接类型、展示位置。免费要排队，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow；付费档：付款确认后当天上线（人工确认收款），反链永久 dofollow，目录页排在免费收录之前。再往上一档才开始买「位置」——目录页和分类页置顶 7 天。',
+      en: 'Three things: how long you wait, what kind of link you get, and where you appear. Free waits usually 7–14 days with a nofollow link. Paid listings publish automatically as soon as payment succeeds, with a permanent dofollow link, listed above free submissions.',
+      zh: '三件事：等待时间、链接类型、展示位置。免费要排队，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow；付费档：付款成功后自动收录发布，反链永久 dofollow，目录页排在免费收录之前。再往上一档才开始买「位置」——目录页和分类页置顶 7 天。',
     },
   },
   {
     q: { en: 'Why is there a $19 tier in the middle?', zh: '为什么中间还有一个 $19？' },
     a: {
-      en: 'Because most people want exactly two things: the link turns dofollow, and the listing goes live the day payment clears. They do not want a homepage position. With only Free and Featured on the menu, those people either freeload or get pushed into a tier they do not need.',
-      zh: '因为绝大多数人只想要两件事：链接变 dofollow、确认收款后当天上线。他们并不想买首页位置，如果只有「免费」和「置顶」两个选择，这些人要么白嫖，要么被推去买一个用不上的档位。标准档就是给他们准备的。',
+      en: 'Because most people want exactly two things: the link turns dofollow, and the listing publishes automatically when the payment succeeds. They do not want a homepage position. With only Free and Featured on the menu, those people either freeload or get pushed into a tier they do not need.',
+      zh: '因为绝大多数人只想要两件事：链接变 dofollow、付款成功就自动上线。他们并不想买首页位置，如果只有「免费」和「置顶」两个选择，这些人要么白嫖，要么被推去买一个用不上的档位。标准档就是给他们准备的。',
     },
   },
   {
@@ -322,8 +322,28 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'How fast does it go live?', zh: '多久能上线？' },
     a: {
-      en: 'Paid listings are published the same day the owner confirms the payment. Free listings join the manual review queue, usually 7–14 days, not guaranteed.',
-      zh: '付费档在站长确认收款后当天生成页面并上线（人工确认收款）。免费进入人工审核队列，通常 7–14 天，不保证；高峰可能更长。',
+      en: 'Paid listings are published automatically as soon as the payment succeeds: the signed payment webhook settles the order and publishes the page, with no operator in the loop. Free listings join the manual review queue, usually 7–14 days, not guaranteed.',
+      zh: '付费档在付款成功后由系统自动发布：支付回调验签后完成订单并生成页面上线，不需要站长经手。免费进入人工审核队列，通常 7–14 天，不保证；高峰可能更长。',
+    },
+  },
+  {
+    q: {
+      en: 'Do I have to wait for someone to confirm my payment?',
+      zh: '付费档还要等人工确认吗？',
+    },
+    a: {
+      en: 'No. A verified payment webhook settles the order and the system publishes the listing or schedules the ad slot right away; the receipt goes to the email you entered. Free listings still go through manual review, usually 7–14 days.',
+      zh: '不用。付款成功后支付回调自动验签并完成订单，系统立即发布收录或排期广告位，收据发到你填的邮箱。免费档仍需人工审核，通常 7–14 天。',
+    },
+  },
+  {
+    q: {
+      en: 'Do these placements affect search rankings?',
+      zh: '这些展示会影响搜索排名吗？',
+    },
+    a: {
+      en: 'We make no claims about rankings, traffic, indexing or domain authority. What we sell is on-site placement and the readers who see it; the link attribute is stated per plan — permanent dofollow on paid listings, nofollow on free ones, and rel="sponsored" on ad slots.',
+      zh: '我们不对搜索排名、流量、收录或域名权重做任何承诺。卖的是站内展示位置与看到它的读者；链接属性按方案写清楚：付费收录永久 dofollow、免费 nofollow、广告位带 rel="sponsored"。',
     },
   },
   {

@@ -57,6 +57,11 @@ async function entries(event: H3Event): Promise<Entry[]> {
     { path: '/tags', priority: '0.6' },
     { path: '/makers', priority: '0.6' },
     { path: '/pricing', priority: '0.8' },
+    // Rules and FAQ sit above the legal pages: they are what a seller reads
+    // before paying, so they earn a real priority rather than the 0.2 a policy
+    // page gets.
+    { path: '/rules', priority: '0.7' },
+    { path: '/faq', priority: '0.7' },
     { path: '/privacy-policy', priority: '0.2' },
     { path: '/terms-of-service', priority: '0.2' },
   ].map((e) => ({ ...e, lastmod: today }))

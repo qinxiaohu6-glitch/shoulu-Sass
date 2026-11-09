@@ -151,6 +151,10 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('定价', 'Pricing'), to: '/pricing' },
       { label: pick('提交产品', 'Submit a product'), to: '/submit' },
       { label: pick('我的提交', 'My submissions'), to: '/settings/submissions' },
+      // Rules and FAQ come before the legal pages: they are what a seller reads
+      // before paying, and both answer questions the policies only define.
+      { label: pick('排名与收录规则', 'Ranking rules'), to: '/rules' },
+      { label: pick('常见问答', 'Questions'), to: '/faq' },
       { label: pick('隐私政策', 'Privacy Policy'), to: '/privacy-policy' },
       { label: pick('服务条款', 'Terms of Service'), to: '/terms-of-service' },
       { label: pick('可接受使用政策', 'Acceptable Use Policy'), to: '/terms-of-service', hash: 'acceptable-use' },

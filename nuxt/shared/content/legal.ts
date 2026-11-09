@@ -128,7 +128,7 @@ export const privacyPolicy: LegalDoc = {
           'Usage data — pages and listings viewed, and votes cast while signed in. Votes are stored against an internal identifier so one account cannot vote twice in the same week. We do not build advertising profiles.',
           'Submission data — the product name, description, website URL, logo URL, tags, contact email and screenshots you send us for review.',
           'Support data — the content of tickets you open and our replies.',
-          'Payment data — the plan, order reference, amount and payment status. Card numbers are collected by the payment processor, never by us; where no processor is enabled, payment is confirmed manually by the operator.',
+          'Payment data — the plan, order reference, amount and payment status. Card numbers are collected by the payment processor, never by us; a verified payment webhook settles the order and publishes the placement automatically. Where no processor is enabled, the operator confirms receipt by hand.',
           'Technical data — IP address and request metadata processed by our hosting provider for security and delivery, and the cookie / local-storage values described in the next section.',
         ],
         zh: [
@@ -136,7 +136,7 @@ export const privacyPolicy: LegalDoc = {
           '使用数据 —— 浏览的页面与登录后投出的票。投票按内部标识记录，用于防止同一账号在一周内重复投票；我们不构建广告画像。',
           '提交数据 —— 你提交审核的产品名称、简介、网址、图标地址、标签、联系邮箱与截图。',
           '工单数据 —— 你提交的工单内容以及我们的回复。',
-          '支付数据 —— 方案、订单号、金额与支付状态。银行卡号由支付服务商收集，本站不接触；未启用在线支付时由站长人工确认收款。',
+          '支付数据 —— 方案、订单号、金额与支付状态。银行卡号由支付服务商收集，本站不接触；支付回调验签后由系统自动完成订单并发布展示。未启用在线支付时由站长人工确认收款。',
           '技术数据 —— 托管服务商为安全与交付处理的 IP 与请求元信息，以及下一节列出的 Cookie 与本地存储值。',
         ],
       },
@@ -309,8 +309,8 @@ export const termsOfService: LegalDoc = {
     {
       heading: { en: 'Listings and Submissions', zh: '收录与提交' },
       body: {
-        en: 'We may edit, decline or remove listings that are inaccurate, misleading, duplicated, or link to a site that does not work. Free listings go live after manual review and carry a nofollow link. Free review usually takes 7–14 days; that is not guaranteed, and busy periods can take longer. Paid placements go live on the day the operator confirms receipt of payment. Approval is never guaranteed.',
-        zh: '对于不准确、误导、重复或链接失效的收录，我们可以编辑、拒绝或下架。免费收录经人工审核后展示，外链为 nofollow；审核通常需 7–14 天，不保证时限，繁忙期可能更久。付费置顶在站长确认收款当天上线。任何提交都不保证一定通过。',
+        en: 'We may edit, decline or remove listings that are inaccurate, misleading, duplicated, or link to a site that does not work — including after publication. Free listings go live after manual review and carry a nofollow link; that review usually takes 7–14 days, is not guaranteed, and takes longer in busy periods. Paid placements are published automatically as soon as the payment succeeds: a signed webhook settles the order and publishes the listing or schedules the ad slot, with no operator confirming each receipt. Approval of a free listing is never guaranteed.',
+        zh: '对于不准确、误导、重复或链接失效的收录，我们可以编辑、拒绝或下架，上线之后同样适用。免费收录经人工审核后展示，外链为 nofollow；审核通常需 7–14 天，不保证时限，繁忙期可能更久。付费展示在付款成功后由系统自动发布：支付回调验签后完成订单并发布收录或排期广告位，不需要站长逐笔确认收款。免费提交不保证一定通过。',
       },
     },
     {
@@ -320,8 +320,8 @@ export const termsOfService: LegalDoc = {
         en: [
           'Billing model. Every paid option on this site is a ONE-TIME purchase, never a subscription. The listing tiers are Free $0, Standard $19, Featured $39 and Pro $69; the paid submission upgrade is $39; advertising slots are $29 (board) and $19 (sidebar) per fixed seven-day week, with $99 and $65 four-week bundles. Prices and the exact display period are shown at checkout and at https://dirtool.com/pricing. There is no recurring billing, no automatic renewal, no auto top-up, no credits or credit expiry, and no free trial that converts into a paid plan.',
           'Why there is no subscription section. Waffo\'s Terms of Service template offers three billing blocks — V1 Subscription, V2 Credits/Top-up and V3 Hybrid — and instructs merchants to "Pick the one block that matches your billing model" and "Delete the other two". None of the three describes this business, so the recurring-billing authorisation, renewal notice, in-product subscription cancellation, credit validity, rollover and auto-top-up clauses are deliberately omitted under the template\'s own rule "Deleted the sections that don\'t apply". A completed checkout authorises ONE charge for the amount displayed at that checkout; nothing further is charged without a new, separate purchase.',
-          'Payment processor. Online payments for this merchant account are handled by Waffo Pancake as the payment processor; Stripe and Creem are optional alternative providers in our code. When no processor is enabled, the operator confirms receipt of payment by hand and no card data reaches this site. Payment card data is collected exclusively by the processor and is never stored on our servers. See the Privacy Policy at https://dirtool.com/privacy-policy. Prices are exclusive of applicable taxes unless stated otherwise at checkout.',
-          'Delivery. What is delivered is an editorial listing, a change of the outbound link attribute from nofollow to dofollow, a pinned position (7 or 90 days, depending on the tier), or an advertising slot for a fixed seven-day or four-week window. Free submissions enter a manual review queue that usually takes 7–14 days and is not guaranteed; paid placements go live on the day the operator confirms receipt of payment. Delivery is performed by a human and is not instantaneous.',
+          'Payment processor. Online payments for this merchant account are handled by Waffo Pancake as the payment processor; Stripe and Creem are optional alternative providers in our code. A signed payment webhook settles each order and publishes the paid placement automatically. When no processor is enabled, the operator confirms receipt by hand as a fallback and no card data reaches this site. Payment card data is collected exclusively by the processor and is never stored on our servers. See the Privacy Policy at https://dirtool.com/privacy-policy. Prices are exclusive of applicable taxes unless stated otherwise at checkout.',
+          'Delivery. What is delivered is an editorial listing, a change of the outbound link attribute from nofollow to dofollow, a pinned position (7 or 90 days, depending on the tier), or an advertising slot for a fixed seven-day or four-week window. Free submissions enter a manual review queue that usually takes 7–14 days and is not guaranteed. Paid placements are delivered automatically as soon as the payment succeeds: the verified webhook settles the order and publishes the listing or schedules the ad slot, with no manual step.',
           'Link attributes and SEO. Paid tiers change the outbound link from nofollow to permanent dofollow, exactly as described on the pricing page. We do not promise any search-engine ranking, traffic, indexing, domain-authority increase or other SEO outcome. The fee buys on-site editorial display and the stated link attribute, not a guaranteed result.',
           'Refund policy and eligible cases. Paid placements are one-time purchases. Fees are generally non-refundable once the purchased placement has been delivered — that is, once the listing has been published under the purchased plan, or once the purchased pin, feature or advertising period has started. A full refund is given only for a confirmed duplicate charge or a payment made in error, or if we fail to deliver the purchased placement (including if we decline the submission at review before any paid placement starts, or if a paid pin or listing never goes live for a reason attributable to us). Nothing in these Terms limits any non-waivable withdrawal or refund right that applicable law grants you.',
           'Non-refundable cases. After delivery, the following are not refunded: a change of mind; dissatisfaction with traffic, ranking, clicks or results; partial use of a period that has already started; inaccurate information you submitted; and a paid placement removed because it violates the Acceptable Use Policy at https://dirtool.com/terms-of-service#acceptable-use.',
@@ -332,8 +332,8 @@ export const termsOfService: LegalDoc = {
         zh: [
           '计费模式。本站所有付费项均为**一次性购买，不是订阅**：收录四档为免费 $0、标准 $19、精选 $39、专业 $69；提交页的付费升级为 $39；广告位为榜单位 $29 / 7 天、右栏位 $19 / 7 天，连投 4 周分别为 $99 与 $65。价格与具体展示周期以结账页及 https://dirtool.com/pricing 为准。**没有订阅制**、没有周期性扣款、没有自动续费、没有自动充值、没有积分及其有效期，也没有会自动转为付费的免费试用。',
           '为什么没有订阅章节。Waffo 服务条款模板只提供「V1 订阅」「V2 积分／充值」「V3 混合」三种计费区块，并要求「选一个与计费模式匹配的区块」且「删掉另外两个」。三者均不符合本站业务，因此循环扣款授权、续费提醒、站内订阅取消、积分有效期、积分结转与自动充值等条款，均按模板自身的「删除不适用章节」规则删除。每次结账仅授权当次显示金额的**一次**扣款；除非你再次单独购买，不会产生任何后续扣费。',
-          '支付处理方。本站商户账号的在线支付由 Waffo Pancake 处理；代码中另保留 Stripe、Creem 作为可选替代处理方。未启用在线支付时由站长人工确认收款，卡资料不进入本站。银行卡资料由 PCI-DSS 认证的处理方独家收集，本站服务器不存储。隐私政策见 https://dirtool.com/privacy-policy。除结账页另有说明外，价格不含适用税费。',
-          '交付内容。交付的是约定期限内的编辑型收录、外链由 nofollow 变更为 dofollow、置顶位置（按档位 7 天或 90 天），或固定 7 天／4 周窗口内的广告位。免费提交进入人工审核队列，通常需 7–14 天且不保证；付费收录在站长确认收款当天上线。交付由人工完成，并非即时交付，本站也不作即时交付的宣称。',
+          '支付处理方。本站商户账号的在线支付由 Waffo Pancake 处理；代码中另保留 Stripe、Creem 作为可选替代处理方。支付回调验签后由系统自动完成订单并发布付费展示。未启用在线支付时由站长人工确认收款作为兜底，卡资料不进入本站。银行卡资料由 PCI-DSS 认证的处理方独家收集，本站服务器不存储。隐私政策见 https://dirtool.com/privacy-policy。除结账页另有说明外，价格不含适用税费。',
+          '交付内容。交付的是约定期限内的编辑型收录、外链由 nofollow 变更为 dofollow、置顶位置（按档位 7 天或 90 天），或固定 7 天／4 周窗口内的广告位。免费提交进入人工审核队列，通常需 7–14 天且不保证。付费展示在付款成功后自动交付：支付回调验签后完成订单并发布收录或排期广告位，无需人工介入。',
           '链接属性与 SEO。付费档会把外链从 nofollow 变更为永久 dofollow，与定价页描述一致。我们不承诺任何搜索排名、流量、收录、域名权重提升或其他 SEO 效果；费用购买的是站内编辑展示位与上述链接属性，而非保证的结果。',
           '退款政策与可退情形。付费项均为一次性购买。**一旦已购展示已经交付，原则上不予退款** —— 交付是指付费收录已按所购档位发布，或所购置顶／精选／广告周期已经开始。全额退款仅适用于：经确认的重复扣款或误扣；以及本站未能兑现已购展示（包括付费提交在任何付费展示开始前被审核拒绝，或因本站原因导致付费置顶／收录始终未能上线）。本条款不限制适用法律强制赋予、不可放弃的撤回或退款权利。',
           '不予退款的情形。交付之后，以下情形不予退款：改主意；对流量、排名、点击或效果不满意；已开始的展示周期只用了一部分；你提交的信息不准确；以及因违反可接受使用政策（https://dirtool.com/terms-of-service#acceptable-use）被下架的付费收录。',
