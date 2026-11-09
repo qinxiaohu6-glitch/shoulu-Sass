@@ -44,6 +44,8 @@ export interface PricingPlan {
   interval?: string
   featured?: boolean
   badge?: string
+  /** Small promo line above the price, e.g. a campaign label. */
+  kicker?: string
   features: string[]
   buttonText?: string
 }
