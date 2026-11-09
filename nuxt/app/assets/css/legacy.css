@@ -4589,6 +4589,10 @@ kbd {
   align-items: center;
   gap: 18px;
 }
+.audit__download {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
 .audit__ring {
   --ring-color: var(--primary);
   position: relative;
@@ -4633,6 +4637,7 @@ kbd {
   color: var(--muted-foreground);
 }
 .audit__verdict {
+  flex: 1 1 auto;
   min-width: 0;
 }
 .audit__kicker {
@@ -5190,7 +5195,13 @@ kbd {
     width: 100%;
   }
   .audit__head {
+    flex-wrap: wrap;
     gap: 14px;
+  }
+  .audit__download {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
   }
   .audit__ring {
     width: 78px;

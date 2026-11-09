@@ -350,9 +350,6 @@ useSeo({
               <a :href="report.final_url" target="_blank" rel="noopener nofollow">{{ targetLabel }}</a>
             </p>
             <h2 class="audit__headline">{{ verdict }}</h2>
-            <button class="btn btn--outline" type="button" :disabled="pdfBusy" @click="downloadPdf">
-              {{ pdfBusy ? pick('正在生成 PDF…', 'Building the PDF…') : pick('下载 PDF', 'Download PDF') }}
-            </button>
             <ul class="audit__tally">
               <li v-if="report.summary.fail" class="is-fail">
                 <b>{{ report.summary.fail }}</b>{{ pick('项不通过', 'failed') }}
@@ -365,6 +362,9 @@ useSeo({
               </li>
             </ul>
           </div>
+          <button class="btn btn--primary btn--lg audit__download" type="button" :disabled="pdfBusy" @click="downloadPdf">
+            {{ pdfBusy ? pick('正在生成 PDF…', 'Building the PDF…') : pick('下载 PDF', 'Download PDF') }}
+          </button>
         </div>
 
         <div class="audit__bars">
