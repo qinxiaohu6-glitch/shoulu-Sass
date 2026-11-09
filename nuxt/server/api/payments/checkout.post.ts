@@ -13,7 +13,8 @@
 
 import { getSubmission } from '../../utils/submissions'
 import { useDb } from '../../utils/db'
-import { planAmountCents } from '~~/shared/content/pricing'
+import { campaignSnapshot } from '~~/shared/content/campaign'
+import { effectiveAmountCents, listAmountCents } from '~~/shared/utils/pricing-effective'
 import { getPaymentProvider, paymentConfig, returnUrls } from '../../utils/payments'
 import { attachSession, createOrder, newOrderId, setOrderStatus } from '../../utils/payments/orders'
 
@@ -60,7 +61,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const amountCents = planAmountCents(submission.plan)
+  const amountCents = effectiveAmountCents('listing', submission.plan)
+  const listCents = listAmountCents('listing', submission.plan)
   if (!amountCents) {
     throw createError({
       statusCode: 409,
@@ -100,7 +102,14 @@ export default defineEventHandler(async (event) => {
       cancelUrl: urls.cancelUrl,
     })
     await attachSession(db, orderId, session.ref, session.url)
-    return { ok: true, order: orderId, url: session.url }
+    return {
+      ok: true,
+      order: orderId,
+      url: session.url,
+      amount_cents: amountCents,
+      list_cents: listCents,
+      campaign: campaignSnapshot(),
+    }
   } catch (err) {
     console.error('[payments] checkout failed', err)
     await setOrderStatus(db, orderId, 'failed', {

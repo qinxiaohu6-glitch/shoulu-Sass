@@ -1,16 +1,16 @@
 <script setup lang="ts">
 /**
- * /billboard — fixed tiers, invoice request, and the same ranking as the
- * homepage Top 10. Nothing on this page opens a charge session.
+ * /billboard — fixed tiers and the same ranking as the homepage Top 10.
+ * Checkout charges `effectiveAmountCents` on the server. This page never sends an amount.
  */
 import {
   BILLBOARD_TIERS,
   campaignActive,
   campaignDeadlineShanghai,
-  quoteCents,
   type BillboardTierId,
 } from '~~/shared/content/billboard'
 import { tierPriceLabel } from '~~/shared/utils/billboard'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick, isZh } = useLang()
 const localePath = useLocalePath()
@@ -21,15 +21,15 @@ const url = ref('')
 const email = ref('')
 const name = ref('')
 const busy = ref(false)
-const done = ref(false)
+const done = ref('')
 const error = ref('')
+const payable = ref('')
 
 const deadline = campaignDeadlineShanghai()
 const promoOn = computed(() => campaignActive())
 
 function tierQuote(id: BillboardTierId) {
-  const tier = BILLBOARD_TIERS.find((item) => item.id === id)!
-  return quoteCents(tier.amountCents, Date.now(), tier.floorCents)
+  return effectiveQuote('billboard', id, Date.now())
 }
 
 const rules = computed(() => [
@@ -45,8 +45,8 @@ const rules = computed(() => [
     n: '2',
     title: pick('确认收款后才上榜', 'Live only after payment is confirmed'),
     body: pick(
-      '这个页面只收下意向并开具发票。确认收款后，同一条记录会出现在本页和首页 Top 10。未付款不会公开。违规内容可以事后下架。',
-      'This page only takes the request and an invoice. After payment is confirmed, the same record shows here and in the homepage Top 10. Unpaid requests stay private. A placement that breaks the rules can be taken down afterward.',
+      '付款成功后，同一条记录会出现在本页和首页 Top 10。未付款不会公开。违规内容可以事后下架。',
+      'After payment succeeds, the same record shows here and in the homepage Top 10. Unpaid checkouts stay private. A placement that breaks the rules can be taken down afterward.',
     ),
   },
   {
@@ -72,7 +72,7 @@ const faq = computed(() =>
         },
         {
           q: '多久能上榜？',
-          a: '发票确认收款之后上榜，并同步到首页 Top 10。只提交意向不会公开。我们保留对违规内容的下架权。',
+          a: '付款成功后自动上板，并同步到首页 Top 10。未付款不会公开。我们保留对违规内容的下架权。',
         },
         {
           q: '免费收录还在吗？',
@@ -90,7 +90,7 @@ const faq = computed(() =>
         },
         {
           q: 'How soon does it go live?',
-          a: 'After the invoice is confirmed paid, it appears here and in the homepage Top 10. Sending the request does not publish it. We can take a placement down afterward if it breaks the rules.',
+          a: 'It goes live when payment succeeds, on this page and in the homepage Top 10. An unpaid checkout is not published. We can take a placement down afterward if it breaks the rules.',
         },
         {
           q: 'Does a free listing still exist?',
@@ -101,24 +101,30 @@ const faq = computed(() =>
 
 const openFaq = ref(-1)
 
-async function requestInvoice() {
+async function startCheckout() {
   if (busy.value) return
   busy.value = true
   error.value = ''
+  const quote = tierQuote(picked.value)
+  payable.value = quote.priceLabel
   try {
-    const res = await $fetch<{ ok: boolean; status: string; published: boolean }>('/api/billboard/invoice', {
-      method: 'POST',
-      body: { tier: picked.value, url: url.value, email: email.value, name: name.value },
-    })
-    if (!res?.ok || res.published || res.status !== 'requested') {
+    const res = await $fetch<{ ok: boolean; url?: string; amount_cents: number; published: boolean }>(
+      '/api/billboard/checkout',
+      {
+        method: 'POST',
+        body: { tier: picked.value, url: url.value, email: email.value, name: name.value },
+      },
+    )
+    if (!res?.ok || res.published || res.amount_cents !== quote.amountCents || !res.url) {
       throw new Error('unexpected')
     }
-    done.value = true
+    window.location.assign(res.url)
   } catch (err) {
     const info = (err as { data?: { message_zh?: string; message_en?: string } })?.data
     error.value =
       (isZh.value ? info?.message_zh : info?.message_en) ||
-      pick('没有保存成功，请稍后再试。', 'Could not save the request. Try again in a moment.')
+      pick('结账没有打开，请稍后再试。', 'Checkout did not open. Try again in a moment.')
+    done.value = payable.value
   } finally {
     busy.value = false
   }
@@ -128,8 +134,8 @@ useSeo({
   title: computed(() => pick('Billboard · Product Atlas', 'Billboard · Product Atlas')),
   description: computed(() =>
     pick(
-      'Billboard 一次性三档：入门 $15、标准 $29、优先 $49。与首页 Top 10 同一排行。在线收款未开通时只接受发票意向。',
-      'Billboard is one-time: Entry $15, Standard $29, Prime $49. Same ranking as the homepage Top 10. While card checkout is off, this page only takes an invoice request.',
+      'Billboard 一次性三档。价格与结账实付相同。与首页 Top 10 同一排行。未付款不上板。',
+      'Billboard is one-time. The price on this page is the checkout charge. Same ranking as the homepage Top 10. Unpaid rows stay off the board.',
     ),
   ),
 })
@@ -174,22 +180,12 @@ useHead({
           }}
         </p>
 
-        <form id="claim" class="bb-claim" @submit.prevent="requestInvoice">
+        <form id="claim" class="bb-claim" @submit.prevent="startCheckout">
           <div class="bb-claim__head">
             <h2>{{ pick('认领一个位置', 'Claim a spot') }}</h2>
-            <span>{{ pick('先开发票', 'Invoice first') }}</span>
+            <span>{{ payable ? pick(`应付 ${payable}`, `Pay ${payable}`) : pick('付款后上板', 'Live after payment') }}</span>
           </div>
-          <template v-if="done">
-            <p class="bb-claim__done">
-              {{
-                pick(
-                  '意向已记下，还没有上榜。我们会把发票发到这个邮箱。确认收款之后才会公开，违规内容可以事后下架。',
-                  'Request saved. It is not on the board. We will email an invoice to this address. It is published only after payment is confirmed, and a placement that breaks the rules can be taken down afterward.',
-                )
-              }}
-            </p>
-          </template>
-          <template v-else>
+          <template v-if="true">
             <label class="sr-only" for="bb-url">URL</label>
             <input id="bb-url" v-model="url" type="url" required placeholder="https://yourproduct.com" maxlength="500">
             <label class="sr-only" for="bb-email">Email</label>
@@ -206,23 +202,20 @@ useHead({
                 </span>
                 <span class="bb-tier__price">
                   <s v-if="tierQuote(tier.id).strikeLabel">{{ tierQuote(tier.id).strikeLabel }}</s>
-                  {{
-                    tierQuote(tier.id).strikeLabel
-                      ? pick(`约 ${tierQuote(tier.id).priceLabel}`, `about ${tierQuote(tier.id).priceLabel}`)
-                      : tier.price
-                  }}
+                  {{ tierQuote(tier.id).priceLabel }}
                 </span>
               </label>
             </fieldset>
             <button class="btn btn--primary btn--block" type="submit" :disabled="busy">
-              {{ pick('索取发票', 'Request invoice') }}
+              {{ pick('去付款', 'Pay now') }}
             </button>
             <p v-if="error" class="bb-claim__error">{{ error }}</p>
+            <p v-if="done" class="bb-claim__fine">{{ pick(`应付 ${done}`, `Amount due ${done}`) }}</p>
             <p class="bb-claim__fine">
               {{
                 pick(
-                  '此页不扣款。活动价约按现表价七折，划线价就是表价。入门档保持 $15。',
-                  'This page does not charge you. The promotion is about 30% off the list price, and the struck price is that list price. Entry stays at $15.',
+                  '按钮上的价格就是结账实付。未付款不会公开。',
+                  'The price on the button is the checkout charge. Unpaid rows are not published.',
                 )
               }}
               <template v-if="promoOn">
@@ -264,7 +257,7 @@ useHead({
           <span class="bb-rank__logo" aria-hidden="true">?</span>
           <span class="bb-rank__meta">
             <strong>{{ pick('你的产品可以在这里', 'Your product can go here') }}</strong>
-            <span>{{ pick('空位。索取发票后才会公开。', 'Open. It stays private until the invoice is confirmed.') }}</span>
+            <span>{{ pick('空位。付款成功后才公开。', 'Open. It stays private until payment succeeds.') }}</span>
           </span>
           <span class="bb-price">Claim</span>
         </NuxtLink>

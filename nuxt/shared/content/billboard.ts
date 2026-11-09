@@ -18,9 +18,8 @@ export type BillboardTier = {
   amountCents: number
   price: string
   /**
-   * Campaign sale is not allowed under this many cents. Entry stays at the
-   * list price (the locked floor) instead of advertising a deeper cut that
-   * has not been approved.
+   * Optional minimum. Entry is 0: the campaign discounts every Billboard tier.
+   * A positive floor would keep the list price instead of a deeper cut.
    */
   floorCents: number
   name: { en: string; zh: string }
@@ -35,7 +34,7 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     rank: 1,
     amountCents: 1500,
     price: '$15',
-    floorCents: 1500,
+    floorCents: 0,
     name: { en: 'Entry', zh: '入门' },
     blurb: {
       en: 'One-time Billboard row. Same board as the homepage Top 10.',
@@ -83,86 +82,13 @@ export function billboardStandardCents(): number {
   return billboardTier('standard')?.amountCents ?? 0
 }
 
-export const BLACK_FRIDAY = {
-  /** Flip this off to drop the thin bar and every strikethrough at once. */
-  enabled: true,
-  /** Exclusive end: 2026-12-01 06:59 Asia/Shanghai. */
-  endsAt: '2026-12-01T06:59:00+08:00',
-  /** Taken off the current list price. The list price itself does not move. */
-  off: 0.3,
-} as const
-
-export function campaignActive(now = Date.now(), enabled = BLACK_FRIDAY.enabled): boolean {
-  if (!enabled) return false
-  const ends = Date.parse(BLACK_FRIDAY.endsAt)
-  return Number.isFinite(ends) && now < ends
-}
-
-/** Nearest whole dollar after `off`, never above the list price. */
-export function saleCents(listCents: number, off = BLACK_FRIDAY.off): number {
-  if (!Number.isInteger(listCents) || listCents <= 0) return 0
-  const dollars = Math.round((listCents * (1 - off)) / 100)
-  const cents = dollars * 100
-  if (cents <= 0) return listCents
-  return Math.min(listCents, cents)
-}
-
-export function centsLabel(cents: number): string {
-  if (cents % 100 === 0) return `$${cents / 100}`
-  return `$${(cents / 100).toFixed(2)}`
-}
-
-export type PriceQuote = {
-  listCents: number
-  listLabel: string
-  /** Current price. The list price when the campaign is off or the floor holds. */
-  priceLabel: string
-  /** Struck-through list label. Null when nothing is discounted. */
-  strikeLabel: string | null
-  active: boolean
-}
-
-/**
- * Strikethrough is always the list price. A floor (Entry) keeps the list
- * price rather than printing a discount under the locked minimum.
- */
-export function quoteCents(
-  listCents: number,
-  now = Date.now(),
-  floorCents = 0,
-  enabled = BLACK_FRIDAY.enabled,
-): PriceQuote {
-  const listLabel = centsLabel(listCents)
-  const active = campaignActive(now, enabled)
-  if (!active || listCents <= 0) {
-    return { listCents, listLabel, priceLabel: listLabel, strikeLabel: null, active: false }
-  }
-  let sale = saleCents(listCents)
-  if (floorCents > 0 && sale < floorCents) sale = listCents
-  if (sale >= listCents) {
-    return { listCents, listLabel, priceLabel: listLabel, strikeLabel: null, active: true }
-  }
-  return {
-    listCents,
-    listLabel,
-    priceLabel: centsLabel(sale),
-    strikeLabel: listLabel,
-    active: true,
-  }
-}
-
-/** Shanghai wall time of the campaign end, derived from `endsAt` only. */
-export function campaignDeadlineShanghai(iso = BLACK_FRIDAY.endsAt): string {
-  const date = new Date(iso)
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Shanghai',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  })
-  const parts = Object.fromEntries(fmt.formatToParts(date).map((part) => [part.type, part.value]))
-  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`
-}
+export {
+  BLACK_FRIDAY,
+  CAMPAIGN,
+  campaignActive,
+  campaignDeadlineShanghai,
+  centsLabel,
+  quoteCents,
+  saleCents,
+  type PriceQuote,
+} from './campaign.ts'

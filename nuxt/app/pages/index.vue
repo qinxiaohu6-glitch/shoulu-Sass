@@ -59,7 +59,7 @@ const spotStrip = computed(() => {
       strike: '',
       unit: pick('一次性', 'one-time'),
       where: pick('首页 Top 10。固定三档，不再按周租。', 'Homepage Top 10. Three fixed tiers, not a weekly rental.'),
-      foot: pick('索取发票', 'Request invoice'),
+      foot: pick('去付款', 'Pay now'),
       to: `${localePath('/billboard')}#claim`,
     },
     {
@@ -312,8 +312,8 @@ useHead({
       <p class="mk-sub">
         {{
           pick(
-            '目录页会留着。Billboard 是另外买的一次性展示（$15 / $29 / $49），和每周投票榜不是同一份名单。',
-            'The listing page stays up. Billboard is a separate one-time placement ($15 / $29 / $49), and it is not the weekly vote list.',
+            '一个永久目录页。一次付费的展示位。没有订阅。',
+            'A permanent listing page. A one-time placement. No subscription.',
           )
         }}
       </p>
@@ -374,8 +374,8 @@ useHead({
         <p class="home-spots__note">
           {{
             pick(
-              'Billboard 在这一页不扣款，去索取发票。右栏周次来自排期表。',
-              'Billboard is not charged on this page — request an invoice. Sidebar weeks come from the schedule.',
+              'Billboard 在这一页不扣款，去 /billboard 付款后上板。右栏周次来自排期表。',
+              'Billboard is not charged on this page — pay on /billboard and it goes live. Sidebar weeks come from the schedule.',
             )
           }}
         </p>

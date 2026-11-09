@@ -153,6 +153,8 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
     links: [
       { label: pick('定价', 'Pricing'), to: '/pricing' },
       { label: 'Billboard', to: '/billboard' },
+      { label: pick('投放', 'Advertise'), to: '/advertise' },
+      { label: pick('目录数字', 'Directory numbers'), to: '/stats' },
       { label: pick('提交产品', 'Submit a product'), to: '/submit' },
       { label: pick('我的提交', 'My submissions'), to: '/settings/submissions' },
       // Rules and FAQ come before the legal pages: they are what a seller reads
@@ -276,15 +278,15 @@ watch(() => route.fullPath, () => {
     <p>
       {{
         pick(
-          `黑五 · 约七折，划线价即表价，截止 ${campaignDeadlineShanghai()}（Asia/Shanghai）。`,
-          `Black Friday · about 30% off list price until ${campaignDeadlineShanghai()} (Asia/Shanghai).`,
+          `黑五 · 表价七折，截止 ${campaignDeadlineShanghai()}（Asia/Shanghai）。页面价等于结账实付。`,
+          `Black Friday · 30% off list price until ${campaignDeadlineShanghai()} (Asia/Shanghai). The price on the page is the checkout charge.`,
         )
       }}
       <NuxtLink :to="`${localePath('/pricing')}#black-friday`">{{ pick('看定价', 'See pricing') }}</NuxtLink>
     </p>
   </div>
 
-  <div class="shell">
+  <div class="shell shell--topnav">
     <!-- ── Left rail ─────────────────────────────────────────────────────── -->
     <aside class="sidebar">
       <div class="sidebar__brand">
@@ -359,11 +361,16 @@ watch(() => route.fullPath, () => {
             </button>
           </div>
 
-          <div class="topbar__actions">
-            <NuxtLink class="topbar__link" :to="localePath('/billboard')">Billboard</NuxtLink>
+          <nav class="topbar__nav" :aria-label="pick('主导航', 'Primary')">
+            <NuxtLink class="topbar__link" :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/tools')">{{ pick('产品', 'Products') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink>
+            <NuxtLink class="topbar__link topbar__link--billboard" :to="localePath('/billboard')">Billboard</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>
+          </nav>
 
-            <NuxtLink class="btn btn--ghost topbar__submit" :to="localePath('/submit')">
+          <div class="topbar__actions">
+            <NuxtLink class="btn btn--primary topbar__submit" :to="localePath('/submit')">
               <Icon name="plus" />
               {{ pick('提交', 'Submit') }}
             </NuxtLink>
@@ -439,12 +446,16 @@ watch(() => route.fullPath, () => {
                 </button>
               </div>
             </div>
-            <NuxtLink v-else class="btn btn--primary" :to="signInLink">
+            <NuxtLink v-else class="btn btn--ghost" :to="signInLink">
               {{ pick('登录', 'Sign In') }}
             </NuxtLink>
           </div>
         </div>
       </header>
+
+      <p class="free-strip">
+        {{ pick('免费目录页会留下来。付费位置一次付清，付款成功后自动发布。', 'A free listing page stays up. Paid placement is one payment, and it publishes when payment succeeds.') }}
+      </p>
 
       <main>
         <slot />
@@ -548,5 +559,6 @@ watch(() => route.fullPath, () => {
     </div>
 
     <SearchDialog v-model:open="searchOpen" />
+    <CampaignFloat />
   </div>
 </template>

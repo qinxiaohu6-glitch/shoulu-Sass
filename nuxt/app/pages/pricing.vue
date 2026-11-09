@@ -29,8 +29,8 @@ import {
   BILLBOARD_TIERS,
   campaignActive,
   campaignDeadlineShanghai,
-  quoteCents,
 } from '~~/shared/content/billboard'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { adPlans, comparison, listingBenefits, pricingFaq, tiers } from '~~/shared/content/pricing'
 import { categories, tools } from '~~/shared/utils/catalog'
 
@@ -54,12 +54,16 @@ const lead = computed(() =>
 const deadline = campaignDeadlineShanghai()
 const promoOn = computed(() => campaignActive())
 
+function skuQuote(kind: 'listing' | 'sidebar' | 'billboard', id: string) {
+  return effectiveQuote(kind, id, Date.now())
+}
+
 const plans = computed<PricingPlan[]>(() =>
   tiers.map((tier) => ({
       id: tier.id,
       name: t(tier.name),
       description: t(tier.tagline),
-      price: tier.price,
+      price: skuQuote('listing', tier.id).priceLabel,
       featured: tier.id === 'featured',
       badge: tier.badge ? t(tier.badge) : undefined,
       features: tl(tier.features),
@@ -99,8 +103,8 @@ const steps = computed(() => [
     title: pick('被看到', 'Get seen'),
     price: pick('Billboard $15 / $29 / $49 · 右栏 $19/周', 'Billboard $15 / $29 / $49 · sidebar $19/week'),
     body: pick(
-      'Billboard 是一次性三档，替代原来的榜单周租。右栏仍按周。Billboard 先索取发票，这里不打开结账。',
-      'Billboard is three one-time tiers and replaces the weekly board rental. The sidebar stays weekly. Billboard asks for an invoice — this page does not open a checkout for it.',
+      'Billboard 是一次性三档，付款成功后自动上板。右栏仍按周。页面上的价格就是结账实付。',
+      'Billboard is three one-time tiers and goes live when payment succeeds. The sidebar stays weekly. The price on the page is the checkout charge.',
     ),
     cta: pick('看 Billboard', 'See Billboard'),
     to: '#ads',
@@ -108,15 +112,15 @@ const steps = computed(() => [
   },
   {
     n: '3',
-    title: pick('代提交', 'Done for you'),
-    price: pick('不提供', 'Not offered'),
+    title: pick('持续出现', 'Keep showing up'),
+    price: pick('永久页 · 周票榜 · 目录内链', 'Permanent page · weekly board · directory links'),
     body: pick(
-      '我们不代你把产品提交到别的网站。这一步没有可买的服务。',
-      'We do not submit your product to other sites for you. There is nothing to buy in this step.',
+      '目录页会留着。周票榜只按票数排，付费不能改名次。我们不代你提交到别的网站。',
+      'The listing page stays up. The weekly board ranks by votes, and payment cannot change that rank. We do not submit your product to other sites.',
     ),
-    cta: '',
-    to: '',
-    muted: true,
+    cta: pick('看周票榜', 'See the weekly board'),
+    to: localePath('/weekly'),
+    muted: false,
   },
 ])
 
@@ -312,8 +316,8 @@ useHead({
             <p>
               {{
                 pick(
-                  `黑五约七折。划掉的是现在的表价，没有抬高。截止 ${deadline}（Asia/Shanghai）。收录档的在线金额仍是表价；Billboard 按约价开发票，入门保持 $15。`,
-                  `Black Friday is about 30% off. The struck figure is the current list price, not a higher one. Ends ${deadline} (Asia/Shanghai). Listing checkout still charges the list price. Billboard invoices use the lower figure. Entry stays at $15.`,
+                  `黑五七折。划掉的是表价。页面价格等于结账 amount_cents。截止 ${deadline}（Asia/Shanghai）。`,
+                  `Black Friday is 30% off. The struck figure is the list price. The price on this page is the checkout charge. Ends ${deadline} (Asia/Shanghai).`,
                 )
               }}
             </p>
@@ -324,8 +328,8 @@ useHead({
                 class="rounded-full border border-border px-3 py-1"
               >
                 {{ t(tier.name) }}
-                <s class="text-muted-foreground">{{ quoteCents(tier.amountCents).listLabel }}</s>
-                {{ pick(`约 ${quoteCents(tier.amountCents).priceLabel}`, `about ${quoteCents(tier.amountCents).priceLabel}`) }}
+                <s class="text-muted-foreground">{{ skuQuote('listing', tier.id).listLabel }}</s>
+                {{ skuQuote('listing', tier.id).priceLabel }}
               </li>
               <li
                 v-for="plan in adPlans"
@@ -333,8 +337,8 @@ useHead({
                 class="rounded-full border border-border px-3 py-1"
               >
                 {{ t(plan.name) }}
-                <s class="text-muted-foreground">{{ quoteCents(plan.weeklyCents).listLabel }}</s>
-                {{ pick(`约 ${quoteCents(plan.weeklyCents).priceLabel}/周`, `about ${quoteCents(plan.weeklyCents).priceLabel}/wk`) }}
+                <s class="text-muted-foreground">{{ skuQuote('sidebar', '1').listLabel }}</s>
+                {{ skuQuote('sidebar', '1').priceLabel }}{{ pick('/周', '/wk') }}
               </li>
             </ul>
           </template>
@@ -387,18 +391,11 @@ useHead({
               <span class="text-sm font-medium">{{ t(tier.name) }}</span>
               <span class="text-right">
                 <span
-                  v-if="quoteCents(tier.amountCents, Date.now(), tier.floorCents).strikeLabel"
+                  v-if="skuQuote('billboard', tier.id).strikeLabel"
                   class="mr-2 text-sm text-muted-foreground line-through"
-                >{{ quoteCents(tier.amountCents, Date.now(), tier.floorCents).strikeLabel }}</span>
+                >{{ skuQuote('billboard', tier.id).strikeLabel }}</span>
                 <span class="font-serif text-3xl tracking-tight">
-                  {{
-                    quoteCents(tier.amountCents, Date.now(), tier.floorCents).strikeLabel
-                      ? pick(
-                          `约 ${quoteCents(tier.amountCents, Date.now(), tier.floorCents).priceLabel}`,
-                          quoteCents(tier.amountCents, Date.now(), tier.floorCents).priceLabel,
-                        )
-                      : tier.price
-                  }}
+                  {{ skuQuote('billboard', tier.id).priceLabel }}
                 </span>
               </span>
             </div>
@@ -409,11 +406,11 @@ useHead({
                 :to="`${localePath('/billboard')}#claim`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
-                {{ pick('索取发票', 'Request invoice') }}
+                {{ pick('去付款', 'Pay now') }}
               </NuxtLink>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
-              {{ pick('一次性。此按钮不打开结账。', 'One-time. This button does not open a checkout.') }}
+              {{ pick('一次性。付款成功后自动上板。', 'One-time. It goes live when payment succeeds.') }}
             </p>
           </article>
           <article
@@ -423,7 +420,7 @@ useHead({
           >
             <div class="mb-2 flex items-baseline justify-between gap-3">
               <span class="text-sm font-medium text-foreground">{{ t(plan.name) }}</span>
-              <span class="font-serif text-3xl tracking-tight">{{ plan.price }}</span>
+              <span class="font-serif text-3xl tracking-tight">{{ skuQuote('sidebar', '1').priceLabel }}</span>
             </div>
             <h3 class="text-lg font-semibold tracking-tight">{{ t(plan.where) }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ t(plan.pitch) }}</p>

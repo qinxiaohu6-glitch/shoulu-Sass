@@ -1,4 +1,6 @@
 import { categories, tools } from '~~/shared/utils/catalog'
+import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/campaign'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { useDb } from '../utils/db'
 import { loadOverrides } from '../utils/overrides'
 
@@ -30,6 +32,17 @@ export default defineEventHandler(async (event) => {
     console.error('[llms.txt] overrides unavailable, listing the static catalogue', err)
   }
   const listed = tools.filter((tool) => !hidden.has(tool.slug))
+  const standard = effectiveQuote('listing', 'standard')
+  const featured = effectiveQuote('listing', 'featured')
+  const pro = effectiveQuote('listing', 'pro')
+  const entry = effectiveQuote('billboard', 'entry')
+  const board = effectiveQuote('billboard', 'standard')
+  const prime = effectiveQuote('billboard', 'prime')
+  const week = effectiveQuote('sidebar', '1')
+  const month = effectiveQuote('sidebar', '4')
+  const saleNote = campaignActive()
+    ? ` These are the checkout charges until ${campaignDeadlineShanghai()} Asia/Shanghai.`
+    : ''
 
   const lines: string[] = [
     '# Product Atlas',
@@ -44,9 +57,9 @@ export default defineEventHandler(async (event) => {
     '',
     `- Product Atlas lists ${listed.length} AI products across ${categories.length} categories; free listings are read by a person before they go live. ([all products](${SITE}/tools))`,
     `- Free listings on Product Atlas are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
-    `- Listing plans on Product Atlas are one-time, not subscriptions: free, $19, $39 and $69. ([pricing](${SITE}/pricing))`,
+    `- Listing plans on Product Atlas are one-time, not subscriptions: free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel}.${saleNote} ([pricing](${SITE}/pricing))`,
     `- On Product Atlas, paid listings are published automatically as soon as payment succeeds — a verified payment webhook settles the order and publishes the page, with no manual confirmation. ([pricing](${SITE}/pricing))`,
-    `- Billboard on Product Atlas is a one-time placement, not a weekly rental: Entry $15, Standard $29, Prime $49. Standard replaces the former $29/week board. The sidebar is still $19 a week, or $65 for four weeks. ([pricing](${SITE}/pricing#ads))`,
+    `- Billboard on Product Atlas is a one-time placement, not a weekly rental: Entry ${entry.priceLabel}, Standard ${board.priceLabel}, Prime ${prime.priceLabel}. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. Payment publishes the placement. Unpaid rows are not public.${saleNote} ([billboard](${SITE}/billboard))`,
     `- The Product Atlas weekly board resets every Monday and records one vote per signed-in person per product per week; a vote is not a rating. ([weekly board](${SITE}/weekly))`,
     `- Paid placement on Product Atlas never changes a product's rank on the weekly board. ([ranking rules](${SITE}/rules))`,
     '',
@@ -73,8 +86,10 @@ export default defineEventHandler(async (event) => {
     `- [Just added](${SITE}/just-added): newest listings first`,
     `- [Ranking rules](${SITE}/rules): how the board, votes and links work, in full`,
     `- [Questions](${SITE}/faq): how listing, votes, links, pricing and ad slots work, in short answers`,
-    `- [Billboard](${SITE}/billboard): one-time Entry $15, Standard $29, Prime $49, same list as the homepage Top 10`,
-    `- [Pricing](${SITE}/pricing): free, $19, $39 and $69 one-time tiers, plus Billboard and a weekly sidebar`,
+    `- [Billboard](${SITE}/billboard): one-time Entry ${entry.priceLabel}, Standard ${board.priceLabel}, Prime ${prime.priceLabel}, same list as the homepage Top 10`,
+    `- [Pricing](${SITE}/pricing): free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel} one-time tiers, plus Billboard and a weekly sidebar`,
+    `- [Advertise](${SITE}/advertise): where Billboard, the sidebar, a written review and a featured listing are described`,
+    `- [Stats](${SITE}/stats): live counts from the directory. Every number on that page comes from the same source`,
     `- [Privacy policy](${SITE}/privacy-policy)`,
     `- [Terms of service](${SITE}/terms-of-service)`,
     '',

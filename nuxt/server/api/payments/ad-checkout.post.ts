@@ -28,7 +28,9 @@ import {
 } from '../../utils/ad-bookings'
 import { getPaymentProvider, paymentConfig, returnUrls } from '../../utils/payments'
 import { attachSession, createOrder, newOrderId, setOrderStatus } from '../../utils/payments/orders'
-import { AD_WEEK_OPTIONS, adPlans, adPriceCents } from '~~/shared/content/pricing'
+import { campaignSnapshot } from '~~/shared/content/campaign'
+import { AD_WEEK_OPTIONS, adPlans } from '~~/shared/content/pricing'
+import { effectiveAmountCents, listAmountCents } from '~~/shared/utils/pricing-effective'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -71,8 +73,8 @@ export default defineEventHandler(async (event) => {
       data: {
         reason: 'board_retired',
         message_en:
-          'The weekly board slot is no longer sold. Billboard is a one-time placement — request an invoice on /billboard.',
-        message_zh: '榜单周租已停售。Billboard 改为一次性档位，请到 /billboard 索取发票。',
+          'The weekly board slot is no longer sold. Billboard is a one-time placement — pay on /billboard and it goes live when payment succeeds.',
+        message_zh: '榜单周租已停售。Billboard 改为一次性档位，请到 /billboard 付款，付款成功后自动上板。',
       },
     })
   }
@@ -102,7 +104,8 @@ export default defineEventHandler(async (event) => {
   if (!EMAIL_RE.test(email) || email.length > 160) badRequest('bad_email', 'email')
 
   const { end } = bookingWindow(start, weeks)
-  const amountCents = adPriceCents(slot, weeks)
+  const amountCents = effectiveAmountCents('sidebar', String(weeks))
+  const listCents = listAmountCents('sidebar', String(weeks))
   if (!amountCents) badRequest('bad_price')
 
   // Reuses the operator console's own validation: real dates, a window that
@@ -170,7 +173,14 @@ export default defineEventHandler(async (event) => {
       cancelUrl: urls.cancelUrl,
     })
     await attachSession(db, orderId, session.ref, session.url)
-    return { ok: true, order: orderId, url: session.url, amount_cents: amountCents }
+    return {
+      ok: true,
+      order: orderId,
+      url: session.url,
+      amount_cents: amountCents,
+      list_cents: listCents,
+      campaign: campaignSnapshot(),
+    }
   } catch (err) {
     console.error('[payments] ad checkout failed', err)
     await setOrderStatus(db, orderId, 'failed', {

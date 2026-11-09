@@ -88,9 +88,19 @@ useSeo({
           </p>
         </div>
 
-        <p v-if="!info?.enabled" class="mt-12 text-center text-muted-foreground">
-          {{ pick('本站暂未开放投稿。', "Guest posts aren't open at the moment.") }}
-        </p>
+        <div v-if="!info?.enabled" class="mx-auto mt-12 max-w-xl text-center text-sm leading-relaxed text-muted-foreground">
+          <p>
+            {{
+              pick(
+                '撰稿评测由编辑交付。未发布可全额退。这一页没有自助标价，所以不打开结账。',
+                'A written review is delivered by an editor. It is refunded in full if it is not published. This page has no self-serve price, so it does not open a checkout.',
+              )
+            }}
+          </p>
+          <p class="mt-4">
+            <NuxtLink class="underline" :to="localePath('/advertise')">{{ pick('返回投放说明', 'Back to advertise') }}</NuxtLink>
+          </p>
+        </div>
 
         <template v-else>
           <ol class="mt-14 grid gap-4 sm:grid-cols-3">

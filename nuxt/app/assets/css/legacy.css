@@ -2734,6 +2734,9 @@ kbd {
   .sidebar {
     display: flex;
   }
+  .shell--topnav .sidebar {
+    display: none;
+  }
   .topbar__toggle {
     display: grid;
   }
@@ -5479,6 +5482,33 @@ kbd {
 }
 .topbar__link:hover { color: var(--foreground); background: var(--muted); }
 @media (min-width: 768px) { .topbar__link { display: inline-flex; } }
+
+.shell--topnav .topbar__logo { display: flex; }
+.shell--topnav .topbar__nav {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .shell--topnav .topbar__nav { display: flex; }
+}
+.topbar__link--billboard {
+  color: #92400e;
+  background: #fde68a;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.topbar__link--billboard:hover { background: #fcd34d; color: #78350f; }
+.free-strip {
+  margin: 0;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
 
 /* ==========================================================================
    Home — hero with the weekly picks beside it
