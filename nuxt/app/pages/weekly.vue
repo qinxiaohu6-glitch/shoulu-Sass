@@ -190,7 +190,7 @@ useSeo({
             <tr>
               <td class="rank-num">{{ row.rank }}</td>
               <td>
-                <NuxtLink class="rank-tool" :to="localePath(`/tools/${row.slug}`)">
+                <NuxtLink class="rank-tool" :to="localePath(`/products/${row.slug}`)">
                   <span class="tool-icon" style="width: 32px; height: 32px">
                     <img
                       :src="`/${toolBySlug(row.slug, lang)?.logo ?? `assets/img/icons/${row.slug}.png`}`"

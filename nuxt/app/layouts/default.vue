@@ -63,9 +63,9 @@ const navGroups = computed(() => [
     label: pick('浏览', 'Browse'),
     items: [
       { label: pick('发现', 'Discover'), to: '/', icon: 'compass' },
-      { label: pick('产品', 'Products'), to: '/tools', icon: 'layout-grid' },
+      { label: pick('产品', 'Products'), to: '/products', icon: 'layout-grid' },
       { label: pick('分类', 'Categories'), to: '/categories', icon: 'shapes' },
-      { label: pick('合集', 'Collections'), to: '/collections', icon: 'sparkles' },
+      { label: pick('工具', 'Tools'), to: '/tools', icon: 'sparkles' },
       { label: pick('开发者', 'Makers'), to: '/makers', icon: 'user' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
       { label: 'Billboard', to: '/billboard', icon: 'megaphone' },
@@ -137,9 +137,9 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
   {
     title: pick('目录', 'Directory'),
     links: [
-      { label: pick('产品', 'Products'), to: '/tools' },
+      { label: pick('产品', 'Products'), to: '/products' },
       { label: pick('分类', 'Categories'), to: '/categories' },
-      { label: pick('合集', 'Collections'), to: '/collections' },
+      { label: pick('工具', 'Tools'), to: '/tools' },
       { label: pick('开发者', 'Makers'), to: '/makers' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check' },
       { label: pick('标签', 'Tags'), to: '/tags' },
@@ -176,13 +176,13 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
     // Fixed editorial set, same idea as the category column: a hidden listing
     // answers 410, so the link drops out instead of staying clickable.
     links: [
-      { label: 'Claude', to: '/tools/claude' },
-      { label: 'Consensus', to: '/tools/consensus' },
-      { label: 'Perplexity', to: '/tools/perplexity' },
-      { label: 'Replit', to: '/tools/replit' },
-      { label: 'Jasper', to: '/tools/jasper' },
-      { label: 'Pika', to: '/tools/pika' },
-    ].filter((link) => !overrides.value.hidden.includes(link.to.replace('/tools/', ''))),
+      { label: 'Claude', to: '/products/claude' },
+      { label: 'Consensus', to: '/products/consensus' },
+      { label: 'Perplexity', to: '/products/perplexity' },
+      { label: 'Replit', to: '/products/replit' },
+      { label: 'Jasper', to: '/products/jasper' },
+      { label: 'Pika', to: '/products/pika' },
+    ].filter((link) => !overrides.value.hidden.includes(link.to.replace('/products/', ''))),
   },
 ])
 
@@ -352,7 +352,8 @@ watch(() => route.fullPath, () => {
 
           <nav class="topbar__nav" :aria-label="pick('主导航', 'Primary')">
             <NuxtLink class="topbar__link" :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
-            <NuxtLink class="topbar__link" :to="localePath('/tools')">{{ pick('产品', 'Products') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/products')">{{ pick('产品', 'Products') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/tools')">{{ pick('工具', 'Tools') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink>
             <NuxtLink class="topbar__link topbar__link--billboard" :to="localePath('/billboard')">Billboard</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>

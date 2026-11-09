@@ -124,7 +124,7 @@ export function approvedMail(row: SubmissionRow, site: string): MailMessage {
     subject: `${name} is live`,
     text:
       `${name} is live.\n\n` +
-      `Page: ${site}/tools/${row.slug}\n\n` +
+      `Page: ${site}/products/${row.slug}\n\n` +
       `The link to your site is included on that page. If anything looks wrong, ` +
       `reply to this mail and we will fix it.\n\n` +
       `— Product Atlas\n`,
@@ -171,7 +171,7 @@ export function paymentConfirmedMail(row: SubmissionRow, site: string): MailMess
     subject: `Payment received — ${name} is live`,
     text:
       `Payment received — ${name} is live.\n\n` +
-      `Page: ${site}/tools/${row.slug}\n\n` +
+      `Page: ${site}/products/${row.slug}\n\n` +
       `Your placement runs for the period shown at checkout. When it ends the ` +
       `page stays up; only the pinned position goes away.\n\n` +
       `— Product Atlas\n`,

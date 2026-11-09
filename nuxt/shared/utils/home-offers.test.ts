@@ -188,7 +188,7 @@ test('catalogue seed and unpaid intent do not fill a spot; a paid order does', (
   })
   const byId = Object.fromEntries(slots.map((slot) => [slot.id, slot.occupant]))
   assert.equal(byId.featured?.name, 'Real Featured')
-  assert.equal(byId.featured?.href, '/tools/real-featured')
+  assert.equal(byId.featured?.href, '/products/real-featured')
   assert.equal(byId.featured?.external, false)
   assert.equal(byId.pro?.name, 'Real Pro')
   assert.equal(byId.billboard?.name, 'Board Co')

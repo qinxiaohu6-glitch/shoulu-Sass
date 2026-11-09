@@ -13,6 +13,7 @@ import { campaignSnapshot } from '~~/shared/content/campaign'
 import { billboardBidDraft, BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
 import { centsLabel } from '~~/shared/content/campaign'
 import { insertBillboardCheckout } from '../../utils/billboard'
+import { seedBillboardScreenshot } from '../../utils/billboard-media'
 import { useDb } from '../../utils/db'
 import { getPaymentProvider, paymentConfig, returnUrls } from '../../utils/payments'
 import { attachSession, createOrder, newOrderId, setOrderStatus } from '../../utils/payments/orders'
@@ -92,6 +93,7 @@ export default defineEventHandler(async (event) => {
     amountCents,
     now: Math.floor(Date.now() / 1000),
   })
+  await seedBillboardScreenshot(db, placementId, draft.url)
 
   try {
     const session = await provider.createCheckout({

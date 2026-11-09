@@ -3,8 +3,9 @@
  * Homepage Top 10. The price pill is the website's current backing.
  * Empty cells are a dashed claim from $15. No stock screenshot is invented.
  */
-import { BILLBOARD_FLOOR_CENTS, backingLabel, faviconForUrl, isHomepageThumbnail } from '~~/shared/utils/billboard-bid'
+import { BILLBOARD_FLOOR_CENTS, backingLabel, faviconForUrl } from '~~/shared/utils/billboard-bid'
 import { centsLabel } from '~~/shared/content/campaign'
+import { screenshotSrc } from '~~/shared/utils/screenshot'
 import type { BillboardCell, BillboardRow } from '~~/shared/utils/billboard'
 
 defineProps<{
@@ -15,9 +16,16 @@ const { pick } = useLang()
 const localePath = useLocalePath()
 const claimTo = computed(() => `${localePath('/billboard')}#claim`)
 const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const brokenShots = ref<Record<string, true>>({})
 
 function shotOf(row: BillboardRow): string {
-  return isHomepageThumbnail(row.screenshot) ? row.screenshot : ''
+  const src = screenshotSrc(row.screenshot)
+  if (!src || brokenShots.value[src]) return ''
+  return src
+}
+
+function onShotError(src: string) {
+  brokenShots.value = { ...brokenShots.value, [src]: true }
 }
 
 function logoOf(row: BillboardRow): string {
@@ -47,15 +55,16 @@ function logoOf(row: BillboardRow): string {
           <template v-if="cell.kind === 'live'">
             <a
               class="bb-shot"
+              :class="{ 'bb-shot--image': shotOf(cell.placement) }"
               :href="cell.placement.url"
               target="_blank"
               rel="sponsored nofollow noopener"
             >
               <img
                 v-if="shotOf(cell.placement)"
-                :src="logoSrc(shotOf(cell.placement))"
-                alt=""
-                loading="lazy"
+                :src="shotOf(cell.placement)"
+                :alt="cell.placement.name"
+                @error="onShotError(shotOf(cell.placement))"
               >
               <span v-else class="bb-shot__plain">{{ cell.placement.name }}</span>
             </a>

@@ -133,7 +133,7 @@ useHead({
             itemListElement: sorted.value.map((tool, index) => ({
               '@type': 'ListItem',
               position: index + 1,
-              url: `https://dirtool.com/tools/${tool.slug}`,
+              url: `https://dirtool.com/products/${tool.slug}`,
               name: tool.name,
             })),
           },

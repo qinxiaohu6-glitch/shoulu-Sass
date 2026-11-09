@@ -17,6 +17,7 @@
 
 import catalogJson from '~~/shared/content/catalog.json'
 import { categories, categoryBySlug, isoWeekId, slugify as slugifyText } from '~~/shared/utils/catalog'
+import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { legalLogoUrl } from '~~/shared/utils/logo'
 import type { DetailBlock, Tool } from '~~/shared/types/catalog'
 import type { Db } from './db'
@@ -338,13 +339,13 @@ async function uniqueSlug(db: Db, name: string, domain: string): Promise<string>
   let n = 2
   // The catalogue's own slugs are reserved too, so a submission can never
   // shadow a page that already exists.
-  while (catalogIndex().slugs.has(candidate)) {
+  while (catalogIndex().slugs.has(candidate) || isReservedProductSlug(candidate)) {
     candidate = `${base}-${n++}`
   }
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const hit = await db.prepare('SELECT 1 AS x FROM submissions WHERE slug = ?').bind(candidate).first()
-    if (!hit) return candidate
+    if (!hit && !isReservedProductSlug(candidate)) return candidate
     candidate = `${base}-${n++}`
   }
 }

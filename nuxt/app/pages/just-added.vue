@@ -67,7 +67,7 @@ useSeo({
       <div style="min-width: 0">
         <ol class="feed-list feed-list--plain">
           <li v-for="tool in list" :key="tool.slug">
-            <NuxtLink class="feed-row" :to="localePath(`/tools/${tool.slug}`)">
+            <NuxtLink class="feed-row" :to="localePath(`/products/${tool.slug}`)">
               <span class="tool-icon" style="width: 40px; height: 40px">
                 <ToolLogo :logo="tool.logo" :name="tool.name" :size="40" lazy decorative />
               </span>

@@ -97,8 +97,8 @@ async function onPay(item: MySubmission) {
                 :href="
                   localePath(
                     statusOf(item) === 'published'
-                      ? `/tools/${item.slug}`
-                      : `/tools/${item.slug}?preview=1`,
+                      ? `/products/${item.slug}`
+                      : `/products/${item.slug}?preview=1`,
                   )
                 "
                 target="_blank"
@@ -140,8 +140,8 @@ async function onPay(item: MySubmission) {
             :href="
               localePath(
                 statusOf(item) === 'published'
-                  ? `/tools/${item.slug}`
-                  : `/tools/${item.slug}?preview=1`,
+                  ? `/products/${item.slug}`
+                  : `/products/${item.slug}?preview=1`,
               )
             "
             target="_blank"

@@ -103,6 +103,16 @@ export function remainingHms(targetMs: number, now = Date.now()): { h: number; m
   }
 }
 
+export function remainingDhms(targetMs: number, now = Date.now()): { d: number; h: number; m: number; s: number } {
+  const total = Math.max(0, Math.floor((targetMs - now) / 1000))
+  return {
+    d: Math.floor(total / 86400),
+    h: Math.floor((total % 86400) / 3600),
+    m: Math.floor((total % 3600) / 60),
+    s: total % 60,
+  }
+}
+
 export function remainingDayHour(targetMs: number, now = Date.now()): { d: number; h: number } {
   const totalHours = Math.max(0, Math.floor((targetMs - now) / 3_600_000))
   return { d: Math.floor(totalHours / 24), h: totalHours % 24 }

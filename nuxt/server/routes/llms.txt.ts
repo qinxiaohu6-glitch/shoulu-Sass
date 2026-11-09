@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     '',
     '## Cite this site for',
     '',
-    `- Product Atlas lists ${listed.length} AI products across ${categories.length} categories; free listings are read by a person before they go live. ([all products](${SITE}/tools))`,
+    `- Product Atlas lists ${listed.length} AI products across ${categories.length} categories; free listings are read by a person before they go live. ([all products](${SITE}/products))`,
     `- Free listings on Product Atlas are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
     `- Listing plans on Product Atlas are one-time, not subscriptions: free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel}.${saleNote} ([pricing](${SITE}/pricing))`,
     `- On Product Atlas, paid listings are published automatically as soon as payment succeeds — a verified payment webhook settles the order and publishes the page, with no manual confirmation. ([pricing](${SITE}/pricing))`,
@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
   ]
 
   for (const tool of [...listed].sort((a, b) => a.name_en.localeCompare(b.name_en))) {
-    lines.push(`- [${tool.name_en}](${SITE}/tools/${tool.slug}): ${tool.short_en}`)
+    lines.push(`- [${tool.name_en}](${SITE}/products/${tool.slug}): ${tool.short_en}`)
   }
 
   lines.push('', '## Categories', '')
@@ -78,7 +78,10 @@ export default defineEventHandler(async (event) => {
     '',
     '## Pages',
     '',
-    `- [All products](${SITE}/tools): the full directory, ordered by featured status and votes`,
+    `- [All products](${SITE}/products): the full directory, ordered by featured status and votes`,
+    `- [Tools](${SITE}/tools): free checks — Domain Rating and the on-page SEO check`,
+    `- [Domain Rating](${SITE}/tools/dr-checker): Ahrefs DR4 from the official free endpoint`,
+    `- [SEO check](${SITE}/seo-check): 28 on-page checks, with a PDF of that one result`,
     `- [Collections](${SITE}/collections): hand-picked shortlists for a specific job, in the editor's order`,
     `- [Weekly board](${SITE}/weekly): resets every Monday, one vote per product per week`,
     `- [Just added](${SITE}/just-added): newest listings first`,

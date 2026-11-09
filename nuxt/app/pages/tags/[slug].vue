@@ -106,7 +106,7 @@ useHead({
             '@type': 'ListItem',
             position: (page.value - 1) * DIRECTORY_PAGE_SIZE + index + 1,
             name: tool.name,
-            url: `https://dirtool.com${isZh.value ? '/zh' : ''}/tools/${tool.slug}`,
+            url: `https://dirtool.com${isZh.value ? '/zh' : ''}/products/${tool.slug}`,
           })),
         }),
       ),

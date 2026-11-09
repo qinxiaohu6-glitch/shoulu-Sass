@@ -248,14 +248,14 @@ useHead({
       <NuxtLink
         v-if="order?.slug && order.live"
         class="btn btn--primary"
-        :to="localePath(`/tools/${order.slug}`)"
+        :to="localePath(`/products/${order.slug}`)"
       >
         {{ pick('打开我的详情页', 'Open my listing') }}<Icon name="arrow-right" />
       </NuxtLink>
       <NuxtLink class="btn btn--ghost" :to="localePath('/settings/submissions')">
         {{ pick('我的提交', 'My submissions') }}
       </NuxtLink>
-      <NuxtLink class="btn btn--ghost" :to="localePath('/tools')">
+      <NuxtLink class="btn btn--ghost" :to="localePath('/products')">
         {{ pick('逛逛目录', 'Browse the directory') }}
       </NuxtLink>
     </div>

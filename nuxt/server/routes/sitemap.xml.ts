@@ -6,6 +6,7 @@ import { useDb } from '../utils/db'
 import { listDirectoryCollections } from '../utils/directory'
 import { loadOverrides } from '../utils/overrides'
 import { listPublishedTools } from '../utils/submissions'
+import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 
 const SITE = 'https://dirtool.com'
 
@@ -49,7 +50,10 @@ async function entries(event: H3Event): Promise<Entry[]> {
 
   const list: Entry[] = [
     { path: '/', priority: '1.0' },
-    { path: '/tools', priority: '0.9' },
+    { path: '/products', priority: '0.9' },
+    { path: '/tools', priority: '0.7' },
+    { path: '/tools/dr-checker', priority: '0.7' },
+    { path: '/seo-check', priority: '0.8' },
     { path: '/categories', priority: '0.8' },
     { path: '/collections', priority: '0.8' },
     { path: '/weekly', priority: '0.8' },
@@ -71,7 +75,8 @@ async function entries(event: H3Event): Promise<Entry[]> {
 
   for (const tool of tools) {
     if (!visible(tool.slug)) continue
-    list.push({ path: `/tools/${tool.slug}`, lastmod: tool.created_at, priority: '0.9' })
+    if (isReservedProductSlug(tool.slug)) continue
+    list.push({ path: `/products/${tool.slug}`, lastmod: tool.created_at, priority: '0.9' })
   }
   for (const category of categories) {
     list.push({ path: `/categories/${category.slug}`, lastmod: today, priority: '0.7' })
@@ -106,7 +111,8 @@ async function entries(event: H3Event): Promise<Entry[]> {
   // the sitemap is one a crawler only finds by luck.
   for (const tool of published) {
     if (!visible(tool.slug)) continue
-    list.push({ path: `/tools/${tool.slug}`, lastmod: tool.created_at, priority: '0.8' })
+    if (isReservedProductSlug(tool.slug)) continue
+    list.push({ path: `/products/${tool.slug}`, lastmod: tool.created_at, priority: '0.8' })
   }
 
   // Only makers the curated index does not already list: a submission from a

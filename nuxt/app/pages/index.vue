@@ -20,6 +20,22 @@ const overrides = useOverrides()
 const { categories: liveCategories } = useDirectoryMeta()
 const { homeGrid, ranked: billboardRanked } = await useBillboard()
 const { ready: paymentReady } = await usePayment()
+const requestFetch = useRequestFetch()
+const { data: weekVotes } = await useAsyncData(
+  'home-week-votes',
+  async () => {
+    try {
+      return await requestFetch<{ ok: boolean; counts?: Record<string, number> }>('/api/votes')
+    } catch {
+      return { ok: false, counts: {} as Record<string, number> }
+    }
+  },
+  { default: () => ({ ok: false, counts: {} as Record<string, number> }) },
+)
+
+function votesOf(tool: { slug: string; votes_week: number }): number {
+  return Math.max(Number(tool.votes_week) || 0, Number(weekVotes.value?.counts?.[tool.slug]) || 0)
+}
 
 const all = computed(() =>
   mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value),
@@ -207,7 +223,7 @@ useHead({
             v-for="tool in heroLeft"
             :key="tool.slug"
             class="feat-card"
-            :to="localePath(`/tools/${tool.slug}`)"
+            :to="localePath(`/products/${tool.slug}`)"
           >
             <ToolLogo :logo="tool.logo" :name="tool.name" :size="36" decorative />
             <span>
@@ -256,7 +272,7 @@ useHead({
             v-for="tool in heroRight"
             :key="tool.slug"
             class="feat-card"
-            :to="localePath(`/tools/${tool.slug}`)"
+            :to="localePath(`/products/${tool.slug}`)"
           >
             <ToolLogo :logo="tool.logo" :name="tool.name" :size="36" decorative />
             <span>
@@ -322,8 +338,8 @@ useHead({
           </button>
         </div>
         <ol class="home-feed">
-          <li v-for="(tool, index) in feed" :key="tool.slug">
-            <NuxtLink class="launch-row" :to="localePath(`/tools/${tool.slug}`)">
+          <li v-for="(tool, index) in feed" :key="tool.slug" class="launch-row">
+            <NuxtLink class="launch-row__link" :to="localePath(`/products/${tool.slug}`)">
               <span class="launch-row__rank">{{ index + 1 }}</span>
               <span class="launch-row__logo">
                 <ToolLogo :logo="tool.logo" :name="tool.name" :size="40" decorative />
@@ -336,8 +352,8 @@ useHead({
                 <span>{{ tool.short }}</span>
                 <span v-if="categoryName(tool.category)" class="launch-row__cat">{{ categoryName(tool.category) }}</span>
               </span>
-              <span class="launch-row__votes">▲ {{ tool.votes_week }}<small>{{ pick('票', 'votes') }}</small></span>
             </NuxtLink>
+            <VoteButton stack :slug="tool.slug" :votes="votesOf(tool)" />
           </li>
         </ol>
         <p v-if="!feed.length" class="home-feed__empty">
@@ -382,7 +398,7 @@ useHead({
         </section>
         <ul class="feat-mini">
           <li v-for="tool in featuredPool.slice(0, 4)" :key="tool.slug">
-            <NuxtLink :to="localePath(`/tools/${tool.slug}`)">
+            <NuxtLink :to="localePath(`/products/${tool.slug}`)">
               <ToolLogo :logo="tool.logo" :name="tool.name" :size="32" decorative />
               <span>
                 <strong>{{ tool.name }}</strong>

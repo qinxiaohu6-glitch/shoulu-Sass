@@ -107,7 +107,7 @@ useSeo({
 
       <ol class="board">
         <li v-for="(tool, i) in maker!.tools" :key="tool.slug" class="board__row">
-          <NuxtLink class="board__link" :to="localePath(`/tools/${tool.slug}`)">
+          <NuxtLink class="board__link" :to="localePath(`/products/${tool.slug}`)">
             <span class="board__rank">{{ i + 1 }}</span>
             <span class="tool-icon" style="width: 38px; height: 38px">
               <ToolLogo :logo="tool.logo" :name="tool.name" :size="38" lazy decorative />

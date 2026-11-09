@@ -22,6 +22,8 @@
  * one thing a crawler will complain about.
  */
 
+import { productRedirect } from '~~/shared/utils/product-routes'
+
 const HTML_SUFFIX = /\.html$/i
 const DASHBOARD = new Set(['/dashboard', '/zh/dashboard'])
 
@@ -53,7 +55,7 @@ function legacyTarget(pathname: string): string | null {
     return bare.startsWith('/zh') ? '/zh' : '/'
   }
 
-  return bare || '/'
+  return productRedirect(bare) ?? bare || '/'
 }
 
 export default defineEventHandler((event) => {

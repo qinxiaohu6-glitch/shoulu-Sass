@@ -200,7 +200,7 @@ useSeo({
             >
               <li v-for="tool in group.tools" :key="tool.slug">
                 <NuxtLink
-                  :to="localePath(`/tools/${tool.slug}`)"
+                  :to="localePath(`/products/${tool.slug}`)"
                   class="flex items-center gap-3 px-4 py-3 transition hover:bg-secondary/50"
                 >
                   <span
