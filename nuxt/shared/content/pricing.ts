@@ -1,3 +1,5 @@
+import { billboardStandardCents } from './billboard.ts'
+
 /**
  * Pricing copy, ported verbatim from the site that is live today
  * (dist/pricing.html and dist/zh/pricing.html) so the rebuild does not
@@ -133,7 +135,7 @@ export const tiers: PriceTier[] = [
 ]
 
 export interface AdPlan {
-  id: 'board' | 'sidebar'
+  id: 'sidebar'
   name: Pair
   price: string
   unit: Pair
@@ -156,29 +158,6 @@ export interface AdPlan {
 export const AD_WEEK_OPTIONS = [1, 4] as const
 
 export const adPlans: AdPlan[] = [
-  {
-    id: 'board',
-    name: { en: 'Board slot', zh: '榜单位' },
-    price: '$29',
-    weeklyCents: 2900,
-    bundleWeeks: 4,
-    bundleCents: 9900,
-    unit: { en: '/ week', zh: '/ 周' },
-    where: { en: 'Between 3rd and 4th on this week’s board', zh: '本周榜单第 3、4 名之间' },
-    pitch: {
-      en: 'The one row people read properly, at the moment they decide what to upvote.',
-      zh: '榜单里唯一会被完整读完的一行 —— 人在决定投谁的时候正好看到你。',
-    },
-    bullets: {
-      en: [
-        'A full row: logo, headline, one-line pitch',
-        'Links straight to the page you choose, no interstitial',
-        'Seven days, starting Monday',
-      ],
-      zh: ['整行展示：logo、标题、一句话卖点', '直达你指定的落地页，中间没有跳转页', '展示 7 天，周一起算'],
-    },
-    bundle: { en: '4 weeks $99 — save $17', zh: '连投 4 周 $99 · 省 $17' },
-  },
   {
     id: 'sidebar',
     name: { en: 'Sidebar slot', zh: '右栏位' },
@@ -315,8 +294,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'How is an ad slot different from a listing?', zh: '广告位和收录有什么区别？' },
     a: {
-      en: 'A listing is a page you buy once and keep. An ad slot is a position you rent by the week and lose when the week ends. They are independent — you can buy both. Board is $29/week, sidebar $19/week, with a discount for four weeks.',
-      zh: '收录是买一个页面，一次付费、长期存在；广告位是租一个位置，按周计费、到期下架。两者互不影响，也可以同时买。榜单位 $29 / 周，右栏位 $19 / 周 —— 榜单是决定投票的那一屏，所以比右栏贵；连投 4 周有折扣。',
+      en: 'A listing is a page you buy once and keep. Billboard is a separate one-time placement — Entry $15, Standard $29, Prime $49 — on its own board and, for the top 10, the homepage grid. It does not change weekly vote rank. The sidebar is still rented by the week at $19, or $65 for four weeks. The weekly board rental is no longer sold.',
+      zh: '收录是买一个页面，一次付费、长期存在。Billboard 是另一块一次性板：入门 $15、标准 $29、优先 $49，排进 Billboard，前 10 名同时出现在首页。它不改变每周投票榜的名次。右栏仍按周租，$19 / 周，连投 4 周 $65。原来的榜单周租不再出售。',
     },
   },
   {
@@ -403,8 +382,8 @@ export const listingBenefits: { title: Pair; body: Pair }[] = [
 
    Two spellings reach this function and both have to land on the same number:
    the submit form posts `paid` (the pricing page's word for that column) while
-   the catalogue calls the same tier `featured`; a weekly ad posts `ad`, which
-   is the board placement's $29 rather than a directory tier.
+   the catalogue calls the same tier `featured`. A legacy `plan: 'ad'` is the
+   old board charge, now Billboard Standard — same $29, one-time, not a week.
 
    Checkout reads the amount from here, never from the request body — a client
    that can name its own price is not a price.
@@ -414,10 +393,10 @@ const PLAN_ALIASES: Record<string, string> = { paid: 'featured' }
 
 export function planAmountCents(plan: string): number {
   const slug = PLAN_ALIASES[plan] ?? plan
-  // A legacy `plan: 'ad'` submission has no slot and no week count, so the
-  // only price it can mean is one week of the board slot. Self-serve bookings
-  // do not go through this function — they use `adPriceCents(slot, weeks)`.
-  if (slug === 'ad') return adPlans.find((a) => a.id === 'board')?.weeklyCents ?? 0
+  // Legacy `ad` had no slot. It was one week of the board at $29. That product
+  // is now Billboard Standard, still $29, and no longer a weekly rental.
+  // Self-serve sidebar bookings do not go through this function.
+  if (slug === 'ad') return billboardStandardCents()
   const tier = tiers.find((t) => t.id === slug)
   return tier ? tier.amountCents : 0
 }
@@ -431,6 +410,9 @@ export function planAmountCents(plan: string): number {
  * `slot` and `weeks`, never an amount; this is the only place that decides it.
  */
 export function adPriceCents(slot: string, weeks: number): number {
+  // The weekly board slot is retired. A zero price makes checkout refuse the
+  // charge instead of opening a session for a product we no longer sell.
+  if (slot === 'board') return 0
   if (!Number.isInteger(weeks) || !(AD_WEEK_OPTIONS as readonly number[]).includes(weeks)) return 0
   const plan = adPlans.find((a) => a.id === slot)
   if (!plan) return 0

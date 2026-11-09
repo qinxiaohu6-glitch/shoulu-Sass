@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
+import { BILLBOARD_TIERS } from '../content/billboard.ts'
 import { adPlans, listingBenefits, tiers } from '../content/pricing.ts'
 import {
   categoryBrowseModel,
@@ -101,10 +102,10 @@ test('thumbnails stop at four real logos', () => {
 })
 
 test('offer slots keep the published prices and stay empty without a real order', () => {
-  const slots = homeOfferSlots({ listings: [], board: null, sidebar: null })
+  const slots = homeOfferSlots({ listings: [], billboard: null, sidebar: null })
   assert.deepEqual(
     slots.map((slot) => slot.id),
-    ['featured', 'pro', 'board', 'sidebar'],
+    ['featured', 'pro', 'billboard', 'sidebar'],
   )
   assert.equal(slots[0]?.price, '$39')
   assert.equal(slots[1]?.price, '$69')
@@ -112,24 +113,27 @@ test('offer slots keep the published prices and stay empty without a real order'
   assert.equal(slots[3]?.price, '$19')
   assert.equal(slots[0]?.price, tiers.find((tier) => tier.id === 'featured')?.price)
   assert.equal(slots[1]?.price, tiers.find((tier) => tier.id === 'pro')?.price)
-  assert.equal(slots[2]?.price, adPlans.find((plan) => plan.id === 'board')?.price)
+  assert.equal(slots[2]?.price, BILLBOARD_TIERS.find((tier) => tier.id === 'standard')?.price)
   assert.equal(slots[3]?.price, adPlans.find((plan) => plan.id === 'sidebar')?.price)
   assert.equal(slots.every((slot) => slot.occupant === null), true)
   assert.deepEqual(slots[0]?.href, { path: '/submit', query: { plan: 'featured' } })
   assert.deepEqual(slots[1]?.href, { path: '/submit', query: { plan: 'pro' } })
-  assert.deepEqual(slots[2]?.href, { path: '/book-ad', query: { slot: 'board', weeks: '1' } })
+  assert.deepEqual(slots[2]?.href, { path: '/billboard', hash: '#claim' })
   assert.deepEqual(slots[3]?.href, { path: '/book-ad', query: { slot: 'sidebar', weeks: '1' } })
+  assert.equal(slots[0]?.flag, 'FEATURED')
+  assert.equal(slots[2]?.flag, 'BILLBOARD')
   assert.equal(slots[0]?.detail.zh, '7 天置顶 + 首页卡')
   assert.equal(slots[1]?.detail.zh, '分类置顶 90 天')
   assert.equal(offerSpotLine(slots[0]!, 'zh'), '精选 $39 一次性')
   assert.equal(offerSpotLine(slots[0]!, 'en'), 'Featured $39 one-time')
   assert.equal(offerSpotLine(slots[1]!, 'zh'), '专业 $69 一次性')
   assert.equal(offerSpotLine(slots[1]!, 'en'), 'Pro $69 one-time')
-  assert.equal(offerSpotLine(slots[2]!, 'zh'), '榜单位 $29/周')
-  assert.equal(offerSpotLine(slots[2]!, 'en'), 'Board slot $29/week')
+  assert.equal(offerSpotLine(slots[2]!, 'zh'), 'Billboard $29 一次性')
+  assert.equal(offerSpotLine(slots[2]!, 'en'), 'Billboard $29 one-time')
   assert.equal(offerSpotLine(slots[3]!, 'zh'), '右栏位 $19/周')
   assert.equal(offerSpotLine(slots[3]!, 'en'), 'Sidebar slot $19/week')
   assert.equal(slots.some((slot) => /spots left|\d+\/\d+/.test(offerSpotLine(slot, 'en'))), false)
+  assert.equal(slots.some((slot) => /周租|\/week board|Board slot/.test(`${slot.name.en} ${slot.detail.en}`)), false)
 })
 
 test('catalogue seed and unpaid intent do not fill a spot; a paid order does', () => {
@@ -174,9 +178,9 @@ test('catalogue seed and unpaid intent do not fill a spot; a paid order does', (
   }
   const slots = homeOfferSlots({
     listings: [seed, unpaid, standard, featured, pro],
-    board: {
+    billboard: {
       name: 'Board Co',
-      headline: 'On the board',
+      headline: 'On the billboard',
       logo: 'https://cdn.example/board.png',
       url: 'https://board.example',
     },
@@ -187,9 +191,9 @@ test('catalogue seed and unpaid intent do not fill a spot; a paid order does', (
   assert.equal(byId.featured?.href, '/tools/real-featured')
   assert.equal(byId.featured?.external, false)
   assert.equal(byId.pro?.name, 'Real Pro')
-  assert.equal(byId.board?.name, 'Board Co')
-  assert.equal(byId.board?.external, true)
-  assert.equal(byId.board?.href, 'https://board.example')
+  assert.equal(byId.billboard?.name, 'Board Co')
+  assert.equal(byId.billboard?.external, true)
+  assert.equal(byId.billboard?.href, 'https://board.example')
   assert.equal(byId.sidebar, null)
   assert.equal(
     slots.some((slot) => slot.occupant?.name === 'ChatGPT' || slot.occupant?.name === 'Standard Co'),
@@ -226,6 +230,10 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}`),
-    ['board:$29', 'sidebar:$19'],
+    ['sidebar:$19'],
+  )
+  assert.deepEqual(
+    BILLBOARD_TIERS.map((tier) => `${tier.id}:${tier.price}`),
+    ['entry:$15', 'standard:$29', 'prime:$49'],
   )
 })

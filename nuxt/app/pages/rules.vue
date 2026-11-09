@@ -154,13 +154,13 @@ const sections = computed<RuleSection[]>(() => [
     id: 'ads',
     heading: pick('广告位', 'Ad slots'),
     lead: pick(
-      '广告位是租的，不是买的：按周起租，周一开算，展示 7 天。',
-      'Ad slots are rented, not bought: they start on a Monday and run for seven days.',
+      'Billboard 是一次性买下的位置。右栏仍按周租，周一起算，展示 7 天。',
+      'Billboard is bought once. The sidebar is still rented by the week, starting Monday, for seven days.',
     ),
     items: [
       pick(
-        '榜单位 $29/周，位置在本周榜单第 3、4 名之间；连投 4 周 $99。',
-        'Board slot $29 a week, between 3rd and 4th on this week’s board; $99 for four weeks.',
+        'Billboard 入门 $15、标准 $29、优先 $49，都是一次性。标准档替代原来的榜单周租。它不插进每周投票榜。',
+        'Billboard Entry is $15, Standard $29, Prime $49, all one-time. Standard replaces the old weekly board rental. It is not inserted into the weekly vote list.',
       ),
       pick(
         '右栏位 $19/周，出现在首页与「最新收录」页的右栏；连投 4 周 $65。',

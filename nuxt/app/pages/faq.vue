@@ -180,10 +180,10 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          '榜单位 $29/周（连投 4 周 $99），位置在本周榜单第 3、4 名之间；右栏位 $19/周（连投 4 周 $65），出现在首页与「最新收录」页的右栏。',
-          'Board slot $29 a week ($99 for four weeks), between 3rd and 4th on this week’s board; sidebar slot $19 a week ($65 for four weeks), in the rail on the homepage and the just-added feed.',
+          'Billboard 是一次性的：入门 $15、标准 $29、优先 $49。标准档替代原来的榜单周租，不再按周出售。右栏仍是 $19/周（连投 4 周 $65）。Billboard 和每周投票榜不是同一份名单。',
+          'Billboard is one-time: Entry $15, Standard $29, Prime $49. Standard replaces the old weekly board rental, which is no longer sold. The sidebar is still $19 a week ($65 for four). Billboard is not the weekly vote list.',
         ),
-        link: { label: pick('选一个周次', 'Pick a week'), to: '/book-ad' },
+        link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },
       {
         q: pick('买广告位要先提交产品吗？', 'Do I need a listing to book a slot?'),

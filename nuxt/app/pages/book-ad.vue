@@ -35,18 +35,15 @@ const route = useRoute()
 const requestFetch = useRequestFetch()
 const payment = await usePayment()
 
-type Slot = 'board' | 'sidebar'
+type Slot = 'sidebar'
 type Availability = {
   ok: boolean
   starts: string[]
   available: Record<string, boolean>
 }
 
-const slot = ref<Slot>(
-  route.query.slot === 'sidebar' || route.query.slot === 'board'
-    ? (route.query.slot as Slot)
-    : 'board',
-)
+const boardRetired = computed(() => route.query.slot === 'board')
+const slot = ref<Slot>('sidebar')
 const weeks = ref<number>(
   AD_WEEK_OPTIONS.includes(Number(route.query.weeks) as 1 | 4) ? Number(route.query.weeks) : 1,
 )
@@ -167,6 +164,7 @@ const canSubmit = computed(() =>
 )
 
 async function submit() {
+  if (boardRetired.value || slot.value !== 'sidebar') return
   if (!canSubmit.value) return
   busy.value = true
   error.value = ''
@@ -199,8 +197,8 @@ useSeo({
   title: computed(() => pick('预订周广告位 · Product Atlas', 'Book a weekly ad slot · Product Atlas')),
   description: computed(() =>
     pick(
-      '按周预订榜单或右栏广告位，在线付款后自动排期，到期自动下架。',
-      'Rent a weekly board or sidebar placement. Pay online, get scheduled automatically, come down when the week ends.',
+      '右栏按周预订。Billboard 不在这里卖，榜单周租已停。',
+      'Book the sidebar by the week. Billboard is not sold here, and the weekly board rental has stopped.',
     ),
   ),
 })
@@ -212,18 +210,35 @@ useHead({
 
 <template>
   <div class="src-page mx-auto w-full max-w-[1080px] px-4 py-10 sm:px-6 sm:py-14">
-    <header class="mb-10 max-w-3xl">
-      <p class="mb-3 text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">
-        {{ pick('周广告位', 'Weekly ad slots') }}
-      </p>
-      <h1 class="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
-        {{ pick('预订一个广告位', 'Book a weekly placement') }}
+    <section v-if="boardRetired" class="max-w-xl rounded-2xl border border-dashed border-border p-8">
+      <p class="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">BILLBOARD</p>
+      <h1 class="mt-3 font-serif text-3xl tracking-tight">
+        {{ pick('榜单周租已停售', 'The weekly board rental has stopped') }}
       </h1>
       <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
         {{
           pick(
-            '位置按周出租，周一起算、到期自动下架，同一周不会卖两次。付款成功后系统自动排期，不需要提交产品，也不需要等人工确认。想续租，直接选后面的周再订一次。',
-            'Slots are rented by the week, starting Monday, and come down on their own when the window ends. One position is never sold twice for the same week. Payment schedules it automatically — no product submission and no manual confirmation. To renew, simply book a later week.',
+            '原来的榜单位现在是 Billboard 标准档，一次性 $29。另有入门 $15 和优先 $49。这一页不打开结账。',
+            'The old board slot is now Billboard Standard, $29 one-time. Entry is $15 and Prime is $49. This page does not open a checkout for it.',
+          )
+        }}
+      </p>
+      <NuxtLink class="btn btn--primary mt-6" :to="`${localePath('/billboard')}#claim`">
+        {{ pick('索取发票', 'Request invoice') }}
+      </NuxtLink>
+    </section>
+    <header v-if="!boardRetired" class="mb-10 max-w-3xl">
+      <p class="mb-3 text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">
+        {{ pick('周广告位', 'Weekly ad slots') }}
+      </p>
+      <h1 class="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
+        {{ pick('预订右栏', 'Book the sidebar') }}
+      </h1>
+      <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
+        {{
+          pick(
+            '右栏按周出租，周一起算、到期下架，同一周不会卖两次。Billboard 不在这个表单里。',
+            'The sidebar is rented by the week, starting Monday, and comes down when the window ends. It is not sold twice for the same week. Billboard is not on this form.',
           )
         }}
       </p>
@@ -240,7 +255,7 @@ useHead({
       </p>
     </header>
 
-    <form class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" @submit.prevent="submit">
+    <form v-if="!boardRetired" class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" @submit.prevent="submit">
       <div class="space-y-8">
         <!-- position -->
         <section class="space-y-3">
