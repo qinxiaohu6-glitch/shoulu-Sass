@@ -55,7 +55,7 @@ function legacyTarget(pathname: string): string | null {
     return bare.startsWith('/zh') ? '/zh' : '/'
   }
 
-  return productRedirect(bare) ?? bare || '/'
+  return productRedirect(bare) ?? (bare || '/')
 }
 
 export default defineEventHandler((event) => {
