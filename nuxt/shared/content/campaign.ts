@@ -38,8 +38,18 @@ export function campaignInScope(kind: string): kind is CampaignScope {
 
 export function campaignActive(now = Date.now(), enabled: boolean = CAMPAIGN.enabled): boolean {
   if (!enabled) return false
-  const ends = Date.parse(CAMPAIGN.endsAt)
-  return Number.isFinite(ends) && now < ends
+  const ends = campaignClockMs()
+  return ends != null && now < ends
+}
+
+/**
+ * The only countdown source. A missing or unparseable `endsAt` is not a clock:
+ * callers show the deadline sentence and do not paint 00:00:00.
+ */
+export function campaignClockMs(iso = CAMPAIGN.endsAt): number | null {
+  if (!iso) return null
+  const ms = Date.parse(iso)
+  return Number.isFinite(ms) ? ms : null
 }
 
 /** Nearest whole dollar after `off`, never above the list price. */

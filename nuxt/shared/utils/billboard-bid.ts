@@ -12,6 +12,7 @@
 import type { BillboardTierId } from '../content/billboard.ts'
 import { centsLabel } from '../content/campaign.ts'
 import { backingCents, normalizeEmail, publicHttpUrl, samePlacementUrl } from './billboard.ts'
+import { screenshotSrc } from './screenshot.ts'
 
 export const BILLBOARD_FLOOR_CENTS = 1500
 export const BILLBOARD_BID_MAX_CENTS = 1_000_000
@@ -92,10 +93,7 @@ export function domainLabel(value: string): string {
 }
 
 export function isHomepageThumbnail(value: string): boolean {
-  const v = value.trim()
-  if (!v || v.length > 500) return false
-  if (/^https?:\/\//i.test(v)) return true
-  return /\.(png|jpe?g|webp|gif|avif)$/i.test(v)
+  return screenshotSrc(value) !== ''
 }
 
 function othersOf(spots: readonly BidOccupant[], selfUrl: string): BidOccupant[] {

@@ -6,7 +6,10 @@
 import type { BillboardTierId } from '~~/shared/content/billboard'
 import { isBillboardTier } from '~~/shared/content/billboard'
 import { publicBillboardRows, rankBillboard, type BillboardRow } from '~~/shared/utils/billboard'
+import { screenshotSrc } from '~~/shared/utils/screenshot'
+import { legalLogoUrl } from '~~/shared/utils/logo'
 import type { Db } from './db'
+import { fillBillboardScreenshots } from './billboard-media'
 
 type BillboardSqlRow = {
   id: string
@@ -50,7 +53,13 @@ export async function listLiveBillboard(db: Db): Promise<BillboardRow[]> {
       amountCents: Number(row.amount_cents ?? 0),
     })
   }
-  return rankBillboard(publicBillboardRows(rows))
+  const ranked = rankBillboard(publicBillboardRows(rows))
+  try {
+    await fillBillboardScreenshots(db, ranked)
+  } catch (err) {
+    console.error('[billboard] screenshot fill failed', err)
+  }
+  return ranked
 }
 
 export type BillboardAdminRow = {
@@ -60,6 +69,7 @@ export type BillboardAdminRow = {
   tagline: string
   url: string
   logo: string
+  screenshot: string
   email: string
   status: string
   paidAt: number | null
@@ -73,7 +83,7 @@ export type BillboardAdminRow = {
 export async function listAllBillboard(db: Db): Promise<BillboardAdminRow[]> {
   const res = await db
     .prepare(
-      `SELECT id, tier, name, tagline, url, logo, email, status, paid_at, created_at,
+      `SELECT id, tier, name, tagline, url, logo, screenshot, email, status, paid_at, created_at,
               order_id, amount_cents, note
          FROM billboard_placement
         ORDER BY created_at DESC`,
@@ -86,6 +96,7 @@ export async function listAllBillboard(db: Db): Promise<BillboardAdminRow[]> {
     tagline: row.tagline,
     url: row.url,
     logo: row.logo,
+    screenshot: row.screenshot ?? '',
     email: row.email,
     status: row.status,
     paidAt: row.paid_at,
@@ -159,5 +170,27 @@ export async function insertBillboardRequest(
       input.now,
       input.amountCents,
     )
+    .run()
+}
+
+/** Operator edit. Empty strings clear the field. Invalid values are refused. */
+export function billboardMediaPatch(screenshot: unknown, logo: unknown): { screenshot: string; logo: string } | null {
+  const shotRaw = String(screenshot ?? '').trim()
+  const logoRaw = String(logo ?? '').trim()
+  const shot = shotRaw ? screenshotSrc(shotRaw) : ''
+  const mark = logoRaw ? legalLogoUrl(logoRaw) : ''
+  if (shotRaw && !shot) return null
+  if (logoRaw && !mark) return null
+  return { screenshot: shot, logo: mark }
+}
+
+export async function setBillboardMedia(
+  db: Db,
+  id: string,
+  media: { screenshot: string; logo: string },
+): Promise<void> {
+  await db
+    .prepare(`UPDATE billboard_placement SET screenshot = ?, logo = ? WHERE id = ?`)
+    .bind(media.screenshot, media.logo, id)
     .run()
 }

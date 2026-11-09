@@ -4,6 +4,7 @@
  */
 
 import { billboardTier, isBillboardTier, type BillboardTierId } from '../content/billboard.ts'
+import { screenshotSrc } from './screenshot.ts'
 
 export type BillboardStatus = 'requested' | 'pending' | 'live' | 'removed'
 
@@ -39,10 +40,7 @@ export function backingCents(row: { amountCents?: number; tier: string }): numbe
 }
 
 function looksLikeThumbnail(value: string): boolean {
-  const v = value.trim()
-  if (!v || v.length > 500) return false
-  if (/^https?:\/\//i.test(v)) return true
-  return /\.(png|jpe?g|webp|gif|avif)$/i.test(v)
+  return screenshotSrc(value) !== ''
 }
 
 /**

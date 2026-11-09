@@ -3020,6 +3020,33 @@ kbd {
   border-radius: 9999px;
 }
 .vote--sm svg { width: 12px; height: 12px; }
+.vote--stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  min-width: 52px;
+  padding: 2px 4px;
+  gap: 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.1;
+  cursor: pointer;
+}
+.vote--stack__n {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.vote--stack small {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.vote--stack svg { width: 12px; height: 12px; }
+.vote--stack:hover { color: var(--primary); }
 .vote-hint {
   margin-top: 10px;
   font-size: 12px;
@@ -7150,8 +7177,13 @@ html[lang="en"] .ad-section__head h2 {
   color: #111;
   font-size: 13px;
   font-weight: 800;
+  overflow: hidden;
 }
-.bb-shot img { width: 100%; height: 100%; object-fit: cover; }
+.bb-shot--image {
+  display: block;
+  padding: 0;
+}
+.bb-shot img { display: block; width: 100%; height: 136px; object-fit: cover; }
 .bb-shot__plain {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -7286,7 +7318,7 @@ html[lang="en"] .ad-section__head h2 {
 .home-cols__feed { list-style: none; margin: 0; padding: 0; }
 .launch-row {
   display: grid;
-  grid-template-columns: 26px 44px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   margin-bottom: 8px;
@@ -7294,6 +7326,15 @@ html[lang="en"] .ad-section__head h2 {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
+}
+.launch-row__link {
+  display: grid;
+  grid-template-columns: 26px 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 .launch-row__rank {
   width: 26px;
@@ -7482,6 +7523,14 @@ html[lang="en"] .ad-section__head h2 {
   border-style: dashed;
   background: #fffbeb;
 }
+.bb-rank__side {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: max-content;
+}
 .bb-rank__go {
   border: 1px solid var(--border);
   background: #fff;
@@ -7490,7 +7539,9 @@ html[lang="en"] .ad-section__head h2 {
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
-  text-transform: capitalize;
+  white-space: nowrap;
+  flex: none;
+  width: auto;
 }
 .bb-rank__n {
   width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;

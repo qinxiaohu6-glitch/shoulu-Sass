@@ -8,6 +8,7 @@
 
 import { billboardBidDraft } from '~~/shared/utils/billboard-bid'
 import { insertBillboardRequest } from '../../utils/billboard'
+import { seedBillboardScreenshot } from '../../utils/billboard-media'
 import { useDb } from '../../utils/db'
 
 function newBillboardId(): string {
@@ -56,6 +57,7 @@ export default defineEventHandler(async (event) => {
       amountCents: draft.amountCents,
       now: Math.floor(Date.now() / 1000),
     })
+    await seedBillboardScreenshot(db, id, draft.url)
     return {
       ok: true as const,
       id,

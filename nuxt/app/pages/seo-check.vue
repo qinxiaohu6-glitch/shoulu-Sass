@@ -76,6 +76,7 @@ const domain = ref('')
 
 const report = ref<AuditReport | null>(null)
 const auditBusy = ref(false)
+const pdfBusy = ref(false)
 const status = ref('')
 const statusKind = ref<'info' | 'error'>('info')
 
@@ -136,6 +137,47 @@ async function runAudit() {
  * submit would arrive here as a truthy object and silently double the number
  * of upstream calls.
  */
+async function downloadPdf() {
+  if (!report.value || pdfBusy.value) return
+  pdfBusy.value = true
+  statusKind.value = 'info'
+  status.value = pick('正在生成 PDF…', 'Building the PDF…')
+  try {
+    const res = await fetch('/api/audit/pdf', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: report.value.final_url || url.value, lang: lang.value }),
+    })
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as { message_zh?: string; message_en?: string } | null
+      statusKind.value = 'error'
+      status.value = (isZh.value ? data?.message_zh : data?.message_en)
+        || pick('这次没有生成 PDF。', 'No PDF was created for this check.')
+      return
+    }
+    const blob = await res.blob()
+    if (!blob.size || blob.type.includes('json')) {
+      statusKind.value = 'error'
+      status.value = pick('这次没有生成 PDF。', 'No PDF was created for this check.')
+      return
+    }
+    const match = /filename="([^"]+)"/.exec(res.headers.get('content-disposition') || '')
+    const name = match?.[1] || 'dirtool-seo-report.pdf'
+    const href = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = href
+    link.download = name
+    link.click()
+    URL.revokeObjectURL(href)
+    status.value = ''
+  } catch {
+    statusKind.value = 'error'
+    status.value = pick('PDF 没有下载成功，请再试一次。', 'The PDF did not download. Try again.')
+  } finally {
+    pdfBusy.value = false
+  }
+}
+
 async function lookUpDr(withCompare = false) {
   if (drBusy.value) return
 
@@ -351,8 +393,8 @@ const faq = computed(() => [
   {
     q: pick('你们会不会保存我查过的网址？', 'Do you store the URLs I check?'),
     a: pick(
-      '不会存进数据库，也没有账号体系。结果只在这次请求里生成，刷新就没了。',
-      'No database, no account. The report is built for that one request and disappears on refresh.',
+      '不会存进数据库，也没有账号体系。结果只在这次请求里生成，刷新就没了。下载的 PDF 同样不入库，封面和每一页都带 https://dirtool.com。',
+      'No database, no account. The report is built for that one request and disappears on refresh. The downloaded PDF is not stored either, and every page carries https://dirtool.com.',
     ),
   },
 ])
@@ -442,6 +484,9 @@ useSeo({
               <a :href="report.final_url" target="_blank" rel="noopener nofollow">{{ targetLabel }}</a>
             </p>
             <h2 class="audit__headline">{{ verdict }}</h2>
+            <button class="btn btn--outline" type="button" :disabled="pdfBusy" @click="downloadPdf">
+              {{ pdfBusy ? pick('正在生成 PDF…', 'Building the PDF…') : pick('下载 PDF', 'Download PDF') }}
+            </button>
             <ul class="audit__tally">
               <li v-if="report.summary.fail" class="is-fail">
                 <b>{{ report.summary.fail }}</b>{{ pick('项不通过', 'failed') }}

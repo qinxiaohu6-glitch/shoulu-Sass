@@ -313,6 +313,8 @@ useHead({
           </div>
         </div>
 
+        <BlackFridayDeal />
+
         <ol class="mb-12 grid gap-3 sm:grid-cols-2">
           <li v-for="step in steps" :key="step.n">
             <a
@@ -343,53 +345,6 @@ useHead({
               pick(
                 '数字来自当前目录与排期。不承诺搜索排名、流量或域名权重。',
                 'Counts come from the live directory and the booking schedule. No promise of search rank, traffic, or domain authority.',
-              )
-            }}
-          </p>
-        </div>
-
-        <div
-          id="black-friday"
-          class="mb-8 scroll-mt-24 rounded-3xl px-6 py-8 text-stone-100 sm:px-8"
-          :class="promoOn ? 'bg-zinc-950' : 'bg-muted text-foreground'"
-        >
-          <template v-if="promoOn">
-            <p class="inline-flex items-center rounded-full bg-amber-300 px-3 py-1 text-xs font-bold tracking-wide text-zinc-950">
-              {{ pick('黑色星期五 · 约 30% OFF', 'Black Friday · ~30% off') }}
-            </p>
-            <h2 class="mt-4 max-w-2xl font-serif text-3xl tracking-tight text-white sm:text-4xl">
-              {{ pick('划线是表价。页面价格是实付。', 'Struck price is the list price. The page price is what you pay.') }}
-            </h2>
-            <p class="mt-3 text-sm text-stone-300">
-              {{ pick(`截止 ${deadline} Asia/Shanghai。Billboard 地板价仍是 $15。`, `Ends ${deadline} Asia/Shanghai. The Billboard floor stays $15.`) }}
-            </p>
-            <ul class="mt-5 flex flex-wrap gap-2 text-sm">
-              <li
-                v-for="tier in tiers.filter((item) => item.amountCents > 0)"
-                :key="tier.id"
-                class="rounded-full border border-white/15 bg-white/5 px-3 py-1"
-              >
-                <span class="mr-2 rounded-full bg-amber-300 px-1.5 text-[10px] font-bold text-zinc-950">SAVE</span>
-                {{ t(tier.name) }}
-                <s class="mx-1 text-stone-400">{{ skuQuote('listing', tier.id).listLabel }}</s>
-                {{ skuQuote('listing', tier.id).priceLabel }}
-              </li>
-              <li class="rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                <span class="mr-2 rounded-full bg-amber-300 px-1.5 text-[10px] font-bold text-zinc-950">SAVE</span>
-                {{ pick('右栏', 'Sidebar') }}
-                <s class="mx-1 text-stone-400">{{ skuQuote('sidebar', '1').listLabel }}</s>
-                {{ skuQuote('sidebar', '1').priceLabel }}{{ pick('/周', '/wk') }}
-              </li>
-              <li class="rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                Billboard {{ pick('从 $15 起', 'from $15') }}
-              </li>
-            </ul>
-          </template>
-          <p v-else class="text-sm leading-relaxed">
-            {{
-              pick(
-                '下面是表价。页面价格即为实付。Billboard 从 $15 起，一次付清。',
-                'Prices below are the list prices, and the price on the page is what you pay. Billboard is name-your-price from $15.',
               )
             }}
           </p>

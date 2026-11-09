@@ -12,6 +12,8 @@ const props = defineProps<{
   votes: number
   /** The card variant (24px pill) instead of the detail-page one (36px). */
   small?: boolean
+  /** Just launched: triangle, count, and the word "votes" in one column. */
+  stack?: boolean
 }>()
 
 const { pick } = useLang()
@@ -30,19 +32,24 @@ watch(
   },
 )
 
+function statusOf(err: unknown): number {
+  const info = err as { statusCode?: number; status?: number; response?: { status?: number } }
+  return Number(info?.statusCode || info?.status || info?.response?.status || 0)
+}
+
 async function vote() {
   if (busy.value || voted.value) return
   busy.value = true
   try {
-    const res = await $fetch<{ ok: boolean; accepted?: boolean }>('/api/vote', {
+    const res = await $fetch<{ ok: boolean; accepted?: boolean; votes?: number }>('/api/vote', {
       method: 'POST',
       body: { slug: props.slug },
     })
-    if (res?.accepted) count.value += 1
+    if (typeof res?.votes === 'number') count.value = res.votes
+    else if (res?.accepted) count.value += 1
     voted.value = true
   } catch (err: unknown) {
-    const status = (err as { statusCode?: number })?.statusCode
-    if (status === 401) {
+    if (statusOf(err) === 401) {
       // `localePath` comes from @nuxtjs/i18n, so zh pages go to /zh/sign-in.
       // `next` is the full path (locale prefix included) so the visitor lands
       // back on the page whose button they clicked, not on the homepage.
@@ -58,13 +65,20 @@ async function vote() {
 <template>
   <button
     class="vote"
-    :class="[{ 'vote--sm': small, 'is-voted': voted }]"
+    :class="[{ 'vote--sm': small && !stack, 'vote--stack': stack, 'is-voted': voted }]"
     type="button"
     :aria-label="`${count} ${pick('票 / 本周', 'votes this week')}`"
     :disabled="busy"
     @click.prevent.stop="vote"
   >
-    <Icon name="arrow-up" />
-    <span>{{ count }}</span>
+    <span v-if="stack" class="vote--stack__n">
+      <Icon name="arrow-up" />
+      <span>{{ count }}</span>
+    </span>
+    <template v-else>
+      <Icon name="arrow-up" />
+      <span>{{ count }}</span>
+    </template>
+    <small v-if="stack">{{ pick('票', 'votes') }}</small>
   </button>
 </template>

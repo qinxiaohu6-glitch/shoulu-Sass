@@ -295,11 +295,12 @@ useHead({
               </strong>
               <span>{{ row.tagline }}</span>
             </span>
-            <span class="bb-price">{{ backingLabel(row) }}</span>
-            <button type="button" class="bb-rank__go" @click="claimAt(rankOf(row.id))">
-              {{ pick(`认领 #${rankOf(row.id)}`, `Claim #${rankOf(row.id)}`) }}
-              {{ centsLabel(amountToTakeRank(rankOf(row.id), occupants, url)) }}
-            </button>
+            <span class="bb-rank__side">
+              <span class="bb-price">{{ backingLabel(row) }}</span>
+              <button type="button" class="bb-rank__go" @click="claimAt(rankOf(row.id))">
+                {{ pick(`认领 #${rankOf(row.id)} ${centsLabel(amountToTakeRank(rankOf(row.id), occupants, url))}`, `Claim #${rankOf(row.id)} ${centsLabel(amountToTakeRank(rankOf(row.id), occupants, url))}`) }}
+              </button>
+            </span>
           </li>
           <li v-for="n in filter === 'top' ? openSlots : 0" :key="`open-${n}`" class="is-open">
             <span class="bb-rank__n">{{ ranked.length + n }}</span>
@@ -308,9 +309,11 @@ useHead({
               <strong>{{ pick('空位', 'Open slot') }}</strong>
               <span>{{ pick('付款确认后公开。', 'Public after payment is confirmed.') }}</span>
             </span>
-            <button type="button" class="bb-rank__go" @click="claimAt(ranked.length + n)">
-              {{ pick(`认领 · ${floorLabel} 起`, `Claim · from ${floorLabel}`) }}
-            </button>
+            <span class="bb-rank__side">
+              <button type="button" class="bb-rank__go" @click="claimAt(ranked.length + n)">
+                {{ pick(`认领 · ${floorLabel} 起`, `Claim · from ${floorLabel}`) }}
+              </button>
+            </span>
           </li>
         </ol>
         <p v-if="ranked.length > BILLBOARD_TOP_N" class="bb-claim__fine">
