@@ -25,7 +25,7 @@
  */
 import type { PricingGroup, PricingPlan } from '~/utils/directory-ui'
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
-import { adPlans, comparison, pricingFaq, tiers } from '~~/shared/content/pricing'
+import { adPlans, comparison, listingBenefits, pricingFaq, tiers } from '~~/shared/content/pricing'
 import { categories, tools } from '~~/shared/utils/catalog'
 
 const { lang, pick } = useLang()
@@ -421,6 +421,30 @@ useHead({
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Moved off the homepage so that grid can sell placements. -->
+    <section id="after-listing" class="scroll-mt-24 border-t border-border px-4 py-20">
+      <div class="mx-auto max-w-5xl">
+        <header class="mb-8 max-w-3xl">
+          <h2 class="font-serif text-3xl font-normal tracking-tight">
+            {{ pick('收录后你能得到什么', 'What you get when you list') }}
+          </h2>
+          <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
+            {{ pick('四件事，每一条收录都有。', 'Four things, on every listing.') }}
+          </p>
+        </header>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <article
+            v-for="item in listingBenefits"
+            :key="item.title.en"
+            class="rounded-2xl border border-border bg-background p-6"
+          >
+            <h3 class="text-base font-semibold tracking-tight">{{ t(item.title) }}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ t(item.body) }}</p>
+          </article>
         </div>
       </div>
     </section>
