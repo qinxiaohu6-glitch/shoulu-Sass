@@ -119,6 +119,7 @@ const isDark = computed(() => colorMode.value === 'dark')
  * pointing at a page that no longer exists.
  */
 const { categories: liveCategories } = useDirectoryMeta()
+const overrides = useOverrides()
 const FOOTER_CATS = ['chatbots', 'coding', 'image', 'video', 'audio', 'writing', 'productivity', 'research']
 const footerCats = computed(() =>
   FOOTER_CATS.map((slug) => categoryBySlug(slug, liveCategories.value))
@@ -168,6 +169,8 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
   },
   {
     title: pick('热门产品', 'Popular products'),
+    // Fixed editorial set, same idea as the category column: a hidden listing
+    // answers 410, so the link drops out instead of staying clickable.
     links: [
       { label: 'Claude', to: '/tools/claude' },
       { label: 'Consensus', to: '/tools/consensus' },
@@ -175,7 +178,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: 'Replit', to: '/tools/replit' },
       { label: 'Jasper', to: '/tools/jasper' },
       { label: 'Pika', to: '/tools/pika' },
-    ],
+    ].filter((link) => !overrides.value.hidden.includes(link.to.replace('/tools/', ''))),
   },
 ])
 

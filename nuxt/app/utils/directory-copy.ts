@@ -101,10 +101,8 @@ export const DIRECTORY_COPY = {
   'dir.submit.field_category_ph': { en: 'Pick a category', zh: '选择分类' },
   'dir.submit.field_intro': { en: 'Introduction (optional)', zh: '详细介绍（可选）' },
   'dir.submit.field_intro_ph': { en: 'Features, use cases, pricing… Markdown is supported.', zh: '功能特点、使用场景、定价模式……支持 Markdown 格式。' },
-  // Not in the source: it has an account system and reads the email from the
-  // signed-in user. This build accepts anonymous submissions, so without an
-  // address there is nowhere to send the receipt — or to say the listing was
-  // rejected. Required on every plan, free included.
+  // The Google session owns the row. The address is still required so the
+  // receipt and the review outcome have somewhere to go.
   'dir.submit.field_email': { en: 'Email for the receipt', zh: '接收收据的邮箱' },
   'dir.submit.field_email_ph': { en: 'you@example.com', zh: 'you@example.com' },
   'dir.submit.error_email_required': {

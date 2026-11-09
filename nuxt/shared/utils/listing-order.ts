@@ -15,6 +15,11 @@ export interface OverrideFlags {
   pin_until: string
   hidden: number
   sort: number
+  /**
+   * Irreversible catalogue tombstone. Optional on rows written before the
+   * column existed; `1` keeps the row even when pin, hide and weight are off.
+   */
+  removed?: number
   updated_at: number
 }
 
@@ -94,7 +99,8 @@ export function pickListingText(en: string, zh: string, stored: string, max: num
  *
  * Null means delete: a row of zeroes would make "unpin" look like it had not
  * been written. Each call changes one switch and leaves the others alone, so
- * hiding a pinned listing does not drop the pin.
+ * hiding a pinned listing does not drop the pin. `removed` is not a switch
+ * this function turns on; a tombstone survives an unhide and keeps the row.
  */
 export function applyOverrideChange(
   existing: OverrideFlags | null,
@@ -111,9 +117,10 @@ export function applyOverrideChange(
         pin_until: existing.pin ? existing.pin_until || '' : '',
         hidden: existing.hidden ? 1 : 0,
         sort: clampListingWeight(Number(existing.sort) || 0),
+        removed: existing.removed ? 1 : 0,
         updated_at: now,
       }
-    : { slug, pin: 0, pin_until: '', hidden: 0, sort: 0, updated_at: now }
+    : { slug, pin: 0, pin_until: '', hidden: 0, sort: 0, removed: 0, updated_at: now }
 
   if (key === 'pin') {
     const on = Boolean(value)
@@ -126,6 +133,6 @@ export function applyOverrideChange(
   }
   next.updated_at = now
 
-  if (!next.pin && !next.hidden && !next.sort) return null
+  if (!next.pin && !next.hidden && !next.sort && !next.removed) return null
   return next
 }

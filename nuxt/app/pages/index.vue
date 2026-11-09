@@ -99,7 +99,7 @@ const latestWeek = computed(() => {
 })
 
 const weekText = computed(() => weekLabel(latestWeek.value, lang.value))
-const board = computed(() => boardRows(latestWeek.value, lang.value, 6))
+const board = computed(() => boardRows(latestWeek.value, lang.value, 6, overrides.value))
 
 /* "Sponsored" hero card — the one listing that is both paid and featured. */
 const heroCard = computed(() => {

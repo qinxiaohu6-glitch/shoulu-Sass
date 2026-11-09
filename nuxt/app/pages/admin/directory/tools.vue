@@ -12,8 +12,9 @@
  *  - `pending`          → Approve (publish) or Reject (both need no confirm for
  *                         approve; reject asks, because it is destructive)
  *  - any row            → Edit
- *  - `published`        → Force unpublish, confirmed, lands the row in `rejected`
- *  - not `published`    → Delete, confirmed
+ *  - `published`        → Force unpublish, confirmed, lands the row in `hidden`
+ *  - `hidden`           → Relist (visible label; the same unhide as approve)
+ *  - not `published`    → Delete, confirmed, including hidden community rows
  *
  * The status API stores `approved` where the console says `published` and
  * `awaiting_payment` where it says `pending_payment`; the mapping lives in
@@ -23,8 +24,8 @@
  * one, pinning it, or changing its recommend weight writes `tool_overrides`,
  * which is what the public directory reads. The review queue still owns
  * approve / reject of the submission record itself. A hidden row is labeled
- * 「已下架」, not rejected: restore clears `hidden`, and the submission stays
- * approved. Nothing here deletes it or sends a rejection email.
+ * 「已下架」, not rejected: Relist clears `hidden`, and the submission stays
+ * approved. Delete is a separate, later action and removes the record.
  *
  * The edit drawer does not render its fields until the detail payload for *this*
  * row has arrived (`detail.id === editingId`). Mounting the form against a
@@ -208,6 +209,17 @@ async function approve(row: DirTool) {
   }
 }
 
+/** Same unhide as approve. The label is the point: a bare checkmark was not a control anyone could find. */
+async function relist(row: DirTool) {
+  try {
+    await api.put('/api/admin/directory/tools', { id: row.id, status: 'published' })
+    toast.success(t('admin.directory.tools.relisted'))
+    await refresh()
+  } catch (error) {
+    toast.error((error as Error).message)
+  }
+}
+
 async function reject(row: DirTool) {
   const ok = await confirm({
     title: t('admin.directory.tools.reject_title'),
@@ -269,7 +281,7 @@ const columns = computed<DataColumn[]>(() => [
   { key: 'featured', header: t('admin.directory.tools.col_featured'), class: 'hidden lg:table-cell w-[70px]' },
   { key: 'sort', header: t('admin.directory.tools.sort'), class: 'hidden lg:table-cell w-[70px]' },
   { key: 'created_at', header: t('admin.directory.common.created_at'), class: 'hidden xl:table-cell' },
-  { key: 'actions', header: t('admin.directory.common.actions'), class: 'w-[140px]' },
+  { key: 'actions', header: t('admin.directory.common.actions'), class: 'w-[220px]' },
 ])
 </script>
 
@@ -361,13 +373,22 @@ const columns = computed<DataColumn[]>(() => [
           </template>
 
           <template #cell-actions="{ row }">
-            <div class="flex flex-wrap gap-1">
-              <template v-if="row.status === 'pending' || row.status === 'rejected' || row.status === 'hidden'">
+            <div class="flex flex-wrap items-center gap-1">
+              <UiButton
+                v-if="row.status === 'hidden'"
+                variant="outline"
+                size="sm"
+                class="h-7 px-2 text-xs"
+                @click="relist(row)"
+              >
+                {{ t('admin.directory.tools.relist') }}
+              </UiButton>
+              <template v-if="row.status === 'pending' || row.status === 'rejected'">
                 <UiButton
                   variant="ghost"
                   size="icon"
                   class="size-7"
-                  :title="row.status === 'hidden' ? t('admin.directory.tools.restore') : t('admin.directory.tools.approve')"
+                  :title="t('admin.directory.tools.approve')"
                   @click="approve(row)"
                 >
                   <Check class="size-3.5 text-green-600" />
@@ -397,10 +418,11 @@ const columns = computed<DataColumn[]>(() => [
                 <Ban class="size-3" />
               </UiButton>
               <UiButton
-                v-if="canDeleteTool(row.status) && row.source !== 'community'"
+                v-if="canDeleteTool(row.status)"
                 variant="ghost"
                 size="icon"
                 class="size-7"
+                :title="t('admin.directory.common.delete')"
                 @click="handleDelete(row)"
               >
                 <Trash2 class="size-3" />

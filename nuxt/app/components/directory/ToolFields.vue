@@ -4,8 +4,9 @@
  *
  * One field set for both drawers. `lockMeta` is the edit form: the slug is the
  * public listing URL, and `source` / `status` are owned by the list's row
- * actions (Approve / Reject / Force unpublish), so editing a row cannot change
- * them. The source says the same with `opts?.lockMeta` and two hint lines.
+ * actions (Approve / Reject / Force unpublish / Relist), so editing a row
+ * cannot change them. The status control is plain text in that mode: a disabled
+ * dropdown still looked like the way to republish a hidden listing.
  *
  * The pricing / category selects stay editable in both modes — re-filing a
  * listing or correcting its price is ordinary editorial work, not a moderation
@@ -161,12 +162,16 @@ function toggleTag(id: string, checked: boolean) {
 
       <div class="space-y-2">
         <UiLabel>{{ t('admin.directory.common.status') }}</UiLabel>
+        <p v-if="props.lockMeta" class="text-sm">{{ statusLabel }}</p>
+        <p v-if="props.lockMeta" class="text-muted-foreground text-xs">
+          {{ t('admin.directory.tools.status_locked_hint') }}
+        </p>
         <UiSelect
+          v-else
           :model-value="props.form.status"
-          :disabled="props.lockMeta"
           @update:model-value="(v: string) => (props.form.status = String(v || 'published'))"
         >
-          <UiSelectTrigger class="w-full" :disabled="props.lockMeta">
+          <UiSelectTrigger class="w-full">
             <UiSelectValue :text="statusLabel" />
           </UiSelectTrigger>
           <UiSelectContent>

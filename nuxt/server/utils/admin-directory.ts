@@ -14,12 +14,13 @@
  */
 
 import type { Db } from './db'
-import { deleteDirectoryTool, hideCategory, listDirectoryTools, saveCategory, saveCollection, saveTag, saveToolHead, saveToolTranslation } from './directory'
+import { deleteDirectoryTool, hideCategory, listDirectoryTools, saveCategory, saveCollection, saveTag, saveToolHead, saveToolTranslation, tombstoneDirectoryTool } from './directory'
 import { getAd, listAds, stopAd, today } from './ads'
 import { categories, slugify, tags as catalogTags, tools as catalogTools } from '../../shared/utils/catalog'
+import { deleteListingBlockReason } from '../../shared/utils/listing-desk'
 import { pinWindowActive, pickListingText, placementStatus } from '../../shared/utils/listing-order'
 import { mergeBySlug } from '../../shared/utils/taxonomy-merge'
-import { loadOverrides, setListingWeight, setOverride, type OverrideState } from './overrides'
+import { isHidden, isRemoved, loadOverrides, OverrideError, setListingWeight, setOverride, tombstoneOverride, type OverrideState } from './overrides'
 import { cleanUrl, domainOf, listPublishedTools, publiclyListed, type SubmissionRow } from './submissions'
 import type { Tool } from '../../shared/types/catalog'
 
@@ -849,10 +850,13 @@ async function allAdminToolRows(db: Db): Promise<AdminTool[]> {
     community.push(submissionAdminRow(tool, categoryNames))
   }
 
+  // A deleted catalogue preset keeps a tombstone so `catalog.json` cannot revive
+  // it. That row must not come back to this desk either.
+  const removed = new Set(overrides.removed)
   const day = today()
-  return [...community, ...editorial.filter((row) => !communitySlugs.has(row.slug))].map((row) =>
-    applyPublicPlacement(row, overrides, day),
-  )
+  return [...community, ...editorial.filter((row) => !communitySlugs.has(row.slug))]
+    .filter((row) => !removed.has(row.slug))
+    .map((row) => applyPublicPlacement(row, overrides, day))
 }
 
 export async function listAdminTools(
@@ -1253,6 +1257,9 @@ async function updateSubmissionCopy(db: Db, row: SubmissionRow, input: AdminTool
 }
 
 export async function setAdminToolStatus(db: Db, slug: string, status: string) {
+  // Relist clears `hidden` only. A catalogue tombstone stays deleted: the
+  // tools desk no longer lists it, and this path must not publish it again.
+  if (await isRemoved(db, slug)) throw new Error('Deleted listings stay deleted')
   const stored = toStoredStatus(status)
   // Hide and unhide go through `tool_overrides`. The public list, the detail
   // page (410) and the sitemap all read that flag; `dir_tool.status` does not
@@ -1266,21 +1273,51 @@ export async function setAdminToolStatus(db: Db, slug: string, status: string) {
 }
 
 export async function deleteAdminTool(db: Db, slug: string) {
+  const clean = String(slug || '').trim()
+  // `hidden` is unpublished even when `dir_tool.status` is still approved.
+  // P0 hide only writes the override, so judging by the stored status alone
+  // refused every catalogue preset the desk already showed as 已下架.
+  const hidden = await isHidden(db, clean)
   const submitted = await db
     .prepare('SELECT id FROM submissions WHERE slug = ?')
-    .bind(slug)
+    .bind(clean)
     .first<{ id: string }>()
+  const row = await db
+    .prepare('SELECT status FROM dir_tool WHERE slug = ?')
+    .bind(clean)
+    .first<{ status: string }>()
+  const inCatalog = catalogTools.some((tool) => tool.slug === clean)
+  if (!row && !submitted && !inCatalog) throw new Error('Tool not found')
+
+  const stored = row ? toConsoleStatus(row.status) : 'published'
+  const blocked = deleteListingBlockReason(stored, hidden)
+  if (blocked) throw new Error(blocked)
+
+  // Community listings live in `submissions`. Deleting the row is what takes
+  // them off this desk and off the public merge. Hiding alone left them here.
+  // Pending rows that were never published are not on this desk; this only
+  // runs for a slug the operator already unpublished (or that was never live).
   if (submitted) {
-    throw new Error('Submitted listings stay in the review queue — hide them here, or reject them there')
+    await db.prepare('DELETE FROM submissions WHERE slug = ?').bind(clean).run()
   }
-  const row = await db.prepare('SELECT status FROM dir_tool WHERE slug = ?').bind(slug).first<{ status: string }>()
-  if (!row) throw new Error('Tool not found')
-  if (toConsoleStatus(row.status) === 'published') {
-    throw new Error('Only unpublished tools can be deleted — force unpublish first')
+  await db.prepare('DELETE FROM dir_collection_tool WHERE tool_slug = ?').bind(clean).run()
+
+  if (inCatalog) {
+    // A real DELETE would lose the race to `catalog.json` on the next read.
+    await tombstoneDirectoryTool(db, clean)
+    await tombstoneOverride(db, clean)
+  } else {
+    if (row) await deleteDirectoryTool(db, clean)
+    // The record is gone. Clear the hide flag so this slug is not stuck at 410
+    // if a later submission reuses it. Nothing public is left to show either way.
+    // A slug the override table would refuse was never hidden by this desk.
+    try {
+      await setOverride(db, clean, 'hidden', false)
+    } catch (err) {
+      if (!(err instanceof OverrideError)) throw err
+    }
   }
-  await db.prepare('DELETE FROM dir_collection_tool WHERE tool_slug = ?').bind(slug).run()
-  await deleteDirectoryTool(db, slug)
-  return { slug }
+  return { slug: clean }
 }
 
 /* ---------------------------------------------------------------------------

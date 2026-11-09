@@ -20,6 +20,7 @@ import {
   tags as catalogTags,
   tools as catalogTools,
 } from '~~/shared/utils/catalog'
+import { catalogFallback } from '~~/shared/utils/listing-desk'
 import type { Db } from './db'
 
 export interface DirToolHead {
@@ -190,6 +191,10 @@ export async function getDirectoryTool(db: Db, slug: string): Promise<DirectoryT
     return fallback ? { tool: fallback, source: 'catalog' } : null
   }
 
+  // A deleted preset keeps its row so the catalogue cannot answer in its place.
+  // Falling through to `catalog.json` here is how a removed listing came back.
+  if (head?.status === 'deleted') return null
+
   if (!head) {
     return fallback ? { tool: fallback, source: 'catalog' } : null
   }
@@ -218,6 +223,9 @@ export async function listDirectoryTools(db: Db): Promise<Tool[]> {
   }
   if (!heads.length) return catalogTools
 
+  const tombstoned = heads.filter((head) => head.status === 'deleted').map((head) => head.slug)
+  const liveHeads = heads.filter((head) => head.status !== 'deleted')
+
   const bySlug = new Map<string, DirToolTr[]>()
   for (const tr of trs) {
     const list = bySlug.get(tr.slug) ?? []
@@ -225,14 +233,48 @@ export async function listDirectoryTools(db: Db): Promise<Tool[]> {
     bySlug.set(tr.slug, list)
   }
 
-  const overlaid = heads.map((head) =>
+  const overlaid = liveHeads.map((head) =>
     buildTool(head, bySlug.get(head.slug) ?? [], catalogTools.find((t) => t.slug === head.slug)),
   )
 
   // Catalogue rows with no override still belong in the list — the tables are
   // an overlay, not a replacement, until the seeder has copied everything.
+  // Tombstoned slugs are the exception: deleting the row would let the seed
+  // fill the gap, so the deleted row stays and the seed is skipped.
   const seen = new Set(overlaid.map((tool) => tool.slug))
-  return [...overlaid, ...catalogTools.filter((tool) => !seen.has(tool.slug))]
+  return [...overlaid, ...catalogFallback(catalogTools, seen, tombstoned)]
+}
+
+/**
+ * Keep a catalogue preset from being resurrected by the next merge.
+ *
+ * The row is the tombstone. `status = 'deleted'` is what `listDirectoryTools`
+ * and `getDirectoryTool` refuse to overlay with `catalog.json`. Copy columns
+ * are filled from the seed only when the row did not exist yet; an existing
+ * row keeps them and only the status changes.
+ */
+export async function tombstoneDirectoryTool(db: Db, slug: string): Promise<void> {
+  const now = Math.floor(Date.now() / 1000)
+  const fallback = catalogTools.find((tool) => tool.slug === slug)
+  await db
+    .prepare(
+      `INSERT INTO dir_tool (
+         slug, url, logo, category, tags, status, is_featured, is_paid,
+         featured_until, votes_total, votes_week, created_at, maker, shots, updated_at
+       ) VALUES (?, ?, ?, ?, ?, 'deleted', 0, 0, '', 0, 0, ?, ?, '[]', ?)
+       ON CONFLICT(slug) DO UPDATE SET status = 'deleted', updated_at = excluded.updated_at`,
+    )
+    .bind(
+      slug,
+      fallback?.url || '',
+      fallback?.logo || '',
+      fallback?.category || '',
+      JSON.stringify(fallback?.tags ?? []),
+      fallback?.created_at || '',
+      fallback?.maker || '',
+      now,
+    )
+    .run()
 }
 
 /** Which listings have a database row — the console badges the rest "catalogue". */

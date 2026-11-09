@@ -30,6 +30,7 @@ import { categories, tools } from '~~/shared/utils/catalog'
 
 const { lang, pick } = useLang()
 const localePath = useLocalePath()
+const overrides = useOverrides()
 const router = useRouter()
 const requestFetch = useRequestFetch()
 
@@ -211,7 +212,10 @@ const nextOpenWeek = computed(() => {
 
 const priceStats = computed(() => [
   {
-    value: String(tools.length + liveData.value.toolsCount),
+    value: String(
+      tools.filter((tool) => !overrides.value.hidden.includes(tool.slug)).length +
+        liveData.value.toolsCount,
+    ),
     label: pick('个产品已收录', 'products listed'),
   },
   { value: String(categories.length), label: pick('个分类', 'categories') },

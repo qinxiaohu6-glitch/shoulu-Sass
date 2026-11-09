@@ -128,6 +128,10 @@ CREATE TABLE IF NOT EXISTS tool_overrides (
   -- Existing databases gain the column from ensureOverrideColumns, not from
   -- this CREATE, which does not alter a table that is already there.
   sort        INTEGER NOT NULL DEFAULT 0,
+  -- 1 when the tools desk deleted a catalogue preset. Unlike `hidden`, this
+  -- is not cleared by relist. Readers fold it into the public hidden set.
+  -- Existing databases gain the column from ensureOverrideColumns.
+  removed     INTEGER NOT NULL DEFAULT 0,
   updated_at  INTEGER NOT NULL
 );
 

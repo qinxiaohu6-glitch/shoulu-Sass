@@ -156,6 +156,7 @@ const topPicks = computed(() =>
     weeks.length ? [...weeks].sort((a, b) => (a.id < b.id ? 1 : -1))[0] : undefined,
     lang.value,
     6,
+    overrides.value,
   )
     .map((row) => row.tool)
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))

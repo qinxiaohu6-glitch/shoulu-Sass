@@ -12,6 +12,7 @@ import type {
   Tool,
   Week,
 } from '~~/shared/types/catalog'
+import { rankedBoard } from './listing-desk'
 import { compareListingOrder, listingRank, listingWeight, pinWindowActive } from './listing-order'
 
 const catalog = raw as unknown as Catalog
@@ -471,8 +472,19 @@ export function weekLabel(week: Week | undefined, locale: Locale): string {
     : `${monday.toLocaleString('en-US', { month: 'short' })} ${monday.getDate()} – ${sunday.toLocaleString('en-US', { month: 'short' })} ${sunday.getDate()}, ${sunday.getFullYear()}`
 }
 
-/** Board rows for a week, falling back to live vote totals for the current one. */
-export function boardRows(week: Week | undefined, locale: Locale, limit = 10) {
+/**
+ * Board rows for a week, falling back to live vote totals for the current one.
+ *
+ * `overrides.hidden` is applied before the rank numbers are assigned. A hidden
+ * product must not stay clickable: its detail page answers 410. Later rows
+ * move up, and the limit is filled from whoever is left.
+ */
+export function boardRows(
+  week: Week | undefined,
+  locale: Locale,
+  limit = 10,
+  overrides: OverrideView = NO_OVERRIDES,
+) {
   // An archived week already carries its final order. The current week has no
   // archive row yet, so it has to be ranked by this week's votes — using
   // orderedTools() here would show the directory order under a heading that
@@ -483,8 +495,8 @@ export function boardRows(week: Week | undefined, locale: Locale, limit = 10) {
         .map((tool) => ({ slug: tool.slug, votes: tool.votes_week }))
         .sort((a, b) => b.votes - a.votes)
 
-  return source.slice(0, limit).map((row, index) => ({
-    rank: index + 1,
+  return rankedBoard(source, overrides.hidden, limit).map((row) => ({
+    rank: row.rank,
     votes: row.votes,
     tool: toolBySlug(row.slug, locale),
   }))

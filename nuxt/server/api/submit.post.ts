@@ -13,6 +13,7 @@ import { createSubmission, publicRecord, SubmissionError } from '../utils/submis
 import { clientIp, hashIp, sendSubmitError } from '../utils/http'
 import { ownerInbox, sendMail, siteUrl, submissionInboxMail, submittedMail } from '../utils/mail'
 import { readSession } from '../utils/session'
+import { submissionSessionOwner } from '~~/shared/utils/listing-desk'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event).catch(() => null)
@@ -23,14 +24,15 @@ export default defineEventHandler(async (event) => {
   try {
     const db = await useDb(event)
     const ipHash = await hashIp(clientIp(event), event)
-    // Record who submitted it when they are signed in. Without this the row is
-    // orphaned the moment the browser closes: `listByOwner` filters on
-    // `owner_sub`, so a signed-in submitter would never see their own listing
-    // under "My submissions" — which is the one thing signing in is for.
-    const me = await readSession(event)
+    // Google session is required. Anonymous createSubmission is what filled the
+    // review queue with rows that never appear under /api/admin/users. Existing
+    // anonymous pending rows are left as they are — this does not delete or
+    // backfill them.
+    const owner = submissionSessionOwner(await readSession(event))
+    if (!owner) throw new SubmissionError('submit_signin_required')
     const row = await createSubmission(db, body, {
       ipHash,
-      owner: me?.sub ? { sub: me.sub, email: me.email } : null,
+      owner,
     })
 
     // Fire and forget: an unconfigured mailer is a no-op, and a slow one must
