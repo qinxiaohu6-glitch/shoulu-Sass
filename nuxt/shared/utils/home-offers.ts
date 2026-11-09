@@ -12,6 +12,7 @@
  *    seed rows are not orders, and an empty spot stays a recruit card.
  */
 
+import { billboardTier } from '../content/billboard.ts'
 import { adPlans, tiers, type Pair } from '../content/pricing.ts'
 
 export type BrowseTool = {
@@ -123,12 +124,14 @@ export type OfferAd = {
 } | null
 
 export type HomeOfferSlot = {
-  id: 'featured' | 'pro' | 'board' | 'sidebar'
+  id: 'featured' | 'pro' | 'billboard' | 'sidebar'
+  /** Paid placements are labeled. The weekly vote board is a different list. */
+  flag: 'FEATURED' | 'PRO' | 'BILLBOARD' | 'SIDEBAR'
   price: string
   unit: Pair
   name: Pair
   detail: Pair
-  href: { path: string; query?: Record<string, string> }
+  href: { path: string; query?: Record<string, string>; hash?: string }
   occupant: OfferOccupant | null
 }
 
@@ -178,14 +181,15 @@ function adOccupant(ad: OfferAd): OfferOccupant | null {
  */
 export function homeOfferSlots(input: {
   listings: OfferListing[]
-  board?: OfferAd
+  /** A confirmed Billboard placement. A weekly board ad is not one of these. */
+  billboard?: OfferAd
   sidebar?: OfferAd
 }): HomeOfferSlot[] {
   const featuredTier = tiers.find((tier) => tier.id === 'featured')
   const proTier = tiers.find((tier) => tier.id === 'pro')
-  const boardPlan = adPlans.find((plan) => plan.id === 'board')
+  const standard = billboardTier('standard')
   const sidebarPlan = adPlans.find((plan) => plan.id === 'sidebar')
-  if (!featuredTier || !proTier || !boardPlan || !sidebarPlan) {
+  if (!featuredTier || !proTier || !standard || !sidebarPlan) {
     throw new Error('homepage offer slots are missing a row in the pricing tables')
   }
 
@@ -195,6 +199,7 @@ export function homeOfferSlots(input: {
   return [
     {
       id: 'featured',
+      flag: 'FEATURED',
       price: featuredTier.price,
       unit: featuredTier.unit,
       name: featuredTier.name,
@@ -204,6 +209,7 @@ export function homeOfferSlots(input: {
     },
     {
       id: 'pro',
+      flag: 'PRO',
       price: proTier.price,
       unit: proTier.unit,
       name: proTier.name,
@@ -212,16 +218,21 @@ export function homeOfferSlots(input: {
       occupant: pro ? listingOccupant(pro) : null,
     },
     {
-      id: 'board',
-      price: boardPlan.price,
-      unit: boardPlan.unit,
-      name: boardPlan.name,
-      detail: boardPlan.where,
-      href: { path: '/book-ad', query: { slot: 'board', weeks: '1' } },
-      occupant: adOccupant(input.board ?? null),
+      id: 'billboard',
+      flag: 'BILLBOARD',
+      price: standard.price,
+      unit: { en: 'one-time', zh: '一次性' },
+      name: { en: 'Billboard', zh: 'Billboard' },
+      detail: {
+        zh: '入门 $15 · 标准 $29 · 优先 $49，不再按周租',
+        en: 'Entry $15 · Standard $29 · Prime $49, not a weekly rental',
+      },
+      href: { path: '/billboard', hash: '#claim' },
+      occupant: adOccupant(input.billboard ?? null),
     },
     {
       id: 'sidebar',
+      flag: 'SIDEBAR',
       price: sidebarPlan.price,
       unit: sidebarPlan.unit,
       name: sidebarPlan.name,

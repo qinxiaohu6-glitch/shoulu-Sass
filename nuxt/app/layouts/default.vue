@@ -5,6 +5,7 @@ import {
   SOCIAL_X_URL,
   contactHref,
 } from '~~/shared/content/site-contact'
+import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/billboard'
 
 const { locale, setLocale, pick } = useLang()
 
@@ -68,6 +69,7 @@ const navGroups = computed(() => [
       { label: pick('合集', 'Collections'), to: '/collections', icon: 'sparkles' },
       { label: pick('开发者', 'Makers'), to: '/makers', icon: 'user' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
+      { label: 'Billboard', to: '/billboard', icon: 'megaphone' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check', icon: 'gauge' },
       { label: pick('周榜', 'Weekly'), to: '/weekly', icon: 'trophy' },
       { label: pick('最新收录', 'Just added'), to: '/just-added', icon: 'activity' },
@@ -150,6 +152,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
     title: pick('资源', 'Resources'),
     links: [
       { label: pick('定价', 'Pricing'), to: '/pricing' },
+      { label: 'Billboard', to: '/billboard' },
       { label: pick('提交产品', 'Submit a product'), to: '/submit' },
       { label: pick('我的提交', 'My submissions'), to: '/settings/submissions' },
       // Rules and FAQ come before the legal pages: they are what a seller reads
@@ -269,6 +272,18 @@ watch(() => route.fullPath, () => {
 <template>
   <IconSprite />
 
+  <div v-if="campaignActive()" class="promo-bar">
+    <p>
+      {{
+        pick(
+          `黑五 · 约七折，划线价即表价，截止 ${campaignDeadlineShanghai()}（Asia/Shanghai）。`,
+          `Black Friday · about 30% off list price until ${campaignDeadlineShanghai()} (Asia/Shanghai).`,
+        )
+      }}
+      <NuxtLink :to="`${localePath('/pricing')}#black-friday`">{{ pick('看定价', 'See pricing') }}</NuxtLink>
+    </p>
+  </div>
+
   <div class="shell">
     <!-- ── Left rail ─────────────────────────────────────────────────────── -->
     <aside class="sidebar">
@@ -345,6 +360,7 @@ watch(() => route.fullPath, () => {
           </div>
 
           <div class="topbar__actions">
+            <NuxtLink class="topbar__link" :to="localePath('/billboard')">Billboard</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>
 
             <NuxtLink class="btn btn--ghost topbar__submit" :to="localePath('/submit')">

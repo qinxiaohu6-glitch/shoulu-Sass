@@ -59,6 +59,24 @@ function badRequest(reason: string, field = '', message = ''): never {
 export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'cache-control', 'no-store')
 
+  const body = (await readBody<Body>(event).catch(() => null)) ?? {}
+  const slot = String(body.slot ?? '').trim().toLowerCase()
+
+  // Weekly board rental is retired. Refuse before a provider session exists,
+  // so this path cannot charge $29 for a week or pretend checkout succeeded.
+  if (slot === 'board') {
+    throw createError({
+      statusCode: 409,
+      statusMessage: 'Conflict',
+      data: {
+        reason: 'board_retired',
+        message_en:
+          'The weekly board slot is no longer sold. Billboard is a one-time placement — request an invoice on /billboard.',
+        message_zh: '榜单周租已停售。Billboard 改为一次性档位，请到 /billboard 索取发票。',
+      },
+    })
+  }
+
   const provider = getPaymentProvider(event)
   if (!provider) {
     throw createError({
@@ -72,9 +90,6 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = (await readBody<Body>(event).catch(() => null)) ?? {}
-
-  const slot = String(body.slot ?? '').trim().toLowerCase()
   if (!isAdSlot(slot)) badRequest('bad_slot', 'slot')
 
   const weeks = Number(body.weeks)

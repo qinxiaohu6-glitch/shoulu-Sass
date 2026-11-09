@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
-import { adPlans } from '~~/shared/content/pricing'
+import { BILLBOARD_TIERS } from '~~/shared/content/billboard'
+import { adPlans, tiers } from '~~/shared/content/pricing'
+import { samePlacementUrl } from '~~/shared/utils/billboard'
 
 const { lang, isZh, pick } = useLang()
 
-const router = useRouter()
-// @nuxtjs/i18n v10 exposes this as a composable rather than an auto-import,
-// so it has to be pulled in during setup — not inside the submit handler.
 const localePath = useLocalePath()
 const requestFetch = useRequestFetch()
 
@@ -23,7 +22,9 @@ const { categories: liveCategories, tags: liveTags } = useDirectoryMeta()
 
 // Booked placements. `null` is the normal empty state: the offer card then
 // recruits, and the rail renders nothing until a campaign is actually live.
-const { board: boardAd, sidebar: sidebarAd } = await useAds()
+// The weekly board ad is not a Billboard row — that list has its own source.
+const { sidebar: sidebarAd } = await useAds()
+const { ranked: billboardRanked, homeGrid } = await useBillboard()
 
 /**
  * The sidebar slot's price, read from the same table `/pricing` renders so the
@@ -39,36 +40,40 @@ const sidebarPlan = adPlans.find((plan) => plan.id === 'sidebar') ?? null
  * from the same read-only endpoint /book-ad uses. A failed read hides the
  * count rather than inventing one.
  */
-const { data: homeSpots } = await useAsyncData<{
-  board: AdAvailability
-  sidebar: AdAvailability
-}>(
+const { data: homeSpots } = await useAsyncData<AdAvailability>(
   'home-spot-availability',
-  async () => {
-    const [board, sidebar] = await Promise.all([
-      requestFetch<AdAvailability>('/api/ads/availability?slot=board&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
-      requestFetch<AdAvailability>('/api/ads/availability?slot=sidebar&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
-    ])
-    return { board, sidebar }
-  },
-  { default: () => ({ board: EMPTY_AD_AVAILABILITY, sidebar: EMPTY_AD_AVAILABILITY }) },
+  () =>
+    requestFetch<AdAvailability>('/api/ads/availability?slot=sidebar&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
+  { default: () => EMPTY_AD_AVAILABILITY },
 )
 
-const spotStrip = computed(() =>
-  adPlans.map((entry) => {
-    const payload = entry.id === 'board' ? homeSpots.value?.board : homeSpots.value?.sidebar
-    const open = openAdWeeks(payload)
-    return {
-      id: entry.id,
-      name: isZh.value ? entry.name.zh : entry.name.en,
-      price: entry.price,
-      unit: isZh.value ? entry.unit.zh : entry.unit.en,
-      where: isZh.value ? entry.where.zh : entry.where.en,
-      openCount: open.length,
-      hasLive: Boolean(payload?.ok),
-    }
-  }),
-)
+const spotStrip = computed(() => {
+  const sidebar = adPlans.find((plan) => plan.id === 'sidebar')
+  const open = openAdWeeks(homeSpots.value)
+  const billboardPrices = BILLBOARD_TIERS.map((tier) => tier.price).join(' / ')
+  return [
+    {
+      id: 'billboard',
+      name: 'Billboard',
+      price: billboardPrices,
+      strike: '',
+      unit: pick('一次性', 'one-time'),
+      where: pick('首页 Top 10。固定三档，不再按周租。', 'Homepage Top 10. Three fixed tiers, not a weekly rental.'),
+      foot: pick('索取发票', 'Request invoice'),
+      to: `${localePath('/billboard')}#claim`,
+    },
+    {
+      id: 'sidebar',
+      name: sidebar ? (isZh.value ? sidebar.name.zh : sidebar.name.en) : '',
+      price: sidebar?.price ?? '',
+      strike: '',
+      unit: sidebar ? (isZh.value ? sidebar.unit.zh : sidebar.unit.en) : '',
+      where: sidebar ? (isZh.value ? sidebar.where.zh : sidebar.where.en) : '',
+      foot: homeSpots.value?.ok ? spotOpenLabel(open.length) : pick('选周次', 'Pick a week'),
+      to: `${localePath('/book-ad')}?slot=sidebar&weeks=1`,
+    },
+  ]
+})
 
 /** Kept out of the template so the string builder stays plain TypeScript. */
 function spotOpenLabel(count: number): string {
@@ -102,21 +107,6 @@ const latestWeek = computed(() => {
 const weekText = computed(() => weekLabel(latestWeek.value, lang.value))
 const board = computed(() => boardRows(latestWeek.value, lang.value, 6, overrides.value))
 
-/* "Sponsored" hero card — the one listing that is both paid and featured. */
-const heroCard = computed(() => {
-  const featured = featuredTools(lang.value, overrides.value)
-  return featured.find((tool) => tool.is_paid && tool.is_featured) ?? featured[0]
-})
-
-/* The three tiles beside it are a curated set, in this order, on the live site. */
-const tileSlugs = ['coding', 'chatbots', 'image']
-const tiles = computed(() =>
-  tileSlugs
-    .map((slug) => categoryBySlug(slug, liveCategories.value))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c))
-    .map((c) => localizeCategory(c, lang.value)),
-)
-
 const cats = computed(() =>
   liveCategories.value
     .filter((entry) => entry.status !== 'deleted')
@@ -143,9 +133,77 @@ const cats = computed(() =>
 const offerSlots = computed(() =>
   homeOfferSlots({
     listings: submitted.value,
-    board: boardAd.value,
+    billboard: billboardRanked.value[0]
+      ? {
+          name: billboardRanked.value[0].name,
+          headline: billboardRanked.value[0].tagline,
+          logo: billboardRanked.value[0].logo,
+          url: billboardRanked.value[0].url,
+        }
+      : null,
     sidebar: sidebarAd.value,
   }),
+)
+
+const featuredTier = tiers.find((tier) => tier.id === 'featured')
+const sidebarPlanPrice = adPlans.find((plan) => plan.id === 'sidebar')
+
+const billboardKeys = computed(
+  () => new Set(billboardRanked.value.map((row) => samePlacementUrl(row.url))),
+)
+
+function launchBadges(tool: { url?: string; plan?: string; is_featured?: boolean; is_paid?: boolean }): string[] {
+  const badges: string[] = []
+  if (tool.url && billboardKeys.value.has(samePlacementUrl(tool.url))) badges.push('BILLBOARD')
+  if (tool.plan === 'pro' && tool.is_paid) badges.push('PRO')
+  else if (tool.is_paid && (tool.plan === 'featured' || tool.is_featured)) badges.push('FEATURED')
+  return badges
+}
+
+const monthLabel = computed(() =>
+  new Intl.DateTimeFormat(isZh.value ? 'zh-CN' : 'en-US', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Shanghai',
+  }).format(new Date()),
+)
+
+const columnStats = computed(() => [
+  { value: String(all.value.length), label: pick('个产品已收录', 'products listed') },
+  { value: String(liveCategories.value.length), label: pick('个分类', 'categories') },
+])
+
+const columnCats = computed(() =>
+  [...cats.value].sort((a, b) => b.count - a.count).slice(0, 5),
+)
+
+const columnLaunches = computed(() =>
+  latest.value.slice(0, 5).map((tool) => ({
+    slug: tool.slug,
+    name: tool.name,
+    short: tool.short,
+    logo: tool.logo,
+    votes: tool.votes_week,
+    category: categoryBySlug(tool.category, liveCategories.value)
+      ? localizeCategory(categoryBySlug(tool.category, liveCategories.value)!, lang.value).name
+      : '',
+    badges: launchBadges(tool),
+  })),
+)
+
+const columnFeatured = computed(() =>
+  all.value
+    .filter((tool) => tool.is_paid && (tool.plan === 'featured' || tool.plan === 'pro' || tool.is_featured))
+    .slice(0, 3)
+    .map((tool) => ({
+      slug: tool.slug,
+      name: tool.name,
+      short: tool.short,
+      logo: tool.logo,
+      votes: tool.votes_week,
+      category: '',
+      badges: launchBadges(tool),
+    })),
 )
 
 const maxCatVotes = computed(() => Math.max(...cats.value.map((c) => c.votes), 1))
@@ -158,17 +216,10 @@ const latest = computed(() =>
     .slice(0, 6),
 )
 
-const stats = computed(() => [
-  { value: String(all.value.length), label: pick('个产品已收录', 'products listed') },
-  { value: String(liveCategories.value.length), label: pick('个分类', 'categories') },
-  { value: 'dofollow', label: pick('付费收录外链', 'on paid listings') },
-  { value: pick('每周一', 'Weekly'), label: pick('榜单重置', 'board reset') },
-])
-
 const proofs = computed(() => [
-  pick('30 秒提交', '30-second submit'),
-  pick('付费收录 dofollow', 'Dofollow on paid'),
-  pick('付款成功自动上线', 'Live automatically on payment'),
+  pick('目录页会留下', 'Listing page stays up'),
+  pick('Billboard $15 / $29 / $49', 'Billboard $15 / $29 / $49'),
+  pick('投票榜单独计票', 'Votes stay on their own list'),
 ])
 
 const faq = computed(() =>
@@ -212,26 +263,6 @@ const faq = computed(() =>
 )
 
 const openFaq = ref(-1)
-const heroUrl = ref('')
-const { ensure: ensureSession } = useSession()
-
-/**
- * The old site pushed signed-out visitors through Google before the form, so
- * nobody filled in three steps and then discovered they had to sign in. The
- * address they typed rides inside `next` and comes back with them — it is
- * sealed into the OAuth state cookie, not left in the query string where a
- * third party could edit it.
- */
-async function startSubmit() {
-  const url = heroUrl.value.trim()
-  const target = url ? `/submit?url=${encodeURIComponent(url)}` : '/submit'
-
-  if (!(await ensureSession())) {
-    await navigateTo(localePath({ path: '/sign-in', query: { next: target } }))
-    return
-  }
-  router.push(url ? { path: '/submit', query: { url } } : '/submit')
-}
 
 const popularTags = computed(() => liveTags.value.slice(0, 15))
 
@@ -243,8 +274,8 @@ useSeo({
   ),
   description: computed(() =>
     isZh.value
-      ? '为 Maker 做的产品目录：免费提交、付费收录给 dofollow 反链、一个 AI 搜索愿意引用的页面，以及每周一重置的榜单。'
-      : 'A product directory built for makers: free submission, dofollow backlink on paid placements, a page AI search can cite, and a weekly leaderboard that resets every Monday.',
+      ? '产品目录。Billboard 是一次性站内展示（$15 / $29 / $49），和每周投票榜分开。'
+      : 'A product directory. Billboard is a one-time on-site placement ($15 / $29 / $49), kept separate from the weekly vote list.',
   ),
 })
 
@@ -270,78 +301,81 @@ useHead({
 
 <template>
   <div class="container">
-    <!-- ── Hero + Top picks ─────────────────────────────────────────────── -->
-    <div class="home-top">
-      <section class="mk-hero mk-hero--center">
-        <p class="mk-eyebrow">{{ pick('写给 Maker', 'For makers') }}</p>
+    <section class="mk-hero mk-hero--center mk-hero--compact">
+      <p class="mk-eyebrow">Product Atlas</p>
+      <h1 v-if="isZh" class="mk-h1">
+        今天提交。<span class="mk-h1__em">留下一个目录页。</span>
+      </h1>
+      <h1 v-else class="mk-h1">
+        Launch today.<br><span class="mk-h1__em">Keep a listing page.</span>
+      </h1>
+      <p class="mk-sub">
+        {{
+          pick(
+            '目录页会留着。Billboard 是另外买的一次性展示（$15 / $29 / $49），和每周投票榜不是同一份名单。',
+            'The listing page stays up. Billboard is a separate one-time placement ($15 / $29 / $49), and it is not the weekly vote list.',
+          )
+        }}
+      </p>
+      <div class="mk-cta">
+        <NuxtLink class="btn btn--primary btn--lg" :to="localePath('/submit')">
+          {{ pick('提交产品', 'Submit a product') }}
+          <Icon name="arrow-right" />
+        </NuxtLink>
+        <NuxtLink class="btn btn--ghost btn--lg" :to="`${localePath('/billboard')}#claim`">
+          {{ pick('认领 Billboard', 'Claim a Billboard spot') }}
+        </NuxtLink>
+      </div>
+      <ul class="mk-proofs">
+        <li v-for="proof in proofs" :key="proof">
+          <Icon name="check" />
+          {{ proof }}
+        </li>
+      </ul>
+    </section>
 
-        <h1 v-if="isZh" class="mk-h1">
-          发布你的产品，<span class="mk-h1__em">反链永久保留</span>。
-        </h1>
-        <h1 v-else class="mk-h1">
-          Launch your product.<br><span class="mk-h1__em">Keep the backlink forever.</span>
-        </h1>
+    <BillboardGrid :cells="homeGrid" />
 
-        <p class="mk-sub">
-          {{
-            pick(
-              '付费收录给一条永久 dofollow 反链、一个 AI 搜索读得懂也愿意引用的页面，以及每周一重置的榜单曝光。免费提交也能上，链接是 nofollow。',
-              'Paid listings get a permanent dofollow backlink, a page AI search can read and cite, and a weekly leaderboard that resets every Monday. Free listings go up too — nofollow.',
-            )
-          }}
-        </p>
+    <HomeColumns
+      :stats="columnStats"
+      :categories="columnCats"
+      :launches="columnLaunches"
+      :month-label="monthLabel"
+      :featured="columnFeatured"
+      :featured-price="featuredTier?.price ?? ''"
+      :sidebar-price="sidebarPlanPrice?.price ?? ''"
+    />
 
-        <form class="mk-url" @submit.prevent="startSubmit">
-          <div class="mk-url__row">
-            <input
-              v-model="heroUrl"
-              class="mk-url__input"
-              type="text"
-              inputmode="url"
-              autocomplete="url"
-              name="url"
-              spellcheck="false"
-              :placeholder="pick('https://你的产品.com', 'https://yourtool.com')"
-              :aria-label="pick('输入产品网址，登录后进入提交', 'Your product URL — sign in to continue')"
-            >
-            <button class="btn btn--primary btn--lg mk-url__btn" type="submit">
-              {{ pick('免费提交', 'Submit free') }}
-              <Icon name="arrow-right" />
-            </button>
-          </div>
-          <ul class="mk-proofs">
-            <li v-for="proof in proofs" :key="proof">
-              <Icon name="check" />
-              {{ proof }}
-            </li>
-          </ul>
-        </form>
+    <section class="home-how" aria-labelledby="home-how-title">
+      <h2 id="home-how-title">{{ pick('交付的就是这三件事', 'Three things that are actually delivered') }}</h2>
+      <ol>
+        <li>
+          <b>1</b>
+          <span>{{ pick('一个目录页。', 'A page in the directory.') }}</span>
+        </li>
+        <li>
+          <b>2</b>
+          <span>{{ pick('如果买了 Billboard，首页和 /billboard 用同一份已确认名单，并标明 BILLBOARD。', 'If you buy Billboard, the homepage and /billboard share the confirmed list and mark it BILLBOARD.') }}</span>
+        </li>
+        <li>
+          <b>3</b>
+          <span>{{ pick('页面会留着。我们不代你提交到别的网站。', 'The page stays up. We do not submit your product to other sites for you.') }}</span>
+        </li>
+      </ol>
+    </section>
 
-        <div class="mk-stats">
-          <div v-for="stat in stats" :key="stat.label" class="mk-stat">
-            <b>{{ stat.value }}</b>
-            <span>{{ stat.label }}</span>
-          </div>
-        </div>
-      </section>
-
-      <aside class="home-top__side">
-        <TopPicks :limit="5" />
-      </aside>
-    </div>
-
-    <!-- ── Both placements, priced up front ──────────────────────────────── -->
+    <!-- Style-3 price strip. Billboard is one-time; only the sidebar is weekly. -->
     <section class="home-spots" aria-labelledby="home-spots-title">
       <div class="home-spots__head">
         <div>
-          <p class="home-spots__eyebrow">{{ pick('本周还有位置', 'SPOTS OPEN THIS WEEK') }}</p>
-          <h2 id="home-spots-title">{{ pick('两个位置，明码标价', 'Two placements, priced up front') }}</h2>
+          <p class="home-spots__eyebrow">{{ pick('明码标价', 'PRICED UP FRONT') }}</p>
+          <h2 id="home-spots-title">{{ pick('Billboard 一次性，右栏仍按周', 'Billboard is one-time. The sidebar is still weekly.') }}</h2>
         </div>
         <p class="home-spots__note">
           {{
             pick(
-              '可订周次实时读取排期表。付款成功后系统自动排期，同一周不会卖两次。',
-              'Open weeks come from the live schedule. Payment schedules it automatically and no week is sold twice.',
+              'Billboard 在这一页不扣款，去索取发票。右栏周次来自排期表。',
+              'Billboard is not charged on this page — request an invoice. Sidebar weeks come from the schedule.',
             )
           }}
         </p>
@@ -351,20 +385,19 @@ useHead({
           v-for="spot in spotStrip"
           :key="spot.id"
           class="home-spot"
-          :to="`${localePath('/book-ad')}?slot=${spot.id}&weeks=1`"
+          :to="spot.to"
         >
           <span class="home-spot__top">
             <b>{{ spot.name }}</b>
-            <span class="home-spot__price">{{ spot.price }}<small>{{ spot.unit }}</small></span>
+            <span class="home-spot__price">
+              <s v-if="spot.strike">{{ spot.strike }}</s>
+              {{ spot.price }}<small>{{ spot.unit }}</small>
+            </span>
           </span>
           <span class="home-spot__where">{{ spot.where }}</span>
           <span class="home-spot__foot">
-            <span v-if="spot.hasLive">
-              {{ spotOpenLabel(spot.openCount) }}
-            </span>
-            <span v-else>{{ pick('在线选周', 'Pick a week online') }}</span>
             <span class="home-spot__cta">
-              {{ pick('选周次', 'Pick a week') }}
+              {{ spot.foot }}
               <Icon name="arrow-right" :size="14" />
             </span>
           </span>
@@ -404,6 +437,7 @@ useHead({
                 </span>
                 <span class="offer-card__body">
                   <span class="offer-card__kicker">
+                    <em class="offer-card__flag">{{ offer.flag }}</em>
                     {{ pick(offer.name.zh, offer.name.en) }}
                     <b>{{ offer.price }}</b>
                     <small>{{ pick(offer.unit.zh, offer.unit.en) }}</small>
@@ -441,6 +475,7 @@ useHead({
                 </span>
                 <span class="offer-card__body">
                   <span class="offer-card__kicker">
+                    <em class="offer-card__flag">{{ offer.flag }}</em>
                     {{ pick(offer.name.zh, offer.name.en) }}
                     <b>{{ offer.price }}</b>
                     <small>{{ pick(offer.unit.zh, offer.unit.en) }}</small>
@@ -455,56 +490,6 @@ useHead({
                 </span>
               </NuxtLink>
             </template>
-          </div>
-        </section>
-
-        <!-- Featured -->
-        <section v-if="heroCard">
-          <div class="section-head">
-            <div class="section-head__title">
-              <h2>{{ pick('精选', 'Featured') }}</h2>
-            </div>
-            <NuxtLink class="more" :to="localePath('/tools')">
-              {{ pick('查看全部', 'View all') }}
-              <Icon name="arrow-right" />
-            </NuxtLink>
-          </div>
-
-          <div class="featured-grid">
-            <div class="hero-card">
-              <div class="hero-card__glow" aria-hidden="true" />
-              <div class="hero-card__inner">
-                <div class="hero-card__head">
-                  <span class="hero-card__logo">
-                    <img :src="`/${heroCard.logo}`" alt="" width="36" height="36" >
-                  </span>
-                  <span class="badge-pick">{{ pick('赞助', 'Sponsored') }}</span>
-                </div>
-                <h3>{{ heroCard.name }}</h3>
-                <p class="hero-card__desc">{{ heroCard.short }}</p>
-                <div class="hero-card__cta">
-                  <NuxtLink class="btn btn--primary" :to="localePath(`/tools/${heroCard.slug}`)">
-                    {{ pick('查看详情', 'View details') }}
-                    <Icon name="arrow-right" />
-                  </NuxtLink>
-                  <span class="hero-card__meta">
-                    <Icon name="arrow-up" />
-                    <span>{{ heroCard.votes_week }} {{ pick('票', 'votes') }}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div class="featured-tiles">
-              <NuxtLink v-for="cat in tiles" :key="cat.slug" class="cat-tile" :to="localePath(`/categories/${cat.slug}`)">
-                <span class="cat-tile__icon"><Icon :name="cat.icon" /></span>
-                <span class="cat-tile__body">
-                  <p>{{ cat.name }}</p>
-                  <p>{{ cat.desc }}</p>
-                </span>
-                <Icon name="chevron-right" />
-              </NuxtLink>
-            </div>
           </div>
         </section>
 
@@ -526,8 +511,8 @@ useHead({
         <section>
           <div class="section-head">
             <div class="section-head__title">
-              <h2>{{ pick('本周榜单', "This week's board") }}</h2>
-              <p>{{ weekText }} · {{ pick('每周一重置', 'resets every Monday') }}</p>
+              <h2>{{ pick('本周投票榜', "This week's votes") }}</h2>
+              <p>{{ weekText }} · {{ pick('每周一重置。付费 Billboard 不改变这里的名次。', 'resets every Monday. A paid Billboard does not change this rank.') }}</p>
             </div>
             <NuxtLink class="more" :to="localePath('/weekly')">
               {{ pick('查看全部', 'View all') }}

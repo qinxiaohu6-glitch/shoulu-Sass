@@ -25,6 +25,12 @@
  */
 import type { PricingGroup, PricingPlan } from '~/utils/directory-ui'
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
+import {
+  BILLBOARD_TIERS,
+  campaignActive,
+  campaignDeadlineShanghai,
+  quoteCents,
+} from '~~/shared/content/billboard'
 import { adPlans, comparison, listingBenefits, pricingFaq, tiers } from '~~/shared/content/pricing'
 import { categories, tools } from '~~/shared/utils/catalog'
 
@@ -45,17 +51,20 @@ const lead = computed(() =>
   ),
 )
 
+const deadline = campaignDeadlineShanghai()
+const promoOn = computed(() => campaignActive())
+
 const plans = computed<PricingPlan[]>(() =>
   tiers.map((tier) => ({
-    id: tier.id,
-    name: t(tier.name),
-    description: t(tier.tagline),
-    price: tier.price,
-    featured: tier.id === 'featured',
-    badge: tier.badge ? t(tier.badge) : undefined,
-    features: tl(tier.features),
-    buttonText: t(tier.cta),
-  })),
+      id: tier.id,
+      name: t(tier.name),
+      description: t(tier.tagline),
+      price: tier.price,
+      featured: tier.id === 'featured',
+      badge: tier.badge ? t(tier.badge) : undefined,
+      features: tl(tier.features),
+      buttonText: t(tier.cta),
+    })),
 )
 
 const groups = computed<PricingGroup[]>(() => [
@@ -78,33 +87,36 @@ const steps = computed(() => [
     title: pick('收录', 'Launch'),
     price: pick('$0 / $19 / $39 / $69 · 一次性', '$0 / $19 / $39 / $69 · one-time'),
     body: pick(
-      '把产品放进目录。付费档付款成功后自动收录发布，免费档走人工审核。',
-      'Get a page in the directory. Paid listings publish automatically on payment; free ones are reviewed by hand.',
+      '把产品放进目录。价格是表现价，黑五只在表价上划线，不另写一套更高的原价。',
+      'Get a page in the directory. Prices are the list prices. The promotion strikes those prices and does not invent a higher one.',
     ),
     cta: pick('看四档收录', 'See the four tiers'),
     to: '#pricing',
+    muted: false,
   },
   {
     n: '2',
-    title: pick('买曝光', 'Get seen'),
-    price: pick('周广告位 $19 / $29 起', 'Weekly ad slots from $19 / $29'),
+    title: pick('被看到', 'Get seen'),
+    price: pick('Billboard $15 / $29 / $49 · 右栏 $19/周', 'Billboard $15 / $29 / $49 · sidebar $19/week'),
     body: pick(
-      '不用提交产品，直接租一个按周计的位置：榜单位或右栏位，付款成功后自动排期。',
-      'Rent a weekly position without submitting a product: board or sidebar, scheduled automatically once payment succeeds.',
+      'Billboard 是一次性三档，替代原来的榜单周租。右栏仍按周。Billboard 先索取发票，这里不打开结账。',
+      'Billboard is three one-time tiers and replaces the weekly board rental. The sidebar stays weekly. Billboard asks for an invoice — this page does not open a checkout for it.',
     ),
-    cta: pick('看广告位', 'See the ad slots'),
+    cta: pick('看 Billboard', 'See Billboard'),
     to: '#ads',
+    muted: false,
   },
   {
     n: '3',
-    title: pick('持续被看到', 'Keep showing up'),
-    price: pick('不额外收费', 'Included, no extra fee'),
+    title: pick('代提交', 'Done for you'),
+    price: pick('不提供', 'Not offered'),
     body: pick(
-      '页面永久保留、每周一重置的榜单、AI 搜索可读的纯文本版本，以及站内免费的 DR4 自查。',
-      'A page that stays up, a board that resets every Monday, an AI-readable plain-text version, and a free on-site DR4 check.',
+      '我们不代你把产品提交到别的网站。这一步没有可买的服务。',
+      'We do not submit your product to other sites for you. There is nothing to buy in this step.',
     ),
-    cta: pick('看长期路径', 'See what keeps working'),
-    to: '#compound',
+    cta: '',
+    to: '',
+    muted: true,
   },
 ])
 
@@ -123,10 +135,10 @@ const scenarios = computed(() => [
     to: `${localePath('/submit')}?plan=featured`,
   },
   {
-    line: pick('我不提交产品，只想买展示', 'I do not have a listing, I just want the placement'),
-    answer: pick('按周租榜单位或右栏位，选周次、在线付款、自动排期。', 'Rent a weekly board or sidebar slot: pick a week, pay online, get scheduled automatically.'),
-    cta: pick('去预订广告位', 'Book an ad slot'),
-    to: `${localePath('/book-ad')}?slot=sidebar&weeks=1`,
+    line: pick('我不提交产品，只想买首页那一块板', 'I do not have a listing, I just want the homepage board'),
+    answer: pick('Billboard 一次性：入门 $15、标准 $29、优先 $49。先索取发票。右栏仍可按周租。', 'Billboard is one-time: Entry $15, Standard $29, Prime $49. Request an invoice. The sidebar is still weekly.'),
+    cta: pick('索取 Billboard 发票', 'Request a Billboard invoice'),
+    to: `${localePath('/billboard')}#claim`,
   },
 ])
 
@@ -154,8 +166,8 @@ const compound = computed(() => [
 
 const adHead = computed(() =>
   pick(
-    '榜单位 $29 / 周，右栏位 $19 / 周；连投 4 周分别 $99 和 $65。榜单位是「决定投谁」的那一屏，所以更贵；右栏按停留时长卖，所以更便宜。位置是租的，不是买的 —— 不用提交产品，也可以和收录同时买。',
-    'Board $29 a week, sidebar $19 a week — or $99 and $65 for four weeks. The board is the screen where people decide what to upvote, so it costs more; the rail is sold on time-on-page, so it costs less. Both are rented, not bought — no product submission needed, and you can run one alongside a listing.',
+    'Billboard 三档都是一次性：入门 $15、标准 $29、优先 $49。标准档替代原来的榜单 $29/周，不再按周出售。右栏仍是 $19/周，连投 4 周 $65。Billboard 不改变每周投票榜的名次。',
+    'Billboard is one-time: Entry $15, Standard $29, Prime $49. Standard replaces the old $29/week board, which is no longer sold by the week. The sidebar is still $19 a week, or $65 for four. Billboard does not change rank on the weekly vote list.',
   ),
 )
 
@@ -170,45 +182,36 @@ const openFaq = ref<number | null>(null)
 ------------------------------------------------------------------------- */
 type PricingLive = {
   toolsCount: number
-  board: AdAvailability
   sidebar: AdAvailability
 }
 const EMPTY_LIVE: PricingLive = {
   toolsCount: 0,
-  board: EMPTY_AD_AVAILABILITY,
   sidebar: EMPTY_AD_AVAILABILITY,
 }
 
 const { data: live } = await useAsyncData<PricingLive>(
   'pricing-live',
   async () => {
-    const [toolsRes, boardRes, sidebarRes] = await Promise.all([
+    const [toolsRes, sidebarRes] = await Promise.all([
       requestFetch<{ tools?: unknown[] }>('/api/tools').catch(() => null),
-      requestFetch<AdAvailability>('/api/ads/availability?slot=board&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
       requestFetch<AdAvailability>('/api/ads/availability?slot=sidebar&weeks=1').catch(() => EMPTY_AD_AVAILABILITY),
     ])
-    const shape = (res: AdAvailability | null): AdAvailability => ({
-      ok: Boolean(res?.ok),
-      starts: res?.starts ?? [],
-      available: res?.available ?? {},
-    })
     return {
       toolsCount: toolsRes?.tools?.length ?? 0,
-      board: shape(boardRes),
-      sidebar: shape(sidebarRes),
+      sidebar: {
+        ok: Boolean(sidebarRes?.ok),
+        starts: sidebarRes?.starts ?? [],
+        available: sidebarRes?.available ?? {},
+      },
     }
   },
   { default: () => EMPTY_LIVE },
 )
 
 const liveData = computed(() => live.value ?? EMPTY_LIVE)
-const boardOpen = computed(() => openAdWeeks(liveData.value.board))
 const sidebarOpen = computed(() => openAdWeeks(liveData.value.sidebar))
-const openWeekCount = computed(() => boardOpen.value.length + sidebarOpen.value.length)
-const nextOpenWeek = computed(() => {
-  const firsts = [boardOpen.value[0], sidebarOpen.value[0]].filter(Boolean).sort()
-  return firsts[0] ?? ''
-})
+const openWeekCount = computed(() => sidebarOpen.value.length)
+const nextOpenWeek = computed(() => sidebarOpen.value[0] ?? '')
 
 const priceStats = computed(() => [
   {
@@ -219,14 +222,14 @@ const priceStats = computed(() => [
     label: pick('个产品已收录', 'products listed'),
   },
   { value: String(categories.length), label: pick('个分类', 'categories') },
-  { value: String(openWeekCount.value), label: pick('个周次仍可订', 'open weeks, next 6') },
+  { value: String(openWeekCount.value), label: pick('个右栏周次仍可订', 'sidebar weeks open, next 6') },
   { value: String(tiers.length - 1), label: pick('档一次性付费收录', 'one-time paid tiers') },
 ])
 
 const adLiveWeeks = computed(() =>
   pick(
-    `未来 6 周：榜单位 ${boardOpen.value.length} 周可订 · 右栏位 ${sidebarOpen.value.length} 周可订`,
-    `Next 6 weeks: ${boardOpen.value.length} board weeks open · ${sidebarOpen.value.length} sidebar weeks open`,
+    `未来 6 周：右栏 ${sidebarOpen.value.length} 周可订。Billboard 不按周卖。`,
+    `Next 6 weeks: ${sidebarOpen.value.length} sidebar weeks open. Billboard is not sold by the week.`,
   ),
 )
 const adLiveNext = computed(() =>
@@ -269,18 +272,20 @@ useHead({
         <!-- Step 1 / 2 / 3 funnel -->
         <ol class="mb-12 grid gap-3 sm:grid-cols-3">
           <li v-for="step in steps" :key="step.n">
-            <a
-              :href="step.to"
-              class="flex h-full flex-col rounded-2xl border border-border bg-background p-5 transition hover:border-foreground/30"
+            <component
+              :is="step.muted ? 'div' : 'a'"
+              :href="step.muted ? undefined : step.to"
+              class="flex h-full flex-col rounded-2xl border border-border p-5"
+              :class="step.muted ? 'bg-muted/70 opacity-60' : 'bg-background transition hover:border-foreground/30'"
             >
               <span class="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">
-                {{ pick('第 ', 'Step ') }}{{ step.n }}
+                STEP {{ step.n }}
               </span>
               <span class="mt-2 font-serif text-xl tracking-tight">{{ step.title }}</span>
               <span class="mt-1 text-xs font-medium text-primary">{{ step.price }}</span>
               <span class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ step.body }}</span>
-              <span class="mt-auto pt-4 text-xs font-medium text-foreground">{{ step.cta }} →</span>
-            </a>
+              <span v-if="step.cta" class="mt-auto pt-4 text-xs font-medium text-foreground">{{ step.cta }} →</span>
+            </component>
           </li>
         </ol>
 
@@ -295,8 +300,49 @@ useHead({
           <p class="mt-4 border-t border-primary-foreground/20 pt-3 text-xs leading-relaxed opacity-80">
             {{
               pick(
-                '数字来自当前目录与广告排期表，页面加载时读取。所有档位一次性付费；付费档付款成功后自动收录发布，不承诺搜索排名、流量或权重提升。',
-                'Numbers come from the live directory and the ad schedule, read on page load. Every tier is a one-time payment; paid listings publish automatically when payment succeeds. No claims about rankings, traffic or domain authority.',
+                '产品数和分类数来自当前目录。右栏可订周次来自排期表。Billboard 不按周计数。不承诺搜索排名、流量或权重。',
+                'Product and category counts come from the live directory. Sidebar weeks come from the schedule. Billboard is not counted by the week. No claims about rankings, traffic or domain authority.',
+              )
+            }}
+          </p>
+        </div>
+
+        <div id="black-friday" class="mb-8 text-sm leading-relaxed text-muted-foreground">
+          <template v-if="promoOn">
+            <p>
+              {{
+                pick(
+                  `黑五约七折。划掉的是现在的表价，没有抬高。截止 ${deadline}（Asia/Shanghai）。收录档的在线金额仍是表价；Billboard 按约价开发票，入门保持 $15。`,
+                  `Black Friday is about 30% off. The struck figure is the current list price, not a higher one. Ends ${deadline} (Asia/Shanghai). Listing checkout still charges the list price. Billboard invoices use the lower figure. Entry stays at $15.`,
+                )
+              }}
+            </p>
+            <ul class="mt-3 flex flex-wrap gap-2">
+              <li
+                v-for="tier in tiers.filter((item) => item.amountCents > 0)"
+                :key="tier.id"
+                class="rounded-full border border-border px-3 py-1"
+              >
+                {{ t(tier.name) }}
+                <s class="text-muted-foreground">{{ quoteCents(tier.amountCents).listLabel }}</s>
+                {{ pick(`约 ${quoteCents(tier.amountCents).priceLabel}`, `about ${quoteCents(tier.amountCents).priceLabel}`) }}
+              </li>
+              <li
+                v-for="plan in adPlans"
+                :key="plan.id"
+                class="rounded-full border border-border px-3 py-1"
+              >
+                {{ t(plan.name) }}
+                <s class="text-muted-foreground">{{ quoteCents(plan.weeklyCents).listLabel }}</s>
+                {{ pick(`约 ${quoteCents(plan.weeklyCents).priceLabel}/周`, `about ${quoteCents(plan.weeklyCents).priceLabel}/wk`) }}
+              </li>
+            </ul>
+          </template>
+          <p v-else>
+            {{
+              pick(
+                '下面是表价。Billboard 为一次性三档，不按周租。',
+                'Prices below are the list prices. Billboard is three one-time tiers, not a weekly rental.',
               )
             }}
           </p>
@@ -310,7 +356,7 @@ useHead({
       <div class="mx-auto max-w-5xl">
         <header class="mb-10 max-w-3xl">
           <h2 class="font-serif text-3xl font-normal tracking-tight">
-            {{ pick('周广告位', 'Weekly ad slots') }}
+            {{ pick('被看到', 'Get seen') }}
           </h2>
           <p class="mt-4 text-sm leading-relaxed text-muted-foreground">{{ adHead }}</p>
         </header>
@@ -326,16 +372,54 @@ useHead({
           </span>
           <span class="text-muted-foreground">{{ adLiveWeeks }}</span>
           <span class="text-muted-foreground">{{ adLiveNext }}</span>
-          <NuxtLink class="ml-auto font-medium text-primary" :to="localePath('/book-ad')">
-            {{ pick('查全部周次', 'See all weeks') }} →
+          <NuxtLink class="ml-auto font-medium text-primary" :to="`${localePath('/book-ad')}?slot=sidebar&weeks=1`">
+            {{ pick('查右栏周次', 'See sidebar weeks') }} →
           </NuxtLink>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-2">
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <article
+            v-for="tier in BILLBOARD_TIERS"
+            :key="tier.id"
+            class="flex flex-col rounded-2xl border border-border bg-background p-6"
+          >
+            <div class="mb-2 flex items-baseline justify-between gap-3">
+              <span class="text-sm font-medium">{{ t(tier.name) }}</span>
+              <span class="text-right">
+                <span
+                  v-if="quoteCents(tier.amountCents, Date.now(), tier.floorCents).strikeLabel"
+                  class="mr-2 text-sm text-muted-foreground line-through"
+                >{{ quoteCents(tier.amountCents, Date.now(), tier.floorCents).strikeLabel }}</span>
+                <span class="font-serif text-3xl tracking-tight">
+                  {{
+                    quoteCents(tier.amountCents, Date.now(), tier.floorCents).strikeLabel
+                      ? pick(
+                          `约 ${quoteCents(tier.amountCents, Date.now(), tier.floorCents).priceLabel}`,
+                          quoteCents(tier.amountCents, Date.now(), tier.floorCents).priceLabel,
+                        )
+                      : tier.price
+                  }}
+                </span>
+              </span>
+            </div>
+            <p class="text-xs font-semibold tracking-wide">BILLBOARD</p>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ t(tier.blurb) }}</p>
+            <div class="mt-auto pt-6">
+              <NuxtLink
+                :to="`${localePath('/billboard')}#claim`"
+                class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
+              >
+                {{ pick('索取发票', 'Request invoice') }}
+              </NuxtLink>
+            </div>
+            <p class="mt-3 text-xs text-muted-foreground">
+              {{ pick('一次性。此按钮不打开结账。', 'One-time. This button does not open a checkout.') }}
+            </p>
+          </article>
           <article
             v-for="plan in adPlans"
             :key="plan.id"
-            class="flex flex-col rounded-2xl border border-border bg-background p-8 transition-all hover:border-foreground/30"
+            class="flex flex-col rounded-2xl border border-border bg-background p-6 transition-all hover:border-foreground/30"
           >
             <div class="mb-2 flex items-baseline justify-between gap-3">
               <span class="text-sm font-medium text-foreground">{{ t(plan.name) }}</span>
@@ -370,13 +454,13 @@ useHead({
               </NuxtLink>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
-              {{ pick('按周计费，到期自动下架，可续租。', 'Billed weekly. Comes down when the week ends. Renew any time.') }}
+              {{ pick('右栏仍按周计费，到期下架。榜单周租已停。', 'The sidebar is still billed by the week and comes down when the week ends. The weekly board rental has stopped.') }}
             </p>
           </article>
         </div>
 
         <p class="mt-8 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-          {{ pick('在线选周、在线付款，付款成功后自动排期，不用提交产品。位置只有两个，同一周不会重复出售；已订满的周在预订页会自动标灰。我们卖的是站内展示位置与读者，不对搜索排名做任何承诺，广告链接带 rel="sponsored"。', 'Pick a week and pay online — the placement is scheduled automatically once the payment clears, with no product submission. There are two positions and neither is sold twice in the same week; weeks that are gone are marked on the booking page. We sell on-site placement and the readers who see it, make no claims about search rankings, and mark ad links rel="sponsored".') }}
+          {{ pick('Billboard 先记下网址和档位，确认发票收款后才公开。右栏按周、同一周不卖两次。卖的是站内位置，不承诺搜索排名。广告链接带 rel="sponsored"。', 'Billboard stores the URL and tier, and stays private until the invoice is confirmed paid. The sidebar is weekly and is not sold twice in the same week. We sell on-site placement, make no claims about search rankings, and mark ad links rel="sponsored".') }}
         </p>
       </div>
     </section>
