@@ -11,7 +11,7 @@
 import { useDb } from '../utils/db'
 import { createSubmission, publicRecord, SubmissionError } from '../utils/submissions'
 import { clientIp, hashIp, sendSubmitError } from '../utils/http'
-import { sendMail, siteUrl, submittedMail } from '../utils/mail'
+import { ownerInbox, sendMail, siteUrl, submissionInboxMail, submittedMail } from '../utils/mail'
 import { readSession } from '../utils/session'
 
 export default defineEventHandler(async (event) => {
@@ -34,8 +34,12 @@ export default defineEventHandler(async (event) => {
     })
 
     // Fire and forget: an unconfigured mailer is a no-op, and a slow one must
-    // not delay the receipt the submitter is waiting for.
-    sendMail(event, submittedMail(row, siteUrl(event)))
+    // not delay the receipt the submitter is waiting for. The owner ping uses
+    // the same inbox as a new ticket and is skipped when that address is unset.
+    const site = siteUrl(event)
+    sendMail(event, submittedMail(row, site))
+    const inbox = ownerInbox(event)
+    if (inbox) sendMail(event, submissionInboxMail(inbox, row, site))
 
     setResponseStatus(event, 201)
     return {

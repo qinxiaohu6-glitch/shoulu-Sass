@@ -144,6 +144,26 @@ export function rejectedMail(row: SubmissionRow, note: string, site: string): Ma
   }
 }
 
+/**
+ * "A listing was submitted" — to the owner, same inbox as a new ticket.
+ *
+ * Skipped when `mailReplyTo` is unset. The queue still has the row; this is
+ * only the ping so the console is not the only way to notice.
+ */
+export function submissionInboxMail(to: string, row: SubmissionRow, site: string): MailMessage {
+  const name = row.name || row.slug
+  return {
+    to,
+    subject: `New submission: ${name}`,
+    text:
+      `${name} was submitted.\n\n` +
+      `URL: ${row.url}\n` +
+      `Plan: ${row.plan}\n\n` +
+      `Review it: ${site}/admin/submissions\n\n` +
+      `— Product Atlas\n`,
+  }
+}
+
 export function paymentConfirmedMail(row: SubmissionRow, site: string): MailMessage {
   const name = row.name || 'Your listing'
   return {

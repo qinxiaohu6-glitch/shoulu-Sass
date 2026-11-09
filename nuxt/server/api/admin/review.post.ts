@@ -53,6 +53,9 @@ export default defineEventHandler(async (event) => {
 
     if (action === 'payment') {
       const row = await confirmPayment(db, id, ref)
+      // Confirming payment must not clear tool_overrides.hidden. Hide is not
+      // "unpublished in the queue": an explicit hide stays hidden even when
+      // someone confirms the money again. Restore lives on the tools page.
       // The buyer's receipt is the one message that is never optional in
       // spirit — they paid, so "it is live" has to reach them.
       sendMail(event, paymentConfirmedMail(row, site))
@@ -62,6 +65,10 @@ export default defineEventHandler(async (event) => {
       throw new SubmissionError('bad_action')
     }
     const row = await reviewSubmission(db, id, action, notes)
+    // Approving must not clear tool_overrides.hidden. A first-time approve of
+    // a pending row still goes live, because nothing has hidden it. Clicking
+    // approve again on a listing that was hidden after it went live leaves
+    // the hide in place. Reject still only changes the submission row.
     sendMail(event, action === 'approve' ? approvedMail(row, site) : rejectedMail(row, notes, site))
     return { ok: true, item: adminRecord(row) }
   } catch (err) {

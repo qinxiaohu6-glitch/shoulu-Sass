@@ -31,6 +31,16 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
     zh: '请填一个能收信的邮箱，收据和审核结果都会发到这个地址。',
     en: 'Enter an email address that can receive mail — the receipt and the review outcome go there.',
   },
+  logo_required: {
+    status: 400,
+    zh: '请填写产品 logo 的图片网址（以 https:// 开头）。',
+    en: 'Add a logo image URL starting with https://.',
+  },
+  bad_logo: {
+    status: 400,
+    zh: 'logo 必须是 http 或 https 图片网址，不能是空值、站内路径或脚本。',
+    en: 'The logo must be an http(s) image URL, not an empty value, a site path, or a script.',
+  },
   already_listed: { status: 409, zh: '这个站点已经在目录里了。', en: 'That site is already listed.' },
   duplicate: {
     status: 409,

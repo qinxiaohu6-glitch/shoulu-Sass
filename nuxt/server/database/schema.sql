@@ -123,6 +123,11 @@ CREATE TABLE IF NOT EXISTS tool_overrides (
   -- Last day the pin applies, YYYY-MM-DD. Empty means "until switched off".
   pin_until   TEXT    NOT NULL DEFAULT '',
   hidden      INTEGER NOT NULL DEFAULT 0,
+  -- Recommend weight. Higher ranks earlier inside the same paid/featured band.
+  -- Zero means "no opinion" and an all-zero row is deleted rather than stored.
+  -- Existing databases gain the column from ensureOverrideColumns, not from
+  -- this CREATE, which does not alter a table that is already there.
+  sort        INTEGER NOT NULL DEFAULT 0,
   updated_at  INTEGER NOT NULL
 );
 

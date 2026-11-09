@@ -108,23 +108,30 @@ function cellSlot(key: string) {
           </UiTableRow>
         </UiTableHeader>
         <UiTableBody>
-          <template v-if="props.loading">
+          <!-- Skeleton only before the first payload. A refresh that already
+               has rows must not replace them with an empty-looking skeleton
+               while the footer keeps printing the total. -->
+          <template v-if="initialLoading">
             <UiTableRow v-for="r in props.skeletonRowCount" :key="`skeleton-${r}`">
               <UiTableCell v-for="col in props.columns" :key="`skeleton-${r}-${col.key}`" :class="col.class">
                 <UiSkeleton class="h-4 w-4/5" />
               </UiTableCell>
             </UiTableRow>
           </template>
-          <UiTableRow v-else-if="props.rows.length === 0">
-            <UiTableCell :colspan="props.columns.length" class="py-8 text-center text-muted-foreground">
-              {{ props.emptyText || t('common.table.no_data') }}
-            </UiTableCell>
-          </UiTableRow>
-          <UiTableRow v-for="(row, i) in props.rows" v-else :key="String(row.id ?? i)">
-            <UiTableCell v-for="col in props.columns" :key="`${i}-${col.key}`" :class="col.class">
-              <slot :name="cellSlot(col.key)" :row="row">{{ row[col.key] }}</slot>
-            </UiTableCell>
-          </UiTableRow>
+          <template v-else-if="props.rows.length === 0">
+            <UiTableRow>
+              <UiTableCell :colspan="props.columns.length" class="py-8 text-center text-muted-foreground">
+                {{ props.emptyText || t('common.table.no_data') }}
+              </UiTableCell>
+            </UiTableRow>
+          </template>
+          <template v-else>
+            <UiTableRow v-for="(row, i) in props.rows" :key="String(row.id ?? i)">
+              <UiTableCell v-for="col in props.columns" :key="`${i}-${col.key}`" :class="col.class">
+                <slot :name="cellSlot(col.key)" :row="row">{{ row[col.key] }}</slot>
+              </UiTableCell>
+            </UiTableRow>
+          </template>
         </UiTableBody>
       </UiTable>
     </div>

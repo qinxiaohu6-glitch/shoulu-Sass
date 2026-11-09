@@ -19,6 +19,13 @@
  * `awaiting_payment` where it says `pending_payment`; the mapping lives in
  * `server/utils/admin-directory.ts`, so this page speaks console vocabulary only.
  *
+ * Approved submissions are rows on this list too (source `community`). Hiding
+ * one, pinning it, or changing its recommend weight writes `tool_overrides`,
+ * which is what the public directory reads. The review queue still owns
+ * approve / reject of the submission record itself. A hidden row is labeled
+ * 「已下架」, not rejected: restore clears `hidden`, and the submission stays
+ * approved. Nothing here deletes it or sends a rejection email.
+ *
  * The edit drawer does not render its fields until the detail payload for *this*
  * row has arrived (`detail.id === editingId`). Mounting the form against a
  * half-filled object would leave the image uploader and the tag checkboxes
@@ -144,9 +151,12 @@ async function submitCreate() {
 const detailId = ref<string | null>(null)
 
 async function openEdit(row: DirTool) {
+  // Paint the fields from the row that is already on screen. The drawer used
+  // to stay on "加载中..." until a second request's `id` matched, and that
+  // request 404'd whenever the slug was past the paged list.
   editingId.value = row.id
-  detailId.value = null
-  editForm.value = emptyToolForm()
+  editForm.value = valuesFromToolDetail(row)
+  detailId.value = row.id
   formError.value = ''
   detailLoading.value = true
   try {
@@ -154,11 +164,10 @@ async function openEdit(row: DirTool) {
       pageQuery('/api/admin/directory/tools', { id: row.id }),
     )
     if (editingId.value !== row.id) return
-    editForm.value = valuesFromToolDetail(detail)
-    detailId.value = String(detail.id ?? row.id)
+    editForm.value = valuesFromToolDetail({ ...row, ...detail, id: row.id })
+    detailId.value = row.id
   } catch (error) {
     toast.error((error as Error).message)
-    editingId.value = null
   } finally {
     detailLoading.value = false
   }
@@ -353,17 +362,18 @@ const columns = computed<DataColumn[]>(() => [
 
           <template #cell-actions="{ row }">
             <div class="flex flex-wrap gap-1">
-              <template v-if="row.status === 'pending'">
+              <template v-if="row.status === 'pending' || row.status === 'rejected' || row.status === 'hidden'">
                 <UiButton
                   variant="ghost"
                   size="icon"
                   class="size-7"
-                  :title="t('admin.directory.tools.approve')"
+                  :title="row.status === 'hidden' ? t('admin.directory.tools.restore') : t('admin.directory.tools.approve')"
                   @click="approve(row)"
                 >
                   <Check class="size-3.5 text-green-600" />
                 </UiButton>
                 <UiButton
+                  v-if="row.status === 'pending'"
                   variant="ghost"
                   size="icon"
                   class="size-7"
@@ -387,7 +397,7 @@ const columns = computed<DataColumn[]>(() => [
                 <Ban class="size-3" />
               </UiButton>
               <UiButton
-                v-if="canDeleteTool(row.status)"
+                v-if="canDeleteTool(row.status) && row.source !== 'community'"
                 variant="ghost"
                 size="icon"
                 class="size-7"

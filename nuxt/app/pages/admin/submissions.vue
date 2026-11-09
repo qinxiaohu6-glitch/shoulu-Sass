@@ -2,10 +2,12 @@
 /**
  * /admin/submissions — the review queue behind `/submit`.
  *
- * This is NOT a port of a source page. The source reviews community listings in
- * `/admin/directory/tools`, which reads `dir_tool`; this build's `/submit`
- * still writes the older `submissions` table, so the two never meet. This page
- * is the UI for that queue:
+ * This is NOT a port of a source page. `/submit` writes `submissions`. Approving
+ * a row is what puts it on the public site; this page stays that queue.
+ * `/admin/directory/tools` lists those live rows alongside the presets so an
+ * operator can hide, pin or edit them. Hide is not reject: approving again
+ * does not clear `tool_overrides.hidden`, and this page does not delete rows.
+ * This page is the UI for:
  *
  *   GET  /api/admin/submissions           queue + stats
  *   POST /api/admin/review                approve / reject / payment
@@ -27,6 +29,8 @@ import { Check, Eye, ExternalLink, Minus, Pencil, Plus, ThumbsDown, Wallet } fro
 import { toast } from 'vue-sonner'
 import { cn, type DataColumn } from '~/utils/ui'
 import type { DetailBlock } from '~~/shared/types/catalog'
+import { legalLogoUrl } from '~~/shared/utils/logo'
+import { filterByStatus, pageWindow } from '~~/shared/utils/submission-queue'
 
 type Row = {
   id: string
@@ -67,8 +71,8 @@ type Tab = 'all' | 'pending' | 'approved' | 'rejected'
 const COPY = {
   title: { zh: '提交审核', en: 'Submissions' },
   description: {
-    zh: '审核用户从 /submit 提交的应用。通过后前台立即可见；拒绝会保留记录并通知提交者。',
-    en: 'Review listings submitted through /submit. Approving publishes them immediately; rejecting keeps the record and emails the submitter.',
+    zh: '审核用户从 /submit 提交的应用。通过后前台立即可见；拒绝会保留记录并通知提交者。缺 logo 的旧提交不会被删除，名称旁会标出来；要下架已通过的产品，去「工具」里隐藏，不要在这里拒绝。',
+    en: 'Review listings submitted through /submit. Approving publishes them immediately; rejecting keeps the record and emails the submitter. Older rows with no logo are kept and badged — hide a live one from Tools, do not reject it here.',
   },
   hint: {
     zh: '待审核 {pending} 条 · 待付款 {awaiting} 条',
@@ -156,6 +160,7 @@ const COPY = {
   add_shot: { zh: '添加一张截图', en: 'Add a screenshot' },
   save_detail: { zh: '保存详情', en: 'Save details' },
   toast_detail_saved: { zh: '详情已保存', en: 'Details saved' },
+  missing_logo: { zh: '缺 logo', en: 'No logo' },
 } as const
 
 /**
@@ -280,22 +285,25 @@ const { data, status: fetchStatus, refresh } = await useAsyncData<{
 const stats = computed(() => data.value?.stats ?? ZERO_STATS)
 const allRows = computed(() => data.value?.items ?? [])
 const filtered = computed(() => {
+  // The request already asks for one status. Filter again so a stale payload
+  // from the previous tab cannot paint the wrong rows, and so 「已通过」 is
+  // never an empty body sitting under a leftover total.
+  const matched = filterByStatus(allRows.value, tab.value)
   const needle = debouncedSearch.value.trim().toLowerCase()
-  if (!needle) return allRows.value
-  return allRows.value.filter((row) =>
+  if (!needle) return matched
+  return matched.filter((row) =>
     [row.name, row.slug, row.url, row.domain, row.email].some((value) =>
       String(value ?? '').toLowerCase().includes(needle),
     ),
   )
 })
 const total = computed(() => filtered.value.length)
-const rows = computed(() =>
-  filtered.value.slice(
-    (page.value - 1) * SUBMISSIONS_PAGE_SIZE,
-    page.value * SUBMISSIONS_PAGE_SIZE,
-  ),
-)
-const loading = computed(() => fetchStatus.value === 'pending')
+const windowed = computed(() => pageWindow(filtered.value.length, page.value, SUBMISSIONS_PAGE_SIZE))
+const rows = computed(() => filtered.value.slice(windowed.value.start, windowed.value.end))
+watch(windowed, (next) => {
+  if (page.value !== next.page) page.value = next.page
+})
+const loading = computed(() => fetchStatus.value === 'pending' && rows.value.length === 0)
 
 const columns = computed<DataColumn[]>(() => [
   { key: 'name', header: c('col_name') },
@@ -446,7 +454,12 @@ function confirmPayment() {
                 >
                   {{ row.name }}
                 </button>
-                <p class="text-muted-foreground truncate text-xs">{{ row.slug }}</p>
+                <p class="text-muted-foreground truncate text-xs">
+                  {{ row.slug }}
+                  <UiBadge v-if="!legalLogoUrl(row.logo)" variant="outline" class="ml-1">
+                    {{ c('missing_logo') }}
+                  </UiBadge>
+                </p>
               </div>
             </div>
           </template>

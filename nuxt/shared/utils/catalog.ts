@@ -12,6 +12,7 @@ import type {
   Tool,
   Week,
 } from '~~/shared/types/catalog'
+import { compareListingOrder, listingRank, listingWeight, pinWindowActive } from './listing-order'
 
 const catalog = raw as unknown as Catalog
 
@@ -165,15 +166,18 @@ export type OverrideView = {
   /** slug → last day the pin applies; `''` means "until switched off". */
   pinned: Record<string, string>
   hidden: string[]
+  /**
+   * slug → recommend weight. Higher numbers rank earlier inside the same
+   * paid / featured band. Missing or 0 leaves the previous order alone.
+   */
+  sort?: Record<string, number>
 }
 
 export const NO_OVERRIDES: OverrideView = { pinned: {}, hidden: [] }
 
 /** A pin set by an operator, still inside its window. */
 function pinActive(tool: Tool, today: string, overrides: OverrideView): boolean {
-  const until = overrides.pinned[tool.slug]
-  if (until === undefined) return false
-  return !until || until >= today
+  return pinWindowActive(overrides.pinned[tool.slug], today)
 }
 
 /**
@@ -202,9 +206,7 @@ export function isPinned(
  * merely wearing a badge at the bottom of the page.
  */
 function rankOf(tool: Tool, today: string, overrides: OverrideView): number {
-  if (tool.is_paid) return 0
-  if (tool.is_featured || pinActive(tool, today, overrides)) return 1
-  return 2
+  return listingRank(tool.is_paid, tool.is_featured, pinActive(tool, today, overrides))
 }
 
 export function orderedTools(
@@ -215,9 +217,15 @@ export function orderedTools(
   return tools
     .filter((tool) => !isHiddenTool(tool, overrides))
     .map((tool, index) => ({ tool, index }))
-    .sort(
-      (a, b) =>
-        rankOf(a.tool, today, overrides) - rankOf(b.tool, today, overrides) || a.index - b.index,
+    .sort((a, b) =>
+      compareListingOrder(
+        rankOf(a.tool, today, overrides),
+        rankOf(b.tool, today, overrides),
+        listingWeight(overrides, a.tool.slug),
+        listingWeight(overrides, b.tool.slug),
+        a.index,
+        b.index,
+      ),
     )
     .map(({ tool }) => localizeTool(tool, locale))
 }
@@ -236,9 +244,10 @@ export function featuredTools(
  * The directory, with community submissions folded in.
  *
  * Same rule the static list uses — paid first, then featured, then the rest —
- * so a paid submission lands where it was sold, not at the bottom. `sort` is
- * stable, so within a rank the catalogue keeps its own sequence and the
- * submissions keep their newest-first order behind it.
+ * so a paid submission lands where it was sold, not at the bottom. Equal
+ * weights keep that order: the catalogue stays in its own sequence and the
+ * submissions stay newest-first behind it. A non-zero recommend weight
+ * (`overrides.sort`, higher first) only moves a listing inside its band.
  *
  * Returns `catalog` untouched when there is nothing to merge, which is what
  * keeps every page byte-identical while the directory has no submissions.
@@ -259,9 +268,19 @@ export function mergeDirectory(
     ? submitted.filter((tool) => !isHiddenTool(tool, overrides))
     : submitted
   if (!visible.length) return base
-  return [...base, ...visible].sort(
-    (a, b) => rankOf(a, today, overrides) - rankOf(b, today, overrides),
-  )
+  return [...base, ...visible]
+    .map((tool, index) => ({ tool, index }))
+    .sort((a, b) =>
+      compareListingOrder(
+        rankOf(a.tool, today, overrides),
+        rankOf(b.tool, today, overrides),
+        listingWeight(overrides, a.tool.slug),
+        listingWeight(overrides, b.tool.slug),
+        a.index,
+        b.index,
+      ),
+    )
+    .map(({ tool }) => tool)
 }
 
 export function latestTools(

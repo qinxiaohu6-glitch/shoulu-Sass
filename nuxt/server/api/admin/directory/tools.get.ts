@@ -1,6 +1,9 @@
 /**
  * GET /api/admin/directory/tools — the console's tool list.
  *
+ * Editorial presets and approved submissions share this list. The submissions
+ * are the same rows the public directory merges in from `/api/tools`.
+ *
  * Three shapes, all from the source page:
  *   `?id=<slug>`   the edit drawer's detail payload (translations + tag slugs)
  *   `?all=true`    the collection drawer's picker: `{id, slug, name}`, no paging

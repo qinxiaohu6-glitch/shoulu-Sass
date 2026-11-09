@@ -16,7 +16,12 @@
 import type { Db } from './db'
 import { deleteDirectoryTool, hideCategory, listDirectoryTools, saveCategory, saveCollection, saveTag, saveToolHead, saveToolTranslation } from './directory'
 import { getAd, listAds, stopAd, today } from './ads'
-import { slugify } from '../../shared/utils/catalog'
+import { categories, slugify, tags as catalogTags, tools as catalogTools } from '../../shared/utils/catalog'
+import { pinWindowActive, pickListingText, placementStatus } from '../../shared/utils/listing-order'
+import { mergeBySlug } from '../../shared/utils/taxonomy-merge'
+import { loadOverrides, setListingWeight, setOverride, type OverrideState } from './overrides'
+import { cleanUrl, domainOf, listPublishedTools, publiclyListed, type SubmissionRow } from './submissions'
+import type { Tool } from '../../shared/types/catalog'
 
 /* ---------------------------------------------------------------------------
    schema catch-up
@@ -111,7 +116,7 @@ export async function listAdminTags(
     bySlug.set(tr.slug, entry)
   }
 
-  const rows: AdminTag[] = heads
+  const stored: AdminTag[] = heads
     .slice()
     .sort((a, b) => a.sort - b.sort || a.slug.localeCompare(b.slug))
     .map((head) => {
@@ -128,6 +133,19 @@ export async function listAdminTags(
         createdAt: head.updated_at,
       }
     })
+  // Catalogue tags are what the public pills use when this table is empty.
+  // Editing one upserts a database row; the seed in catalog.json stays.
+  const seeds: AdminTag[] = catalogTags.map((tag) => ({
+    id: tag.slug,
+    slug: tag.slug,
+    name: tag.name_en,
+    description: '',
+    nameZh: tag.name_zh,
+    descriptionZh: '',
+    toolCount: counts.get(tag.slug) ?? tag.count ?? 0,
+    createdAt: 0,
+  }))
+  const rows = mergeBySlug(stored, seeds)
 
   const needle = (params.search ?? '').trim().toLowerCase()
   const filtered = needle
@@ -156,9 +174,9 @@ export async function listAdminTagOptions(db: Db): Promise<{ id: string; slug: s
     await db.prepare("SELECT slug, name FROM dir_tag_tr WHERE locale = 'zh'").all<{ slug: string; name: string }>()
   ).results
   const names = new Map(trs.map((row) => [row.slug, row.name]))
-  return heads
-    .map((head) => ({ id: head.slug, slug: head.slug, name: names.get(head.slug) || head.slug }))
-    .sort((a, b) => a.slug.localeCompare(b.slug))
+  const stored = heads.map((head) => ({ id: head.slug, slug: head.slug, name: names.get(head.slug) || head.slug }))
+  const seeds = catalogTags.map((tag) => ({ id: tag.slug, slug: tag.slug, name: tag.name_zh || tag.name_en }))
+  return mergeBySlug(stored, seeds).sort((a, b) => a.slug.localeCompare(b.slug))
 }
 
 const SLUG = /^[a-z0-9][a-z0-9-]*$/
@@ -294,25 +312,42 @@ export async function listAdminCategories(
     bySlug.set(tr.slug, entry)
   }
 
-  const rows: AdminCategory[] = heads
-    .slice()
-    .sort((a, b) => a.sort - b.sort || a.slug.localeCompare(b.slug))
-    .map((head) => {
-      const tr = bySlug.get(head.slug) ?? {}
-      return {
-        id: head.slug,
-        slug: head.slug,
-        name: tr.en?.name || head.slug,
-        description: tr.en?.description ?? '',
-        nameZh: tr.zh?.name ?? '',
-        descriptionZh: tr.zh?.description ?? '',
-        icon: head.icon,
-        sort: head.sort,
-        status: head.status === 'draft' ? 'draft' : 'published',
-        toolCount: counts.get(head.slug) ?? 0,
-        createdAt: head.updated_at,
-      }
-    })
+  const stored: AdminCategory[] = heads.map((head) => {
+    const tr = bySlug.get(head.slug) ?? {}
+    return {
+      id: head.slug,
+      slug: head.slug,
+      name: tr.en?.name || head.slug,
+      description: tr.en?.description ?? '',
+      nameZh: tr.zh?.name ?? '',
+      descriptionZh: tr.zh?.description ?? '',
+      icon: head.icon,
+      sort: head.sort,
+      status: head.status === 'draft' ? 'draft' : 'published',
+      toolCount: counts.get(head.slug) ?? 0,
+      createdAt: head.updated_at,
+    }
+  })
+  const tombstoned = (
+    await db.prepare("SELECT slug FROM dir_category WHERE status = 'deleted'").all<{ slug: string }>()
+  ).results.map((row) => row.slug)
+  // Same eight categories the public nav falls back to when the table is empty.
+  const seeds: AdminCategory[] = categories.map((category, index) => ({
+    id: category.slug,
+    slug: category.slug,
+    name: category.name_en,
+    description: category.desc_en,
+    nameZh: category.name_zh,
+    descriptionZh: category.desc_zh,
+    icon: category.icon,
+    sort: category.sort ?? index,
+    status: 'published',
+    toolCount: counts.get(category.slug) ?? category.count ?? 0,
+    createdAt: 0,
+  }))
+  const rows = mergeBySlug(stored, seeds, tombstoned).sort(
+    (a, b) => a.sort - b.sort || a.slug.localeCompare(b.slug),
+  )
 
   const needle = (params.search ?? '').trim().toLowerCase()
   const filtered = needle
@@ -342,11 +377,25 @@ export async function listAdminCategoryOptions(
   const trs = (
     await db.prepare("SELECT slug, name FROM dir_category_tr WHERE locale = 'zh'").all<{ slug: string; name: string }>()
   ).results
+  const tombstoned = (
+    await db.prepare("SELECT slug FROM dir_category WHERE status = 'deleted'").all<{ slug: string }>()
+  ).results.map((row) => row.slug)
   const names = new Map(trs.map((row) => [row.slug, row.name]))
-  return heads
-    .slice()
-    .sort((a, b) => b.sort - a.sort || a.slug.localeCompare(b.slug))
-    .map((head) => ({ id: head.slug, slug: head.slug, name: names.get(head.slug) || head.slug }))
+  const stored = heads.map((head) => ({
+    id: head.slug,
+    slug: head.slug,
+    name: names.get(head.slug) || head.slug,
+    sort: head.sort,
+  }))
+  const seeds = categories.map((category, index) => ({
+    id: category.slug,
+    slug: category.slug,
+    name: category.name_zh || category.name_en,
+    sort: category.sort ?? index,
+  }))
+  return mergeBySlug(stored, seeds, tombstoned)
+    .sort((a, b) => a.sort - b.sort || a.slug.localeCompare(b.slug))
+    .map(({ id, slug, name }) => ({ id, slug, name }))
 }
 
 export interface AdminCategoryInput {
@@ -406,6 +455,9 @@ export async function updateAdminCategory(db: Db, slug: string, input: Omit<Admi
  * survives a re-read.
  */
 export async function deleteAdminCategory(db: Db, slug: string) {
+  if (categories.some((category) => category.slug === slug)) {
+    throw new Error('Built-in categories stay in the catalogue — edit them instead of deleting')
+  }
   const row = await db
     .prepare('SELECT COUNT(*) AS n FROM dir_tool WHERE category = ?')
     .bind(slug)
@@ -691,25 +743,80 @@ interface ToolExtraRow {
   sponsored: number
 }
 
-export async function listAdminTools(
-  db: Db,
-  params: { page?: number; pageSize?: number; search?: string; status?: string },
-): Promise<{ items: AdminTool[]; total: number }> {
+function categoryLabel(slug: string, fromDb: Map<string, string>): string {
+  if (!slug) return ''
+  const stored = fromDb.get(slug)
+  if (stored) return stored
+  const hit = categories.find((category) => category.slug === slug)
+  return hit?.name_zh || hit?.name_en || ''
+}
+
+/**
+ * What the console row should say, given the switches the public pages read.
+ *
+ * `hidden` is `tool_overrides.hidden` — the kill switch behind 410 and the
+ * list filter — so a listing the site has pulled is not shown as published
+ * just because `dir_tool.status` still says approved. A live pin is featured
+ * even when the static catalogue flag is off, which is how a submission gets
+ * into the featured band.
+ */
+function applyPublicPlacement(row: AdminTool, state: OverrideState, day: string): AdminTool {
+  const weight = state.sort[row.slug]
+  return {
+    ...row,
+    featured: pinWindowActive(state.pinned[row.slug], day) || row.featured,
+    // The public lists read the override weight, not `dir_tool.sort`. Showing
+    // the stored column here would claim an order the site is not using.
+    sort: typeof weight === 'number' ? weight : 0,
+    status: placementStatus(row.status, state.hidden.includes(row.slug)),
+  }
+}
+
+function submissionAdminRow(tool: Tool, categoryNames: Map<string, string>): AdminTool {
+  return {
+    id: tool.slug,
+    slug: tool.slug,
+    name: tool.name_en || tool.slug,
+    tagline: tool.short_en || '',
+    iconUrl: tool.logo || '',
+    websiteUrl: tool.url || '',
+    pricing: 'free',
+    authorName: tool.maker || '',
+    categoryId: tool.category || '',
+    categoryName: categoryLabel(tool.category, categoryNames),
+    source: 'community',
+    featured: false,
+    sponsored: false,
+    sort: 0,
+    status: 'published',
+    createdAt: tool.created_at || '',
+  }
+}
+
+/** Every console row, unpaged. Detail lookup must not stop at page size 100. */
+async function allAdminToolRows(db: Db): Promise<AdminTool[]> {
   await ensureToolColumns(db)
 
-  const page = Math.max(1, Math.trunc(params.page ?? 1))
-  const pageSize = Math.min(100, Math.max(1, Math.trunc(params.pageSize ?? 20)))
-
-  const [tools, extras, categories] = await Promise.all([
+  const [tools, extras, categoryRows, overrides] = await Promise.all([
     listDirectoryTools(db),
     db.prepare('SELECT slug, pricing, source, sort, sponsored FROM dir_tool').all<ToolExtraRow>(),
     db.prepare('SELECT slug, name FROM dir_category_tr WHERE locale = ?').bind('zh').all<{ slug: string; name: string }>(),
+    loadOverrides(db),
   ])
 
-  const extraBySlug = new Map(extras.results.map((row) => [row.slug, row]))
-  const categoryNames = new Map(categories.results.map((row) => [row.slug, row.name]))
+  let submitted: Tool[] = []
+  try {
+    // Same predicate the homepage, /tools, the detail page and the sitemap use.
+    // A failure here must not blank the editorial list.
+    submitted = await listPublishedTools(db)
+  } catch (err) {
+    console.error('[admin/directory/tools] submissions unavailable', err)
+  }
 
-  const rows: AdminTool[] = tools.map((tool) => {
+  const extraBySlug = new Map(extras.results.map((row) => [row.slug, row]))
+  const categoryNames = new Map(categoryRows.results.map((row) => [row.slug, row.name]))
+
+  const editorial: AdminTool[] = tools.map((tool) => {
     const extra = extraBySlug.get(tool.slug)
     return {
       id: tool.slug,
@@ -721,7 +828,7 @@ export async function listAdminTools(
       pricing: extra?.pricing || 'free',
       authorName: tool.maker || '',
       categoryId: tool.category || '',
-      categoryName: categoryNames.get(tool.category) || '',
+      categoryName: categoryLabel(tool.category, categoryNames),
       source: extra?.source || 'editorial',
       featured: !!tool.is_featured,
       sponsored: !!extra?.sponsored,
@@ -731,14 +838,40 @@ export async function listAdminTools(
     }
   })
 
+  // Community listings first: the thirty presets already fill the first page,
+  // which is why an approved submission was invisible until someone searched
+  // a queue that this screen did not read.
+  const communitySlugs = new Set<string>()
+  const community: AdminTool[] = []
+  for (const tool of submitted) {
+    if (communitySlugs.has(tool.slug)) continue
+    communitySlugs.add(tool.slug)
+    community.push(submissionAdminRow(tool, categoryNames))
+  }
+
+  const day = today()
+  return [...community, ...editorial.filter((row) => !communitySlugs.has(row.slug))].map((row) =>
+    applyPublicPlacement(row, overrides, day),
+  )
+}
+
+export async function listAdminTools(
+  db: Db,
+  params: { page?: number; pageSize?: number; search?: string; status?: string },
+): Promise<{ items: AdminTool[]; total: number }> {
+  const page = Math.max(1, Math.trunc(params.page ?? 1))
+  const pageSize = Math.min(100, Math.max(1, Math.trunc(params.pageSize ?? 20)))
+  const rows = await allAdminToolRows(db)
+
   const needle = (params.search ?? '').trim().toLowerCase()
   const wanted = params.status && params.status !== 'all' ? params.status : ''
   const filtered = rows.filter((row) => {
     if (wanted && row.status !== wanted) return false
     if (!needle) return true
     return (
-      row.slug.includes(needle) ||
+      row.slug.toLowerCase().includes(needle) ||
       row.name.toLowerCase().includes(needle) ||
+      row.tagline.toLowerCase().includes(needle) ||
       row.websiteUrl.toLowerCase().includes(needle)
     )
   })
@@ -803,31 +936,82 @@ async function tagLabelMap(db: Db): Promise<{ toSlug: Map<string, string>; toLab
   return { toSlug, toLabel }
 }
 
+function submissionTagIds(raw: string): string[] {
+  let labels: string[] = []
+  try {
+    const parsed = JSON.parse(raw || '[]')
+    labels = Array.isArray(parsed) ? parsed.map(String) : []
+  } catch {
+    labels = []
+  }
+  return labels.map((label) => {
+    const hit = catalogTags.find(
+      (tag) => tag.slug === label || tag.name_en.toLowerCase() === label.toLowerCase(),
+    )
+    return hit?.slug ?? slugify(label)
+  })
+}
+
+/** Submitted listings store one description; both locale boxes show it. */
+function submissionDetail(base: AdminTool, row: SubmissionRow): AdminToolDetail {
+  return {
+    ...base,
+    name: row.name,
+    tagline: row.short,
+    introduction: row.long_desc,
+    nameZh: row.name,
+    taglineZh: row.short,
+    introductionZh: row.long_desc,
+    tagIds: submissionTagIds(row.tags),
+  }
+}
+
+function parseTagLabels(raw: string | null | undefined): string[] {
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.map(String) : []
+  } catch {
+    return []
+  }
+}
+
 export async function getAdminToolDetail(db: Db, slug: string): Promise<AdminToolDetail | null> {
-  const { items } = await listAdminTools(db, { page: 1, pageSize: 100000, search: '' })
-  const base = items.find((row) => row.slug === slug)
+  const clean = String(slug || '').trim()
+  if (!clean) return null
+  // The list endpoint caps a page at 100. Opening edit used to ask for that
+  // page and then wait forever when the slug was not on it. Look up the full
+  // in-memory list instead.
+  const base = (await allAdminToolRows(db)).find((row) => row.slug === clean)
   if (!base) return null
+
+  if (base.source === 'community') {
+    const row = await db.prepare('SELECT * FROM submissions WHERE slug = ?').bind(clean).first<SubmissionRow>()
+    if (row && publiclyListed(row)) return submissionDetail(base, row)
+  }
 
   const trs = (
     await db
       .prepare('SELECT locale, name, short, long_desc FROM dir_tool_tr WHERE slug = ?')
-      .bind(slug)
+      .bind(clean)
       .all<{ locale: string; name: string; short: string; long_desc: string }>()
   ).results
   const en = trs.find((row) => row.locale === 'en')
   const zh = trs.find((row) => row.locale === 'zh')
 
-  const raw = await db.prepare('SELECT tags FROM dir_tool WHERE slug = ?').bind(slug).first<{ tags: string }>()
-  const labels: string[] = raw?.tags ? (JSON.parse(raw.tags) as string[]) : []
+  const raw = await db.prepare('SELECT tags FROM dir_tool WHERE slug = ?').bind(clean).first<{ tags: string }>()
+  const fallback = catalogTools.find((tool) => tool.slug === clean)
+  const labels = parseTagLabels(raw?.tags)
+  const tagSource = labels.length ? labels : (fallback?.tags ?? [])
   const { toSlug } = await tagLabelMap(db)
 
   return {
     ...base,
-    introduction: en?.long_desc ?? '',
-    nameZh: zh?.name ?? '',
-    taglineZh: zh?.short ?? '',
-    introductionZh: zh?.long_desc ?? '',
-    tagIds: labels.map((label) => toSlug.get(label.toLowerCase()) ?? slugify(label)),
+    introduction: en?.long_desc || fallback?.long_en || '',
+    nameZh: zh?.name || fallback?.name_zh || base.name,
+    taglineZh: zh?.short || fallback?.short_zh || base.tagline,
+    introductionZh: zh?.long_desc || fallback?.long_zh || '',
+    tagIds: tagSource.map((label) => toSlug.get(label.toLowerCase()) ?? slugify(label)),
   }
 }
 
@@ -881,15 +1065,54 @@ export async function createAdminTool(db: Db, input: AdminToolWrite) {
   return { slug: input.slug }
 }
 
+/**
+ * Pin and recommend-weight, written to `tool_overrides`.
+ *
+ * That is the table the homepage, `/tools`, search and the sitemap already
+ * read. `dir_tool.is_featured` / `dir_tool.sort` are not. An existing pin date
+ * is kept when the listing stays featured, so saving the form does not turn
+ * "pinned until Tuesday" into "pinned forever".
+ */
+async function syncPublicPlacement(db: Db, slug: string, featured: boolean, sort: number) {
+  const existing = await db
+    .prepare('SELECT pin, pin_until FROM tool_overrides WHERE slug = ?')
+    .bind(slug)
+    .first<{ pin: number; pin_until: string }>()
+  const until = featured && existing?.pin && existing.pin_until ? existing.pin_until : ''
+  await setOverride(db, slug, 'pin', featured, until)
+  await setListingWeight(db, slug, sort)
+}
+
 export async function updateAdminTool(db: Db, slug: string, input: AdminToolInput) {
   await ensureToolColumns(db)
   if (!input.name) throw new Error('name is required')
 
-  const current = await db
+  let current = await db
     .prepare('SELECT url, logo, category, tags, status, is_featured, is_paid, featured_until, votes_total, votes_week, created_at, maker, shots FROM dir_tool WHERE slug = ?')
     .bind(slug)
     .first<Record<string, unknown>>()
-  if (!current) throw new Error('Tool not found')
+  if (!current) {
+    // The thirty presets live in the catalogue until somebody edits one. The
+    // detail page already prefers a database row, so the first save creates it
+    // from the catalogue instead of refusing.
+    const fallback = catalogTools.find((tool) => tool.slug === slug)
+    if (!fallback) throw new Error('Tool not found')
+    current = {
+      url: fallback.url,
+      logo: fallback.logo,
+      category: fallback.category,
+      tags: JSON.stringify(fallback.tags ?? []),
+      status: fallback.status || 'approved',
+      is_featured: fallback.is_featured ? 1 : 0,
+      is_paid: fallback.is_paid ? 1 : 0,
+      featured_until: fallback.featured_until || '',
+      votes_total: fallback.votes_total || 0,
+      votes_week: fallback.votes_week || 0,
+      created_at: fallback.created_at || '',
+      maker: fallback.maker || '',
+      shots: JSON.stringify(fallback.shots ?? []),
+    }
+  }
 
   const { toLabel } = await tagLabelMap(db)
   const tags = input.tagIds.map((id) => toLabel.get(id) ?? id)
@@ -937,17 +1160,119 @@ export async function updateAdminTool(db: Db, slug: string, input: AdminToolInpu
   }
 
   await updateAdminToolExtras(db, slug, input)
+  await syncPublicPlacement(db, slug, input.featured, input.sort)
   return { slug }
 }
 
+/**
+ * The edit drawer. Submitted products are written back to `submissions`, which
+ * is what `/api/tools` and the detail page render. Presets stay on `dir_tool`.
+ * Both also update the pin and the recommend weight, because those are the
+ * fields the public lists actually sort and badge on.
+ */
+export async function saveAdminListing(db: Db, slug: string, input: AdminToolInput) {
+  const row = await db.prepare('SELECT * FROM submissions WHERE slug = ?').bind(slug).first<SubmissionRow>()
+  if (row && publiclyListed(row)) {
+    await updateSubmissionCopy(db, row, input)
+    const dir = await db.prepare('SELECT slug FROM dir_tool WHERE slug = ?').bind(slug).first<{ slug: string }>()
+    if (dir) return updateAdminTool(db, slug, { ...input, source: 'community' })
+    await syncPublicPlacement(db, slug, input.featured, input.sort)
+    return { slug }
+  }
+  return updateAdminTool(db, slug, input)
+}
+
+async function updateSubmissionCopy(db: Db, row: SubmissionRow, input: AdminToolInput) {
+  const name = pickListingText(input.name, input.nameZh, row.name, 60)
+  if (!name) throw new Error('name is required')
+  const short = pickListingText(input.tagline, input.taglineZh, row.short, 200)
+  const longDesc = pickListingText(input.introduction, input.introductionZh, row.long_desc, 4000)
+  const maker = input.authorName.replace(/<[^>]{0,200}>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60)
+
+  let url = row.url
+  let domain = row.domain
+  const nextUrl = input.websiteUrl.trim()
+  if (nextUrl && nextUrl !== row.url) {
+    let cleaned: [string, string]
+    try {
+      cleaned = cleanUrl(nextUrl)
+    } catch {
+      throw new Error('Website URL is invalid')
+    }
+    url = cleaned[0]
+    domain = cleaned[1]
+    if (domain !== row.domain) {
+      const clash = await db
+        .prepare(
+          "SELECT id FROM submissions WHERE domain = ? AND id <> ? AND status IN ('pending','approved') LIMIT 1",
+        )
+        .bind(domain, row.id)
+        .first<{ id: string }>()
+      const takenByCatalog = catalogTools.some((tool) => domainOf(tool.url) === domain)
+      if (clash || takenByCatalog) throw new Error('Another listing already uses this website')
+    }
+  }
+
+  let logo = input.iconUrl.trim()
+  if (logo && !/^https?:\/\//i.test(logo) && !logo.startsWith('/')) logo = row.logo
+
+  const category = categories.some((item) => item.slug === input.categoryId) ? input.categoryId : row.category
+
+  let tags = row.tags || '[]'
+  if (input.tagIds.length) {
+    const names: string[] = []
+    for (const id of input.tagIds) {
+      const hit = catalogTags.find((tag) => tag.slug === id || tag.name_en.toLowerCase() === id.toLowerCase())
+      if (hit && !names.includes(hit.name_en)) names.push(hit.name_en)
+      if (names.length >= 4) break
+    }
+    if (names.length) tags = JSON.stringify(names)
+  }
+
+  await db
+    .prepare(
+      `UPDATE submissions
+       SET name = ?, short = ?, long_desc = ?, url = ?, domain = ?,
+           logo = ?, maker = ?, category = ?, tags = ?, updated_at = ?
+       WHERE id = ?`,
+    )
+    .bind(
+      name,
+      short,
+      longDesc,
+      url,
+      domain,
+      logo,
+      maker,
+      category,
+      tags,
+      Math.floor(Date.now() / 1000),
+      row.id,
+    )
+    .run()
+}
+
 export async function setAdminToolStatus(db: Db, slug: string, status: string) {
+  const stored = toStoredStatus(status)
+  // Hide and unhide go through `tool_overrides`. The public list, the detail
+  // page (410) and the sitemap all read that flag; `dir_tool.status` does not
+  // remove a catalogue entry or a submission from those surfaces.
+  if (stored === 'approved') await setOverride(db, slug, 'hidden', false)
+  else if (stored === 'rejected') await setOverride(db, slug, 'hidden', true)
   await db.prepare('UPDATE dir_tool SET status = ?, updated_at = ? WHERE slug = ?')
-    .bind(toStoredStatus(status), Math.floor(Date.now() / 1000), slug)
+    .bind(stored, Math.floor(Date.now() / 1000), slug)
     .run()
   return { slug }
 }
 
 export async function deleteAdminTool(db: Db, slug: string) {
+  const submitted = await db
+    .prepare('SELECT id FROM submissions WHERE slug = ?')
+    .bind(slug)
+    .first<{ id: string }>()
+  if (submitted) {
+    throw new Error('Submitted listings stay in the review queue — hide them here, or reject them there')
+  }
   const row = await db.prepare('SELECT status FROM dir_tool WHERE slug = ?').bind(slug).first<{ status: string }>()
   if (!row) throw new Error('Tool not found')
   if (toConsoleStatus(row.status) === 'published') {

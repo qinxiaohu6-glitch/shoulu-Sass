@@ -17,6 +17,7 @@
 
 import catalogJson from '~~/shared/content/catalog.json'
 import { categories, categoryBySlug, isoWeekId, slugify as slugifyText } from '~~/shared/utils/catalog'
+import { legalLogoUrl } from '~~/shared/utils/logo'
 import type { DetailBlock, Tool } from '~~/shared/types/catalog'
 import type { Db } from './db'
 
@@ -269,8 +270,14 @@ export function validate(payload: unknown): CleanSubmission {
   // server-side half, so a direct API call cannot skip it.
   if (!email) throw new SubmissionError('email_required', 'email')
 
-  let logo = String(body.logo ?? '').trim()
-  if (logo && !/^https?:\/\//i.test(logo)) logo = ''
+  // A listing without a loadable logo must not enter the queue. Illegal
+  // values are rejected rather than stored as an empty string. Rows already
+  // in the queue are not touched here — the review page badges a missing logo
+  // so an operator can see them; this function does not delete those rows.
+  const logoInput = String(body.logo ?? '').trim()
+  const logo = legalLogoUrl(logoInput)
+  if (!logoInput) throw new SubmissionError('logo_required', 'logo')
+  if (!logo) throw new SubmissionError('bad_logo', 'logo')
 
   // An ad order has to remember *which* slot was bought. Without it the
   // operator sees "$29 — weekly ad" and cannot tell board from rail.
