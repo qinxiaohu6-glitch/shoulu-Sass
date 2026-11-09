@@ -16,7 +16,7 @@ const props = defineProps<{
   lead?: string
 }>()
 
-const { pick, isZh, setLocale } = useLang()
+const { pick } = useLang()
 const localePath = useLocalePath()
 
 const points = computed(() => [
@@ -43,23 +43,12 @@ const points = computed(() => [
   },
 ])
 
-async function switchLang() {
-  await setLocale(isZh.value ? 'en' : 'zh')
-}
 </script>
 
 <template>
   <div v-if="props.welcome" class="auth-welcome">
     <IconSprite />
-    <header class="auth-welcome__bar">
-      <NuxtLink class="auth-welcome__brand" :to="localePath('/')">
-        <img src="/assets/img/brand/logo.png" alt="" width="28" height="28">
-        <span>Product Atlas</span>
-      </NuxtLink>
-      <button class="auth-welcome__lang" type="button" @click="switchLang">
-        {{ isZh ? 'English' : '中文' }}
-      </button>
-    </header>
+    <AuthTopNav />
 
     <div class="auth-welcome__stage">
       <section class="auth-welcome__story" :aria-label="pick('免费账号', 'Free account')">
@@ -98,9 +87,11 @@ async function switchLang() {
     </div>
   </div>
 
-  <div v-else class="src-page flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+  <div v-else class="src-page flex min-h-svh flex-col bg-muted">
     <IconSprite />
+    <AuthTopNav />
 
+    <div class="flex flex-1 flex-col items-center justify-center gap-6 p-6 md:p-10">
     <div class="flex w-full max-w-sm flex-col gap-6">
       <NuxtLink :to="localePath('/')" class="self-center">
         <span class="flex items-center gap-2">
@@ -119,6 +110,7 @@ async function switchLang() {
         </div>
       </div>
     </div>
+    </div>
   </div>
 </template>
 
@@ -131,35 +123,6 @@ async function switchLang() {
     linear-gradient(to right, rgba(28, 25, 23, 0.045) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(28, 25, 23, 0.045) 1px, transparent 1px);
   background-size: 32px 32px;
-}
-.auth-welcome__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 22px 20px 0;
-}
-.auth-welcome__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #1c1917;
-}
-.auth-welcome__brand img {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-}
-.auth-welcome__lang {
-  border: 0;
-  background: transparent;
-  color: #57534e;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
 }
 .auth-welcome__stage {
   display: grid;

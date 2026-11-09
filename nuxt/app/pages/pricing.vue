@@ -18,10 +18,8 @@
  * The plans are one group, so the toggle does not render — the source hides it at
  * `groups.length <= 1` too.
  *
- * Added 2026-11-08 from the launchit.fast teardown (docs/10, §4.2): a three-step
- * funnel, a live-numbers bar, scenario-based guidance, a "keep showing up"
- * section and FAQPage markup. All pure additions — prices, checkout and link
- * policy are untouched, and every new link stays inside this site.
+ * Launch + Get seen. Directory-submission packages are not sold here.
+ * Paid buttons say "Request invoice" until /api/payments/config reports ready.
  */
 import type { PricingGroup, PricingPlan } from '~/utils/directory-ui'
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
@@ -31,7 +29,16 @@ import {
   campaignDeadlineShanghai,
 } from '~~/shared/content/billboard'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
-import { adPlans, comparison, listingBenefits, pricingFaq, tiers } from '~~/shared/content/pricing'
+import { contactHref } from '~~/shared/content/site-contact'
+import {
+  adPlans,
+  comparison,
+  listingBenefits,
+  pricingBillboardBlurb,
+  pricingBillboardChecks,
+  pricingFaq,
+  tiers,
+} from '~~/shared/content/pricing'
 import { categories, tools } from '~~/shared/utils/catalog'
 
 const { lang, pick } = useLang()
@@ -39,17 +46,36 @@ const localePath = useLocalePath()
 const overrides = useOverrides()
 const router = useRouter()
 const requestFetch = useRequestFetch()
+const { ready: paymentReady } = await usePayment()
 
 const t = (pair: { en: string; zh: string }) => (lang.value === 'zh' ? pair.zh : pair.en)
 const tl = (pair: { en: string[]; zh: string[] }) => (lang.value === 'zh' ? pair.zh : pair.en)
 
-const title = computed(() => pick('定价', 'Pricing'))
+const title = computed(() =>
+  pick('把产品放到 maker 正在看的地方', 'Put your product where makers already browse'),
+)
 const lead = computed(() =>
   pick(
-    '免费就能上线。付费只买两件事：更早被看到，链接变 dofollow。不订阅、不自动续费。',
-    'Launch free. Paying buys two things: being seen sooner, and a dofollow link. No subscription, no auto-renewal.',
+    '免费可上。付费买更快上线与 dofollow 链接。不订阅。',
+    'Launch free. Pay once for a faster go-live and a dofollow link. No subscription.',
   ),
 )
+
+function listingCta(id: string, name: { en: string; zh: string }) {
+  if (id === 'free') return pick('免费提交', 'Submit free')
+  if (paymentReady.value) return pick(`去付款 · ${name.zh}`, `Pay · ${name.en}`)
+  return pick(`索取发票 · ${name.zh}`, `Request invoice · ${name.en}`)
+}
+
+function billboardOffer(id: string) {
+  return pricingBillboardBlurb[id] ?? pricingBillboardBlurb.entry
+}
+
+function invoiceMail(plan: string) {
+  const href = contactHref()
+  const subject = encodeURIComponent(`Invoice request · ${plan}`)
+  return href ? `${href}?subject=${subject}` : localePath('/pricing')
+}
 
 const deadline = campaignDeadlineShanghai()
 const promoOn = computed(() => campaignActive())
@@ -59,16 +85,21 @@ function skuQuote(kind: 'listing' | 'sidebar' | 'billboard', id: string) {
 }
 
 const plans = computed<PricingPlan[]>(() =>
-  tiers.map((tier) => ({
+  tiers.map((tier) => {
+    const quote = skuQuote('listing', tier.id)
+    return {
       id: tier.id,
       name: t(tier.name),
       description: t(tier.tagline),
-      price: skuQuote('listing', tier.id).priceLabel,
+      price: quote.priceLabel,
+      originalPrice: quote.strikeLabel ?? undefined,
       featured: tier.id === 'featured',
       badge: tier.badge ? t(tier.badge) : undefined,
+      kicker: quote.active ? pick('BLACK FRIDAY · 约 30% OFF', 'BLACK FRIDAY · ~30% OFF') : undefined,
       features: tl(tier.features),
-      buttonText: t(tier.cta),
-    })),
+      buttonText: listingCta(tier.id, tier.name),
+    }
+  }),
 )
 
 const groups = computed<PricingGroup[]>(() => [
@@ -81,97 +112,98 @@ const groups = computed<PricingGroup[]>(() => [
  * form with the plan preselected.
  */
 function choosePlan(plan: PricingPlan) {
-  router.push({ path: '/submit', query: { plan: plan.id } })
+  router.push({ path: localePath('/submit'), query: { plan: plan.id } })
 }
 
-/** The three steps of the funnel. Each one names a real page on this site. */
+function band(kind: 'listing' | 'billboard', ids: string[]) {
+  return ids.map((id) => skuQuote(kind, id).priceLabel).join(' / ')
+}
+
+/** Launch + Get seen. Directory-submission packages are not a product line. */
 const steps = computed(() => [
   {
     n: '1',
-    title: pick('收录', 'Launch'),
-    price: pick('$0 / $19 / $39 / $69 · 一次性', '$0 / $19 / $39 / $69 · one-time'),
+    title: pick('上线', 'Launch'),
+    price: `${band('listing', ['free', 'standard', 'featured', 'pro'])} · ${pick('一次性', 'one-time')}`,
     body: pick(
-      '把产品放进目录。价格是表现价，黑五只在表价上划线，不另写一套更高的原价。',
-      'Get a page in the directory. Prices are the list prices. The promotion strikes those prices and does not invent a higher one.',
+      '获得永久产品页。付费一次，付款即上线，并得到 dofollow 链接。',
+      'Get a permanent page. Pay once to go live on payment, with a dofollow link.',
     ),
     cta: pick('看四档收录', 'See the four tiers'),
-    to: '#pricing',
-    muted: false,
+    to: '#plans',
   },
   {
     n: '2',
     title: pick('被看到', 'Get seen'),
-    price: pick('Billboard $15 / $29 / $49 · 右栏 $19/周', 'Billboard $15 / $29 / $49 · sidebar $19/week'),
+    price: pick(
+      `Billboard ${band('billboard', ['entry', 'standard', 'prime'])} · 右栏 ${skuQuote('sidebar', '1').priceLabel}/周`,
+      `Billboard ${band('billboard', ['entry', 'standard', 'prime'])} · sidebar ${skuQuote('sidebar', '1').priceLabel}/wk`,
+    ),
     body: pick(
-      'Billboard 是一次性三档，付款成功后自动上板。右栏仍按周。页面上的价格就是结账实付。',
-      'Billboard is three one-time tiers and goes live when payment succeeds. The sidebar stays weekly. The price on the page is the checkout charge.',
+      '一次付清。付款即上线。Top 10 同步首页。右栏仍按周。',
+      'One-time payment. Live the second you pay. Top 10 on the home page. Sidebar stays weekly.',
     ),
     cta: pick('看 Billboard', 'See Billboard'),
     to: '#ads',
-    muted: false,
-  },
-  {
-    n: '3',
-    title: pick('持续出现', 'Keep showing up'),
-    price: pick('永久页 · 周票榜 · 目录内链', 'Permanent page · weekly board · directory links'),
-    body: pick(
-      '目录页会留着。周票榜只按票数排，付费不能改名次。我们不代你提交到别的网站。',
-      'The listing page stays up. The weekly board ranks by votes, and payment cannot change that rank. We do not submit your product to other sites.',
-    ),
-    cta: pick('看周票榜', 'See the weekly board'),
-    to: localePath('/weekly'),
-    muted: false,
   },
 ])
 
-/** Three lines of scenario-based guidance. All links are in-site. */
-const scenarios = computed(() => [
-  {
-    line: pick('我只想要一条 dofollow 反链', 'I just want a dofollow link'),
-    answer: pick('标准档 $19，一次性。付款成功后自动收录发布。', 'Standard, $19 one-time. Published automatically as soon as payment succeeds.'),
-    cta: pick('选标准 $19', 'Standard $19'),
-    to: `${localePath('/submit')}?plan=standard`,
-  },
-  {
-    line: pick('我要上新那一周的位置', 'I want the top spot on launch week'),
-    answer: pick('精选 $39，目录与分类页置顶 7 天，加首页精选卡。', 'Featured, $39. A 7-day pin on the directory and category pages, plus the homepage card.'),
-    cta: pick('选精选 $39', 'Featured $39'),
-    to: `${localePath('/submit')}?plan=featured`,
-  },
-  {
-    line: pick('我不提交产品，只想买首页那一块板', 'I do not have a listing, I just want the homepage board'),
-    answer: pick('Billboard 一次性：入门 $15、标准 $29、优先 $49。先索取发票。右栏仍可按周租。', 'Billboard is one-time: Entry $15, Standard $29, Prime $49. Request an invoice. The sidebar is still weekly.'),
-    cta: pick('索取 Billboard 发票', 'Request a Billboard invoice'),
-    to: `${localePath('/billboard')}#claim`,
-  },
-])
+function salePhrase(quote: { priceLabel: string; strikeLabel: string | null }) {
+  if (!quote.strikeLabel) {
+    return { zh: quote.priceLabel, en: quote.priceLabel }
+  }
+  return {
+    zh: `${quote.strikeLabel}（现价 ${quote.priceLabel}）`,
+    en: `${quote.strikeLabel} (now ${quote.priceLabel})`,
+  }
+}
 
-/** After launch, three things that keep working without another payment. */
-const compound = computed(() => [
-  {
-    title: pick('每周一重置的榜单', 'A board that resets every Monday'),
-    body: pick('每个收录都能参与，一人一产品一周一票。付费不改变排名，规则全文写在 /rules。', 'Every listing competes: one person, one vote per product per week. Paying never changes rank — the full rules are on /rules.'),
-    cta: pick('看本周榜单', 'See this week'),
-    to: localePath('/weekly'),
-  },
-  {
-    title: pick('永久保留的页面', 'A page that stays up'),
-    body: pick('付费档外链永久 dofollow，免费档 nofollow；页面都不下架，也不按月续费。', 'Paid listings keep a permanent dofollow link, free ones nofollow. Neither page comes down and neither is billed monthly.'),
-    cta: pick('浏览目录', 'Browse the directory'),
-    to: localePath('/tools'),
-  },
-  {
-    title: pick('免费的 DR4 自查', 'A free DR4 check'),
-    body: pick('查自己的或竞品的 Domain Rating（DR4），可对照 DR3；查询与结果都留在站内。', 'Check the Domain Rating (DR4) of your site or a competitor, with a DR3 comparison. The query and the result both stay on this site.'),
-    cta: pick('打开 DR 查询', 'Open the DR check'),
-    to: localePath('/seo-check'),
-  },
-])
+/** Three intents. Paid buttons follow the checkout-ready flag. */
+const scenarios = computed(() => {
+  const standard = salePhrase(skuQuote('listing', 'standard'))
+  const featured = salePhrase(skuQuote('listing', 'featured'))
+  const entry = salePhrase(skuQuote('billboard', 'entry'))
+  const billboardTo = paymentReady.value ? `${localePath('/billboard')}#claim` : invoiceMail('Billboard')
+  return [
+    {
+      line: pick('我只需要一条 dofollow 链接', 'I just need a dofollow link'),
+      answer: pick(
+        `标准档 — ${standard.zh}，一次付清。付款即上线。`,
+        `Standard — ${standard.en}, one-time. Live on payment.`,
+      ),
+      cta: listingCta('standard', { en: 'Standard', zh: '标准' }),
+      to: `${localePath('/submit')}?plan=standard`,
+      external: false,
+    },
+    {
+      line: pick('我要上线当周的置顶', 'I want the pin on launch week'),
+      answer: pick(
+        `精选 — ${featured.zh}。置顶 7 天，加首页卡片。`,
+        `Featured — ${featured.en}. A 7-day pin and a homepage card.`,
+      ),
+      cta: listingCta('featured', { en: 'Featured', zh: '精选' }),
+      to: `${localePath('/submit')}?plan=featured`,
+      external: false,
+    },
+    {
+      line: pick('我要首页 Billboard', 'I want the homepage Billboard'),
+      answer: pick(
+        `Billboard 起价 ${entry.zh}。付款即上线。Top 10 同步首页。`,
+        `Billboard from ${entry.en}. Live the second you pay. Top 10 on the home page.`,
+      ),
+      cta: paymentReady.value
+        ? pick('认领展示位', 'Claim your spot')
+        : pick('索取发票 · Billboard', 'Request invoice · Billboard'),
+      to: billboardTo,
+      external: !paymentReady.value,
+    },
+  ]
+})
 
 const adHead = computed(() =>
   pick(
-    'Billboard 三档都是一次性：入门 $15、标准 $29、优先 $49。标准档替代原来的榜单 $29/周，不再按周出售。右栏仍是 $19/周，连投 4 周 $65。Billboard 不改变每周投票榜的名次。',
-    'Billboard is one-time: Entry $15, Standard $29, Prime $49. Standard replaces the old $29/week board, which is no longer sold by the week. The sidebar is still $19 a week, or $65 for four. Billboard does not change rank on the weekly vote list.',
+    '一次付清。付款即上线。Top 10 同步首页。右栏仍按周。',
+    'One-time payment. Live the second you pay. Top 10 on the home page. Sidebar stays weekly.',
   ),
 )
 
@@ -232,8 +264,8 @@ const priceStats = computed(() => [
 
 const adLiveWeeks = computed(() =>
   pick(
-    `未来 6 周：右栏 ${sidebarOpen.value.length} 周可订。Billboard 不按周卖。`,
-    `Next 6 weeks: ${sidebarOpen.value.length} sidebar weeks open. Billboard is not sold by the week.`,
+    `未来 6 周：右栏 ${sidebarOpen.value.length} 周可订。`,
+    `Next 6 weeks: ${sidebarOpen.value.length} sidebar weeks open.`,
   ),
 )
 const adLiveNext = computed(() =>
@@ -255,7 +287,7 @@ const faqSchema = computed(() =>
 )
 
 useSeo({
-  title: computed(() => `${title.value} · Product Atlas`),
+  title: computed(() => pick('定价 · Product Atlas', 'Pricing · Product Atlas')),
   description: lead,
 })
 
@@ -269,18 +301,32 @@ useHead({
     <section id="pricing" class="scroll-mt-24 border-t border-border px-4 py-24 sm:py-32">
       <div class="mx-auto max-w-5xl">
         <div class="mb-14 text-center">
-          <h1 class="font-serif text-4xl font-normal tracking-tight sm:text-5xl">{{ title }}</h1>
-          <p class="mt-5 text-muted-foreground">{{ lead }}</p>
+          <p class="text-xs font-semibold tracking-[0.18em] uppercase text-primary">
+            {{ pick('定价', 'Pricing') }}
+          </p>
+          <h1 class="mt-4 font-serif text-4xl font-normal tracking-tight text-balance sm:text-5xl">{{ title }}</h1>
+          <p class="mx-auto mt-5 max-w-2xl text-muted-foreground">{{ lead }}</p>
+          <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <NuxtLink
+              class="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
+              :to="localePath('/submit')"
+            >
+              {{ pick('免费提交', 'Submit free') }}
+            </NuxtLink>
+            <a
+              class="inline-flex h-11 items-center justify-center rounded-full border border-foreground bg-background px-6 text-sm font-medium text-foreground"
+              href="#plans"
+            >
+              {{ pick('查看方案', 'See plans') }}
+            </a>
+          </div>
         </div>
 
-        <!-- Step 1 / 2 / 3 funnel -->
-        <ol class="mb-12 grid gap-3 sm:grid-cols-3">
+        <ol class="mb-12 grid gap-3 sm:grid-cols-2">
           <li v-for="step in steps" :key="step.n">
-            <component
-              :is="step.muted ? 'div' : 'a'"
-              :href="step.muted ? undefined : step.to"
-              class="flex h-full flex-col rounded-2xl border border-border p-5"
-              :class="step.muted ? 'bg-muted/70 opacity-60' : 'bg-background transition hover:border-foreground/30'"
+            <a
+              :href="step.to"
+              class="flex h-full flex-col rounded-2xl border border-border bg-background p-5 transition hover:border-foreground/30"
             >
               <span class="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">
                 STEP {{ step.n }}
@@ -288,8 +334,8 @@ useHead({
               <span class="mt-2 font-serif text-xl tracking-tight">{{ step.title }}</span>
               <span class="mt-1 text-xs font-medium text-primary">{{ step.price }}</span>
               <span class="mt-3 text-sm leading-relaxed text-muted-foreground">{{ step.body }}</span>
-              <span v-if="step.cta" class="mt-auto pt-4 text-xs font-medium text-foreground">{{ step.cta }} →</span>
-            </component>
+              <span class="mt-auto pt-4 text-xs font-medium text-foreground">{{ step.cta }} →</span>
+            </a>
           </li>
         </ol>
 
@@ -304,8 +350,8 @@ useHead({
           <p class="mt-4 border-t border-primary-foreground/20 pt-3 text-xs leading-relaxed opacity-80">
             {{
               pick(
-                '产品数和分类数来自当前目录。右栏可订周次来自排期表。Billboard 不按周计数。不承诺搜索排名、流量或权重。',
-                'Product and category counts come from the live directory. Sidebar weeks come from the schedule. Billboard is not counted by the week. No claims about rankings, traffic or domain authority.',
+                '数字来自当前目录与排期。不承诺搜索排名、流量或域名权重。',
+                'Counts come from the live directory and the booking schedule. No promise of search rank, traffic, or domain authority.',
               )
             }}
           </p>
@@ -316,8 +362,8 @@ useHead({
             <p>
               {{
                 pick(
-                  `黑五七折。划掉的是表价。页面价格等于结账 amount_cents。截止 ${deadline}（Asia/Shanghai）。`,
-                  `Black Friday is 30% off. The struck figure is the list price. The price on this page is the checkout charge. Ends ${deadline} (Asia/Shanghai).`,
+                  `Black Friday · 约 30% OFF。划线是表价，页面价格即为实付。截止 ${deadline} Asia/Shanghai。`,
+                  `Black Friday · ~30% off. The struck price is the list price. The price on the page is what you pay. Ends ${deadline} Asia/Shanghai.`,
                 )
               }}
             </p>
@@ -345,14 +391,16 @@ useHead({
           <p v-else>
             {{
               pick(
-                '下面是表价。Billboard 为一次性三档，不按周租。',
-                'Prices below are the list prices. Billboard is three one-time tiers, not a weekly rental.',
+                '下面是表价。页面价格即为实付。Billboard 一次付清。',
+                'Prices below are the list prices, and the price on the page is what you pay. Billboard is a one-time payment.',
               )
             }}
           </p>
         </div>
 
-        <DirectoryPricingTable :groups="groups" @select="choosePlan" />
+        <div id="plans" class="scroll-mt-24">
+          <DirectoryPricingTable :groups="groups" @select="choosePlan" />
+        </div>
       </div>
     </section>
 
@@ -363,6 +411,16 @@ useHead({
             {{ pick('被看到', 'Get seen') }}
           </h2>
           <p class="mt-4 text-sm leading-relaxed text-muted-foreground">{{ adHead }}</p>
+          <ul class="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <li
+              v-for="item in pricingBillboardChecks"
+              :key="item.en"
+              class="inline-flex items-center gap-2"
+            >
+              <Icon name="check" :size="16" class="shrink-0 text-primary" />
+              {{ t(item) }}
+            </li>
+          </ul>
         </header>
 
         <!-- Live schedule hint, from the same endpoint /book-ad reads -->
@@ -399,18 +457,30 @@ useHead({
                 </span>
               </span>
             </div>
-            <p class="text-xs font-semibold tracking-wide">BILLBOARD</p>
-            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ t(tier.blurb) }}</p>
+            <p v-if="skuQuote('billboard', tier.id).active" class="text-[11px] font-semibold tracking-wide text-primary">
+              {{ pick('BLACK FRIDAY · 约 30% OFF', 'BLACK FRIDAY · ~30% OFF') }}
+            </p>
+            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {{ t(billboardOffer(tier.id)) }}
+            </p>
             <div class="mt-auto pt-6">
               <NuxtLink
+                v-if="paymentReady"
                 :to="`${localePath('/billboard')}#claim`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
-                {{ pick('去付款', 'Pay now') }}
+                {{ pick('认领展示位', 'Claim your spot') }}
               </NuxtLink>
+              <a
+                v-else
+                :href="invoiceMail(t(tier.name))"
+                class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
+              >
+                {{ pick('索取发票', 'Request invoice') }}
+              </a>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
-              {{ pick('一次性。付款成功后自动上板。', 'One-time. It goes live when payment succeeds.') }}
+              {{ pick('一次付清。付款即上线。', 'One-time payment. Live the second you pay.') }}
             </p>
           </article>
           <article
@@ -420,7 +490,14 @@ useHead({
           >
             <div class="mb-2 flex items-baseline justify-between gap-3">
               <span class="text-sm font-medium text-foreground">{{ t(plan.name) }}</span>
-              <span class="font-serif text-3xl tracking-tight">{{ skuQuote('sidebar', '1').priceLabel }}</span>
+              <span class="text-right">
+                <s
+                  v-if="skuQuote('sidebar', '1').strikeLabel"
+                  class="mr-2 text-sm text-muted-foreground"
+                >{{ skuQuote('sidebar', '1').strikeLabel }}</s>
+                <span class="font-serif text-3xl tracking-tight">{{ skuQuote('sidebar', '1').priceLabel }}</span>
+                <small class="ml-1 text-sm text-muted-foreground">{{ pick('/周', '/wk') }}</small>
+              </span>
             </div>
             <h3 class="text-lg font-semibold tracking-tight">{{ t(plan.where) }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ t(plan.pitch) }}</p>
@@ -434,7 +511,15 @@ useHead({
                 <span class="text-foreground/90">{{ bullet }}</span>
               </li>
             </ul>
-            <p class="mt-4 text-xs text-muted-foreground">{{ t(plan.bundle) }}</p>
+            <p class="mt-4 text-xs text-muted-foreground">
+              <s v-if="skuQuote('sidebar', '4').strikeLabel" class="mr-1">{{ skuQuote('sidebar', '4').strikeLabel }}</s>
+              {{
+                pick(
+                  `连投 4 周 ${skuQuote('sidebar', '4').priceLabel}`,
+                  `4 weeks ${skuQuote('sidebar', '4').priceLabel}`,
+                )
+              }}
+            </p>
             <div class="mt-auto pt-6">
               <!--
                 Weekly slots are their own purchase: a date range, not a
@@ -447,17 +532,31 @@ useHead({
                 :to="`${localePath('/book-ad')}?slot=${plan.id}&weeks=1`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
               >
-                {{ pick('预订这个位置', 'Book this spot') }}
+                {{
+                  paymentReady
+                    ? pick('预订这个位置', 'Book this spot')
+                    : pick('索取发票', 'Request invoice')
+                }}
               </NuxtLink>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
-              {{ pick('右栏仍按周计费，到期下架。榜单周租已停。', 'The sidebar is still billed by the week and comes down when the week ends. The weekly board rental has stopped.') }}
+              {{ pick('首页与最新收录右栏。周一起算 7 天。', 'Homepage and the just-added rail. 7 days from Monday.') }}
             </p>
           </article>
         </div>
 
         <p class="mt-8 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-          {{ pick('Billboard 先记下网址和档位，确认发票收款后才公开。右栏按周、同一周不卖两次。卖的是站内位置，不承诺搜索排名。广告链接带 rel="sponsored"。', 'Billboard stores the URL and tier, and stays private until the invoice is confirmed paid. The sidebar is weekly and is not sold twice in the same week. We sell on-site placement, make no claims about search rankings, and mark ad links rel="sponsored".') }}
+          {{
+            promoOn
+              ? pick(
+                  `页面价格即为实付。发票确认后上线。Black Friday 截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
+                  `The price on the page is what you pay. Invoice confirmed, then it goes live. Black Friday ends ${deadline} Asia/Shanghai. No promise of search rank.`,
+                )
+              : pick(
+                  '页面价格即为实付。发票确认后上线。不承诺搜索排名。',
+                  'The price on the page is what you pay. Invoice confirmed, then it goes live. No promise of search rank.',
+                )
+          }}
         </p>
       </div>
     </section>
@@ -500,6 +599,23 @@ useHead({
                   {{ t(value) }}
                 </td>
               </tr>
+              <tr class="border-b border-border">
+                <th scope="row" class="py-3 pr-4 text-left font-normal text-muted-foreground">
+                  {{ pick('价格', 'Price') }}
+                </th>
+                <td
+                  v-for="tier in tiers"
+                  :key="tier.id"
+                  class="px-3 py-3 align-top"
+                  :class="tier.id === 'featured' ? 'font-medium' : ''"
+                >
+                  <s
+                    v-if="skuQuote('listing', tier.id).strikeLabel"
+                    class="mr-1 text-muted-foreground"
+                  >{{ skuQuote('listing', tier.id).strikeLabel }}</s>
+                  {{ skuQuote('listing', tier.id).priceLabel }}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -530,48 +646,40 @@ useHead({
       </div>
     </section>
 
-    <!-- Step 3: what keeps working after launch, with no extra purchase -->
-    <section id="compound" class="scroll-mt-24 border-t border-border px-4 py-20">
-      <div class="mx-auto max-w-5xl">
-        <header class="mb-8 max-w-3xl">
-          <h2 class="font-serif text-3xl font-normal tracking-tight">
-            {{ pick('上线之后，持续被看到', 'After you launch, keep showing up') }}
-          </h2>
-          <p class="mt-4 text-sm leading-relaxed text-muted-foreground">
-            {{
-              pick(
-                '收录是一次性付款，但这三件事会一直生效，不需要续费。',
-                'A listing is paid for once. These three things keep working without another payment.',
-              )
-            }}
-          </p>
-        </header>
-        <div class="grid gap-4 sm:grid-cols-3">
-          <NuxtLink
-            v-for="item in compound"
-            :key="item.title"
-            :to="item.to"
-            class="flex flex-col rounded-2xl border border-border bg-background p-6 transition hover:border-foreground/30"
-          >
-            <h3 class="text-base font-semibold tracking-tight">{{ item.title }}</h3>
-            <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{{ item.body }}</p>
-            <span class="mt-auto pt-5 text-xs font-medium text-primary">{{ item.cta }} →</span>
-          </NuxtLink>
-        </div>
-        <p class="mt-6 text-xs leading-relaxed text-muted-foreground">
-          {{
-            pick(
-              '我们不承诺搜索排名、流量、收录或域名权重提升。费用购买的是站内展示位置与写明的链接属性，不是保证的结果。',
-              'We make no claims about rankings, traffic, indexing or domain authority. The fee buys on-site placement and the stated link attribute, not a guaranteed result.',
-            )
-          }}
-        </p>
-      </div>
-    </section>
-
     <section class="border-t border-border px-4 py-20">
       <div class="mx-auto max-w-3xl">
-        <h2 class="mb-3 font-serif text-3xl font-normal tracking-tight">
+        <div class="text-center">
+          <p class="font-serif text-2xl tracking-tight">
+            {{ pick('不确定从哪开始？', 'Not sure where to start?') }}
+          </p>
+          <p class="mt-3 text-sm text-muted-foreground">
+            {{ pick('选一个意图。价格是当前实付。', 'Pick an intent. The price is what you pay now.') }}
+          </p>
+          <div class="mt-6 grid gap-3 text-left sm:grid-cols-3">
+            <template v-for="item in scenarios" :key="item.line">
+              <a
+                v-if="item.external"
+                :href="item.to"
+                class="flex flex-col rounded-xl border border-border bg-background p-4 text-left transition hover:border-foreground/30"
+              >
+                <span class="text-sm font-medium">{{ item.line }}</span>
+                <span class="mt-2 text-xs leading-relaxed text-muted-foreground">{{ item.answer }}</span>
+                <span class="mt-auto pt-4 text-xs font-medium text-primary">{{ item.cta }} →</span>
+              </a>
+              <NuxtLink
+                v-else
+                :to="item.to"
+                class="flex flex-col rounded-xl border border-border bg-background p-4 text-left transition hover:border-foreground/30"
+              >
+                <span class="text-sm font-medium">{{ item.line }}</span>
+                <span class="mt-2 text-xs leading-relaxed text-muted-foreground">{{ item.answer }}</span>
+                <span class="mt-auto pt-4 text-xs font-medium text-primary">{{ item.cta }} →</span>
+              </NuxtLink>
+            </template>
+          </div>
+        </div>
+
+        <h2 class="mb-3 mt-16 font-serif text-3xl font-normal tracking-tight">
           {{ pick('常见问题', 'Questions') }}
         </h2>
         <div class="flex w-full flex-col border-t border-border">
@@ -603,28 +711,13 @@ useHead({
 
         <div class="mt-12 text-center">
           <p class="font-serif text-2xl tracking-tight">
-            {{ pick('不确定选哪个？', 'Not sure where to start?') }}
+            {{ pick('免费提交，或选择一档付费方案。', 'Submit free, or pick a paid plan.') }}
           </p>
-          <p class="mt-3 text-sm text-muted-foreground">
-            {{ pick('挑一句最像你的，或者直接免费提交，上线后再决定。', 'Pick the line that sounds like you — or submit free and decide once you are live.') }}
-          </p>
-          <div class="mt-6 grid gap-3 text-left sm:grid-cols-3">
-            <NuxtLink
-              v-for="item in scenarios"
-              :key="item.line"
-              :to="item.to"
-              class="flex flex-col rounded-xl border border-border bg-background p-4 transition hover:border-foreground/30"
-            >
-              <span class="text-sm font-medium">「{{ item.line }}」</span>
-              <span class="mt-2 text-xs leading-relaxed text-muted-foreground">{{ item.answer }}</span>
-              <span class="mt-auto pt-4 text-xs font-medium text-primary">{{ item.cta }} →</span>
-            </NuxtLink>
-          </div>
           <NuxtLink
             :to="localePath('/submit')"
-            class="mt-8 inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
+            class="mt-6 inline-flex h-11 items-center gap-1.5 rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
           >
-            {{ pick('提交产品', 'Submit a product') }}
+            {{ pick('免费提交', 'Submit free') }}
             <Icon name="arrow-right" :size="14" />
           </NuxtLink>
         </div>

@@ -31,24 +31,24 @@ export const tiers: PriceTier[] = [
     id: 'free',
     name: { en: 'Free', zh: '免费' },
     tagline: {
-      en: 'Get listed. The link is nofollow, but the page is yours to keep.',
-      zh: '先上站。链接是 nofollow，但页面永久保留，也照常进每周榜单。',
+      en: 'Get listed. Keep the page.',
+      zh: '先上线。页面留下。',
     },
     price: '$0',
     amountCents: 0,
     unit: { en: 'forever', zh: '永远' },
     features: {
       en: [
-        'Manual review, usually 7–14 days, not guaranteed; busy periods can take longer',
-        'Directory and category listing',
-        'Nofollow link — it passes no authority',
-        'Stays online, competes on the weekly board',
+        'Manual review, usually 7–14 days',
+        'Permanent page',
+        'Nofollow link',
+        'Weekly board eligible',
       ],
       zh: [
-        '人工审核，通常 7–14 天，不保证；高峰可能更长',
-        '目录页 + 分类页展示',
-        '链接是 nofollow，不传递权重',
-        '永久保留，可参与每周榜单',
+        '人工审核，通常 7–14 天',
+        '永久产品页',
+        'nofollow 链接',
+        '可参与每周榜',
       ],
     },
     cta: { en: 'Submit free', zh: '免费提交' },
@@ -57,34 +57,24 @@ export const tiers: PriceTier[] = [
     id: 'standard',
     name: { en: 'Standard', zh: '标准' },
     tagline: {
-      en: 'The cheapest upgrade that matters: the link turns dofollow.',
-      zh: '最便宜的一次升级：链接变成永久 dofollow。',
+      en: 'Skip the wait. Get a dofollow link.',
+      zh: '跳过等待。获得 dofollow 链接。',
     },
     price: '$19',
     amountCents: 1900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
-      en: [
-        'Published automatically as soon as payment succeeds',
-        'Permanent dofollow, no badge, no re-checking',
-        'Listed above every free submission',
-        'Stays online, competes on the weekly board',
-      ],
-      zh: [
-        '付款成功后自动收录发布，不用等人工确认',
-        '永久 dofollow 反链，不挂 badge、不复查',
-        '目录页排在免费收录之前',
-        '永久保留，可参与每周榜单',
-      ],
+      en: ['Live on payment', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
+      zh: ['付款即上线', '永久 dofollow', '排在免费收录之前', '可参与每周榜'],
     },
-    cta: { en: 'Go Standard', zh: '升级到标准' },
+    cta: { en: 'Request invoice · Standard', zh: '索取发票 · 标准' },
   },
   {
     id: 'featured',
     name: { en: 'Featured', zh: '精选' },
     tagline: {
-      en: 'If you want the position: top of the directory and category, plus the homepage card.',
-      zh: '要位置就选这个：目录和分类页最前面，加首页卡。',
+      en: 'Skip the queue — and take the pin.',
+      zh: '跳过排队，并拿到置顶。',
     },
     price: '$39',
     amountCents: 3900,
@@ -92,26 +82,21 @@ export const tiers: PriceTier[] = [
     features: {
       en: [
         'Everything in Standard',
-        'Pinned on the directory and category for 7 days',
-        'A slot in the homepage rotation (one per period)',
-        'After 7 days it drops back to Standard — the link stays',
+        'Directory + category pin, 7 days',
+        'Homepage card slot',
+        'Then returns to Standard order',
       ],
-      zh: [
-        '标准档的全部权益',
-        '目录页 + 分类页置顶 7 天',
-        '首页精选卡排期（每期 1 个）',
-        '7 天后自动回到标准档排序，链接不变',
-      ],
+      zh: ['包含标准档全部权益', '目录与分类置顶 7 天', '首页卡片位', '之后回到标准档排序'],
     },
-    cta: { en: 'Go Featured', zh: '选精选' },
+    cta: { en: 'Request invoice · Featured', zh: '索取发票 · 精选' },
     badge: { en: 'Most picked', zh: '最多人选' },
   },
   {
     id: 'pro',
     name: { en: 'Pro', zh: '专业' },
     tagline: {
-      en: 'For holding the top of one category page, long term.',
-      zh: '长期占住一个分类页第一屏。',
+      en: 'Hold the category pin longer.',
+      zh: '分类置顶留得更久。',
     },
     price: '$69',
     amountCents: 6900,
@@ -119,18 +104,13 @@ export const tiers: PriceTier[] = [
     features: {
       en: [
         'Everything in Featured',
-        'Pinned on its category page for 90 days',
-        'Four copy edits a year (title, description, shots)',
-        'Replies within 24 hours after the site owner turns email on',
+        'Category pin, 90 days',
+        '4 copy edits / year',
+        'Priority replies when email is on',
       ],
-      zh: [
-        '精选档的全部权益',
-        '分类页置顶 90 天',
-        '全年 4 次文案修改（标题、描述、截图）',
-        '站长开启邮件后 24h 内回复',
-      ],
+      zh: ['包含精选档全部权益', '分类置顶 90 天', '全年 4 次文案修改', '邮件开通后优先回复'],
     },
-    cta: { en: 'Choose Pro', zh: '选专业' },
+    cta: { en: 'Request invoice · Pro', zh: '索取发票 · 专业' },
   },
 ]
 
@@ -186,37 +166,32 @@ export const adPlans: AdPlan[] = [
   },
 ]
 
-/** Rows are aligned to `tiers` order: free, standard, featured, pro. */
+/**
+ * Rows are aligned to `tiers` order: free, standard, featured, pro.
+ * The price row is rendered from `effectiveQuote` on /pricing so the table
+ * shows the amount charged, not a second list of numbers.
+ */
 export const comparison: { label: Pair; values: Pair[] }[] = [
   {
-    label: { en: 'Goes live', zh: '上线时间' },
+    label: { en: 'Go live', zh: '上线' },
     values: [
-      { en: 'Usually 7–14 days, not guaranteed', zh: '通常 7–14 天，不保证' },
-      { en: 'Right after payment', zh: '付款成功即上线' },
-      { en: 'Right after payment', zh: '付款成功即上线' },
-      { en: 'Right after payment', zh: '付款成功即上线' },
+      { en: 'Usually 7–14 days', zh: '通常 7–14 天' },
+      { en: 'On payment', zh: '付款即上线' },
+      { en: 'On payment', zh: '付款即上线' },
+      { en: 'On payment', zh: '付款即上线' },
     ],
   },
   {
-    label: { en: 'Outbound link', zh: '反链类型' },
+    label: { en: 'Link', zh: '链接' },
     values: [
-      { en: 'nofollow', zh: 'nofollow' },
+      { en: 'Nofollow', zh: 'nofollow' },
       { en: 'Permanent dofollow', zh: '永久 dofollow' },
       { en: 'Permanent dofollow', zh: '永久 dofollow' },
       { en: 'Permanent dofollow', zh: '永久 dofollow' },
     ],
   },
   {
-    label: { en: 'Directory order', zh: '目录页排序' },
-    values: [
-      { en: 'Last', zh: '最后' },
-      { en: 'Priority', zh: '优先' },
-      { en: 'Top, 7 days', zh: '置顶 7 天' },
-      { en: 'Top, 90 days', zh: '置顶 90 天' },
-    ],
-  },
-  {
-    label: { en: 'Category pin', zh: '分类页置顶' },
+    label: { en: 'Pin', zh: '置顶' },
     values: [
       { en: '—', zh: '—' },
       { en: '—', zh: '—' },
@@ -225,118 +200,84 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
     ],
   },
   {
-    label: { en: 'Homepage card', zh: '首页精选卡' },
+    label: { en: 'Homepage', zh: '首页' },
     values: [
       { en: '—', zh: '—' },
       { en: '—', zh: '—' },
-      { en: 'Rotating', zh: '排期' },
-      { en: 'Rotating', zh: '排期' },
-    ],
-  },
-  {
-    label: { en: 'Copy edits', zh: '文案修改' },
-    values: [
-      { en: '—', zh: '—' },
-      { en: '—', zh: '—' },
-      { en: '—', zh: '—' },
-      { en: '4 a year', zh: '全年 4 次' },
-    ],
-  },
-  {
-    label: { en: 'Support', zh: '支持' },
-    values: [
-      { en: 'Standard', zh: '普通' },
-      { en: 'Standard', zh: '普通' },
-      { en: 'Standard', zh: '普通' },
-      { en: '24h after email is on', zh: '开启邮件后 24h' },
-    ],
-  },
-  {
-    label: { en: 'Price', zh: '价格' },
-    values: [
-      { en: '$0', zh: '$0' },
-      { en: '$19', zh: '$19' },
-      { en: '$39', zh: '$39' },
-      { en: '$69', zh: '$69' },
+      { en: 'Card slot', zh: '卡片位' },
+      { en: 'Card slot', zh: '卡片位' },
     ],
   },
 ]
 
+/**
+ * Billboard lines for /pricing only. The Billboard page and `billboard.ts`
+ * keep their own copy until that page is revised separately.
+ */
+export const pricingBillboardBlurb: Record<string, Pair> = {
+  entry: {
+    en: 'One-time payment. Live the second you pay — including homepage Top 10.',
+    zh: '一次付清。付款即上线；含首页 Top 10 展示。',
+  },
+  standard: {
+    en: 'One-time payment. Ranks above Entry. Live the second you pay.',
+    zh: '一次付清。排序高于入门档；付款即上线。',
+  },
+  prime: {
+    en: 'One-time payment. Top priority on the paid board. Live the second you pay.',
+    zh: '一次付清。付费板最高优先级；付款即上线。',
+  },
+}
+
+export const pricingBillboardChecks: Pair[] = [
+  { en: 'Live the second you pay', zh: '付款即上线' },
+  { en: 'Guaranteed homepage Top 10 placement', zh: '首页 Top 10 展示' },
+  { en: 'One-time payment', zh: '一次付清' },
+  { en: 'Higher tiers rank first', zh: '高档优先排序' },
+  { en: 'Permanent listing', zh: '长期展示' },
+]
+
 export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
-    q: { en: 'Is it really one payment?', zh: '真的只付一次吗？' },
+    q: { en: 'Is anything a subscription?', zh: '有订阅吗？' },
     a: {
-      en: 'Yes. No subscription, no auto-renewal, no hidden fees. You are buying one listing, not renting a slot by the month.',
-      zh: '是。没有订阅、没有自动续费、没有隐藏费用。你买的是一次上架，不是一个按月租的位置。',
+      en: 'No. Listings and Billboard are one-time. Sidebar is weekly rental only.',
+      zh: '没有。收录与 Billboard 都是一次付清。右栏只按周租。',
     },
   },
   {
-    q: { en: 'What do I get by paying?', zh: '免费和付费差在哪？' },
+    q: { en: 'Free vs paid — what changes?', zh: '免费和付费差在哪？' },
     a: {
-      en: 'Three things: how long you wait, what kind of link you get, and where you appear. Free waits usually 7–14 days with a nofollow link. Paid listings publish automatically as soon as payment succeeds, with a permanent dofollow link, listed above free submissions.',
-      zh: '三件事：等待时间、链接类型、展示位置。免费要排队，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow；付费档：付款成功后自动收录发布，反链永久 dofollow，目录页排在免费收录之前。再往上一档才开始买「位置」——目录页和分类页置顶 7 天。',
+      en: 'Wait time, the link attribute (nofollow or permanent dofollow), and optional pins.',
+      zh: '等待时间、链接属性（nofollow 或永久 dofollow），以及可选置顶。',
     },
   },
   {
-    q: { en: 'Why is there a $19 tier in the middle?', zh: '为什么中间还有一个 $19？' },
+    q: { en: 'How fast do I go live?', zh: '多久上线？' },
     a: {
-      en: 'Because most people want exactly two things: the link turns dofollow, and the listing publishes automatically when the payment succeeds. They do not want a homepage position. With only Free and Featured on the menu, those people either freeload or get pushed into a tier they do not need.',
-      zh: '因为绝大多数人只想要两件事：链接变 dofollow、付款成功就自动上线。他们并不想买首页位置，如果只有「免费」和「置顶」两个选择，这些人要么白嫖，要么被推去买一个用不上的档位。标准档就是给他们准备的。',
+      en: 'Paid listings go live on payment, or when an invoice is confirmed. Free listings are usually reviewed in 7–14 days.',
+      zh: '付费收录在付款成功或发票确认后上线。免费收录通常 7–14 天完成审核。',
     },
   },
   {
-    q: { en: 'Is the dofollow link permanent?', zh: 'dofollow 反链是永久的吗？' },
+    q: { en: 'Do you guarantee rankings or DR?', zh: '承诺排名或 DR 吗？' },
     a: {
-      en: 'On paid tiers, yes — permanent. No badge to install, no periodic re-check, nothing that lapses because a payment was missed. Free listings are nofollow, but the page and the link stay online permanently.',
-      zh: '付费的是永久的：不用挂 badge，不复查，不会因为某天忘了续费而消失。免费收录是 nofollow，但页面和链接永久保留，不删。',
+      en: 'No. We sell on-site placement and the stated link attribute — not search results.',
+      zh: '不承诺。出售的是站内展示和写明的链接属性，不是搜索结果。',
     },
   },
   {
-    q: { en: 'How is an ad slot different from a listing?', zh: '广告位和收录有什么区别？' },
+    q: { en: 'Billboard vs the weekly board?', zh: 'Billboard 和每周榜有何不同？' },
     a: {
-      en: 'A listing is a page you buy once and keep. Billboard is a separate one-time placement — Entry $15, Standard $29, Prime $49 — on its own board and, for the top 10, the homepage grid. It does not change weekly vote rank. The sidebar is still rented by the week at $19, or $65 for four weeks. The weekly board rental is no longer sold.',
-      zh: '收录是买一个页面，一次付费、长期存在。Billboard 是另一块一次性板：入门 $15、标准 $29、优先 $49，排进 Billboard，前 10 名同时出现在首页。它不改变每周投票榜的名次。右栏仍按周租，$19 / 周，连投 4 周 $65。原来的榜单周租不再出售。',
-    },
-  },
-  {
-    q: { en: 'How fast does it go live?', zh: '多久能上线？' },
-    a: {
-      en: 'Paid listings are published automatically as soon as the payment succeeds: the signed payment webhook settles the order and publishes the page, with no operator in the loop. Free listings join the manual review queue, usually 7–14 days, not guaranteed.',
-      zh: '付费档在付款成功后由系统自动发布：支付回调验签后完成订单并生成页面上线，不需要站长经手。免费进入人工审核队列，通常 7–14 天，不保证；高峰可能更长。',
-    },
-  },
-  {
-    q: {
-      en: 'Do I have to wait for someone to confirm my payment?',
-      zh: '付费档还要等人工确认吗？',
-    },
-    a: {
-      en: 'No. A verified payment webhook settles the order and the system publishes the listing or schedules the ad slot right away; the receipt goes to the email you entered. Free listings still go through manual review, usually 7–14 days.',
-      zh: '不用。付款成功后支付回调自动验签并完成订单，系统立即发布收录或排期广告位，收据发到你填的邮箱。免费档仍需人工审核，通常 7–14 天。',
-    },
-  },
-  {
-    q: {
-      en: 'Do these placements affect search rankings?',
-      zh: '这些展示会影响搜索排名吗？',
-    },
-    a: {
-      en: 'We make no claims about rankings, traffic, indexing or domain authority. What we sell is on-site placement and the readers who see it; the link attribute is stated per plan — permanent dofollow on paid listings, nofollow on free ones, and rel="sponsored" on ad slots.',
-      zh: '我们不对搜索排名、流量、收录或域名权重做任何承诺。卖的是站内展示位置与看到它的读者；链接属性按方案写清楚：付费收录永久 dofollow、免费 nofollow、广告位带 rel="sponsored"。',
+      en: 'Billboard is paid placement. The weekly board is vote-ranked. They are separate.',
+      zh: 'Billboard 是付费展示。每周榜按投票排名。两者分开。',
     },
   },
   {
     q: { en: 'Can I get a refund?', zh: '可以退款吗？' },
     a: {
-      en: 'Full refund before your listing goes live. After it is live we cannot refund, because the backlink is already in place and cannot be taken back. If you are unsure, submit free first.',
-      zh: '上线前可以全额退。上线后不支持退款——反链已经生效，撤不回来。所以如果不确定，先免费提交。',
-    },
-  },
-  {
-    q: { en: 'Why no monthly plan?', zh: '为什么不做月订阅？' },
-    a: {
-      en: 'Because the delivery is one-off. A permanent page is paid for once; charging monthly would mean charging repeatedly for the same thing.',
-      zh: '因为交付是一次性的。一个永久页面收一次钱就够，按月收费等于为同一件东西反复收钱。',
+      en: 'Full refund before go-live. After it is live, no refund — the backlink is already public.',
+      zh: '上线前可全额退款。上线后不退，因为反链已经公开。',
     },
   },
 ]

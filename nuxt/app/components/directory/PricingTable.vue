@@ -68,15 +68,21 @@ const gridClass = computed(() => {
             : 'bg-background hover:border-foreground/30'
         "
       >
+        <p v-if="plan.badge" class="mb-3 inline-flex rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
+          {{ plan.badge }}
+        </p>
         <p v-if="plan.name" class="mb-2 text-sm font-medium text-foreground">{{ plan.name }}</p>
+        <p v-if="plan.kicker" class="mb-2 text-[11px] font-semibold tracking-wide text-primary">
+          {{ plan.kicker }}
+        </p>
 
-        <div class="mb-2 flex items-baseline gap-1">
+        <div class="mb-2 flex items-baseline gap-2">
+          <span v-if="plan.originalPrice" class="text-lg text-muted-foreground line-through">
+            {{ plan.originalPrice }}
+          </span>
           <span class="font-serif text-5xl tracking-tight">{{ plan.price }}</span>
           <span v-if="plan.interval" class="text-sm text-muted-foreground">/{{ plan.interval }}</span>
         </div>
-        <span v-if="plan.originalPrice" class="mb-1 text-sm text-muted-foreground line-through">
-          {{ plan.originalPrice }}
-        </span>
 
         <p v-if="plan.description" class="mb-8 text-sm text-muted-foreground">
           {{ plan.description }}

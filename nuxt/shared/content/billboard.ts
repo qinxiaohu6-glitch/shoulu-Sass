@@ -37,8 +37,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Entry', zh: '入门' },
     blurb: {
-      en: 'One-time Billboard row. Same board as the homepage Top 10.',
-      zh: '一次性 Billboard 一行。和首页 Top 10 是同一块板。',
+      en: 'One-time payment. Live the second you pay — including homepage Top 10.',
+      zh: '一次付清。付款即上线；含首页 Top 10 展示。',
     },
   },
   {
@@ -49,8 +49,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Standard', zh: '标准' },
     blurb: {
-      en: 'Replaces the old $29/week board rental. One payment, not a week.',
-      zh: '替代原来的榜单 $29/周。一次付款，不再按周租。',
+      en: 'One-time payment. Ranks above Entry. Live the second you pay.',
+      zh: '一次付清。排序高于入门档；付款即上线。',
     },
   },
   {
@@ -61,8 +61,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Prime', zh: '优先' },
     blurb: {
-      en: 'Same board, higher tier, so it sorts above Standard and Entry.',
-      zh: '同一块板，档位更高，排在标准档和入门档前面。',
+      en: 'One-time payment. Top priority on the paid board. Live the second you pay.',
+      zh: '一次付清。付费板最高优先级；付款即上线。',
     },
   },
 ] as const

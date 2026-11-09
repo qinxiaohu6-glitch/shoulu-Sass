@@ -217,9 +217,9 @@ const latest = computed(() =>
 )
 
 const proofs = computed(() => [
-  pick('目录页会留下', 'Listing page stays up'),
-  pick('Billboard $15 / $29 / $49', 'Billboard $15 / $29 / $49'),
-  pick('投票榜单独计票', 'Votes stay on their own list'),
+  pick('永久产品页', 'Permanent listing page'),
+  pick('数分钟即可提交', 'Submit in minutes'),
+  pick('一次性 Billboard · 无订阅', 'One-time Billboard · no subscription'),
 ])
 
 const faq = computed(() =>
@@ -301,29 +301,29 @@ useHead({
 
 <template>
   <div class="container">
-    <section class="mk-hero mk-hero--center mk-hero--compact">
-      <p class="mk-eyebrow">Product Atlas</p>
+    <section class="mk-hero mk-hero--center mk-hero--launch">
+      <p class="mk-eyebrow">{{ pick('发现优质 AI 与 SaaS 产品', 'Discover the best AI & SaaS tools') }}</p>
       <h1 v-if="isZh" class="mk-h1">
-        今天提交。<span class="mk-h1__em">留下一个目录页。</span>
+        今日上线，<br><span class="mk-h1__em">即被发现。</span>
       </h1>
       <h1 v-else class="mk-h1">
-        Launch today.<br><span class="mk-h1__em">Keep a listing page.</span>
+        Launch today.<br><span class="mk-h1__em">Get discovered.</span>
       </h1>
       <p class="mk-sub">
         {{
           pick(
-            '一个永久目录页。一次付费的展示位。没有订阅。',
-            'A permanent listing page. A one-time placement. No subscription.',
+            '首页 Billboard 展示、永久产品页，以及上线之后持续被发现。',
+            'Homepage Billboard placement, a permanent listing page, and founders discovering your product long after launch day.',
           )
         }}
       </p>
       <div class="mk-cta">
         <NuxtLink class="btn btn--primary btn--lg" :to="localePath('/submit')">
-          {{ pick('提交产品', 'Submit a product') }}
+          {{ pick('立即上线', 'Launch Now') }}
           <Icon name="arrow-right" />
         </NuxtLink>
-        <NuxtLink class="btn btn--ghost btn--lg" :to="`${localePath('/billboard')}#claim`">
-          {{ pick('认领 Billboard', 'Claim a Billboard spot') }}
+        <NuxtLink class="btn btn--outline btn--lg" :to="localePath('/billboard')">
+          {{ pick('认领 Billboard 位置', 'Claim a Billboard spot') }}
         </NuxtLink>
       </div>
       <ul class="mk-proofs">
