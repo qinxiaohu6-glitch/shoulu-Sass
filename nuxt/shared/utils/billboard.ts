@@ -10,7 +10,7 @@ import {
   type BillboardTierId,
 } from '../content/billboard.ts'
 
-export type BillboardStatus = 'requested' | 'live' | 'removed'
+export type BillboardStatus = 'requested' | 'pending' | 'live' | 'removed'
 
 export type BillboardRow = {
   id: string
@@ -23,6 +23,8 @@ export type BillboardRow = {
   /** Unix seconds. Required before a row can be public. */
   paidAt: number
   status: BillboardStatus
+  /** Charged cents. 0 when an older row has no amount stored. */
+  amountCents?: number
 }
 
 export type BillboardCell<T> =

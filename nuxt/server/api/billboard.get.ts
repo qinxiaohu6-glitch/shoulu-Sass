@@ -13,7 +13,22 @@ export default defineEventHandler(async (event) => {
   try {
     const db = await useDb(event)
     const placements = await listLiveBillboard(db)
-    return { ok: true as const, placements }
+    const activity = [...placements]
+      .sort((a, b) => b.paidAt - a.paidAt || (a.id < b.id ? -1 : 1))
+      .slice(0, 8)
+      .map((row) => ({
+        id: row.id,
+        name: row.name,
+        tier: row.tier,
+        paidAt: row.paidAt,
+        amountCents: row.amountCents ?? 0,
+      }))
+    return {
+      ok: true as const,
+      placements,
+      confirmed: placements.length,
+      activity,
+    }
   } catch (err) {
     console.error('[billboard] read failed', err)
     throw createError({ statusCode: 503, statusMessage: 'Billboard unavailable' })

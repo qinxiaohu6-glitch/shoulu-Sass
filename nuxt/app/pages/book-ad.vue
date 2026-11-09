@@ -21,12 +21,8 @@
  * matching FAQPage markup. No bidding, no stackable payments and no "no review"
  * claim — this site keeps its conflict checks and its Acceptable Use Policy.
  */
-import {
-  AD_WEEK_OPTIONS,
-  adPlans,
-  adPriceCents,
-  formatAdPrice,
-} from '~~/shared/content/pricing'
+import { AD_WEEK_OPTIONS, adPlans } from '~~/shared/content/pricing'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { openAdWeeks } from '~/composables/useAds'
 
 const { pick, isZh } = useLang()
@@ -72,8 +68,9 @@ const starts = computed(() => data.value?.starts ?? [])
 const available = computed(() => data.value?.available ?? {})
 const openWeeks = computed(() => openAdWeeks(data.value))
 const plan = computed(() => adPlans.find((entry) => entry.id === slot.value) ?? adPlans[0]!)
-const priceCents = computed(() => adPriceCents(slot.value, weeks.value))
-const price = computed(() => formatAdPrice(priceCents.value))
+const quote = computed(() => effectiveQuote('sidebar', String(weeks.value)))
+const priceCents = computed(() => quote.value.amountCents)
+const price = computed(() => quote.value.priceLabel)
 
 const openWeeksLine = computed(() =>
   pick(
@@ -218,13 +215,13 @@ useHead({
       <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
         {{
           pick(
-            '原来的榜单位现在是 Billboard 标准档，一次性 $29。另有入门 $15 和优先 $49。这一页不打开结账。',
-            'The old board slot is now Billboard Standard, $29 one-time. Entry is $15 and Prime is $49. This page does not open a checkout for it.',
+            '原来的榜单位现在是 Billboard，一次付款后自动上板。价格在 /billboard，和结账实付相同。',
+            'The old board slot is now Billboard. It goes live after one payment. The price is on /billboard and matches checkout.',
           )
         }}
       </p>
       <NuxtLink class="btn btn--primary mt-6" :to="`${localePath('/billboard')}#claim`">
-        {{ pick('索取发票', 'Request invoice') }}
+        {{ pick('去 Billboard 付款', 'Pay on Billboard') }}
       </NuxtLink>
     </section>
     <header v-if="!boardRetired" class="mb-10 max-w-3xl">

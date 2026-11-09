@@ -77,6 +77,19 @@ async function getLocal(): Promise<{ db: any; ready: boolean }> {
 
   const schema = readFileSync(join(process.cwd(), 'server/database/schema.sql'), 'utf8')
   db.exec(schema)
+  // Local file only. Production D1 is not altered here — run the migration
+  // in server/database/migrations before a deploy that selects these columns.
+  for (const sql of [
+    `ALTER TABLE billboard_placement ADD COLUMN order_id TEXT NOT NULL DEFAULT ''`,
+    `ALTER TABLE billboard_placement ADD COLUMN amount_cents INTEGER NOT NULL DEFAULT 0`,
+    `CREATE INDEX IF NOT EXISTS idx_billboard_order ON billboard_placement (order_id)`,
+  ]) {
+    try {
+      db.exec(sql)
+    } catch {
+      // The column or index is already there.
+    }
+  }
 
   localHandle = { db, ready: true }
   return localHandle

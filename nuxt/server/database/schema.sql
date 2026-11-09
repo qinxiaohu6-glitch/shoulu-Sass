@@ -113,29 +113,34 @@ CREATE INDEX IF NOT EXISTS idx_ads_slot ON ads (slot, active);
 -- ---------------------------------------------------------------------------
 -- Billboard placements — one-time, not the weekly `ads` table.
 --
--- `requested` is an invoice intent. It must not be selected for the public
--- board. `live` requires `paid_at` (invoice confirmed, or a later payment
--- webhook). `removed` is the takedown switch and does not rewrite paid_at.
+-- `requested` is an operator invoice backfill. `pending` is a checkout that
+-- has not been paid. Neither is public. `live` requires `paid_at`. `removed`
+-- is the takedown switch and does not rewrite paid_at.
 -- Homepage Top 10 and /billboard read the same live rows.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS billboard_placement (
-  id          TEXT    PRIMARY KEY,
+  id           TEXT    PRIMARY KEY,
   -- entry | standard | prime
-  tier        TEXT    NOT NULL,
-  name        TEXT    NOT NULL DEFAULT '',
-  tagline     TEXT    NOT NULL DEFAULT '',
-  url         TEXT    NOT NULL,
-  logo        TEXT    NOT NULL DEFAULT '',
-  screenshot  TEXT    NOT NULL DEFAULT '',
-  email       TEXT    NOT NULL DEFAULT '',
-  -- requested | live | removed
-  status      TEXT    NOT NULL DEFAULT 'requested',
-  paid_at     INTEGER,
-  created_at  INTEGER NOT NULL,
-  note        TEXT    NOT NULL DEFAULT ''
+  tier         TEXT    NOT NULL,
+  name         TEXT    NOT NULL DEFAULT '',
+  tagline      TEXT    NOT NULL DEFAULT '',
+  url          TEXT    NOT NULL,
+  logo         TEXT    NOT NULL DEFAULT '',
+  screenshot   TEXT    NOT NULL DEFAULT '',
+  email        TEXT    NOT NULL DEFAULT '',
+  -- requested | pending | live | removed
+  status       TEXT    NOT NULL DEFAULT 'requested',
+  paid_at      INTEGER,
+  created_at   INTEGER NOT NULL,
+  note         TEXT    NOT NULL DEFAULT '',
+  -- payment_order.id. Empty on a hand-entered invoice backfill.
+  order_id     TEXT    NOT NULL DEFAULT '',
+  -- Charged cents, copied from the order. Never taken from the browser.
+  amount_cents INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_billboard_status ON billboard_placement (status, paid_at);
+CREATE INDEX IF NOT EXISTS idx_billboard_order ON billboard_placement (order_id);
 
 -- ---------------------------------------------------------------------------
 -- Operator overrides for the curated catalogue.

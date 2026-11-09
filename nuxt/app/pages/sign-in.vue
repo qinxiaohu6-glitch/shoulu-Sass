@@ -64,14 +64,29 @@ onMounted(async () => {
   if (await ensure()) await navigateTo(next.value, { external: true })
 })
 
+const switchQuery = computed(() =>
+  route.query.next ? `?next=${encodeURIComponent(String(route.query.next))}` : '',
+)
+
 useSeo({
-  title: computed(() => pick('登录 | Product Atlas', 'Sign In | Product Atlas')),
-  description: computed(() => pick('欢迎回来', 'Welcome back')),
+  title: computed(() => pick('登录 | Product Atlas', 'Sign in | Product Atlas')),
+  description: computed(() =>
+    pick(
+      '用 Google 登录。免费开始，这一页不需要银行卡。',
+      'Sign in with Google. Free to start — no card on this page.',
+    ),
+  ),
 })
 </script>
 
 <template>
-  <AuthShell :title="pick('登录', 'Sign In')">
+  <AuthShell
+    welcome
+    :title="pick('欢迎回来', 'Welcome back')"
+    :description="pick('用 Google 登录。这一页没有密码，也不需要银行卡。', 'Sign in with Google. No password on this page, and no card.')"
+    :hero="pick('给你的产品一个会留下来的页面。', 'A page for your product that stays up.')"
+    :lead="pick('用 Google 免费建账号。目录页会留下来。付费位置一次付清，付款成功后系统自动发布。', 'Create a free account with Google. The listing page stays up. Paid placement is one payment, and it goes live when that payment succeeds.')"
+  >
     <div
       v-if="configsLoaded && !hasAnyMethod"
       class="rounded-lg border border-dashed p-6 text-center"
@@ -94,6 +109,7 @@ useSeo({
         <AuthSocialButton
           v-if="googleEnabled"
           provider="google"
+          variant="primary"
           :label="pick('使用 Google 登录', 'Sign in with Google')"
           :next="next"
         />
@@ -120,6 +136,45 @@ useSeo({
           {{ pick('注册', 'Sign Up') }}
         </NuxtLink>
       </p>
+      <p class="auth-switch">
+        {{ pick('第一次来？', 'New here?') }}
+        <NuxtLink :to="`${localePath('/sign-up')}${switchQuery}`">
+          {{ pick('免费建账号', 'Create a free account') }}
+        </NuxtLink>
+      </p>
+      <p class="auth-legal">
+        {{ pick('继续即表示你同意', 'By continuing you agree to the') }}
+        <NuxtLink :to="localePath('/terms-of-service')">{{ pick('服务条款', 'Terms') }}</NuxtLink>
+        {{ pick('和', 'and') }}
+        <NuxtLink :to="localePath('/privacy-policy')">{{ pick('隐私政策', 'Privacy') }}</NuxtLink>{{ pick('。', '.') }}
+      </p>
     </form>
   </AuthShell>
 </template>
+
+<style scoped>
+.auth-switch {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: #78716c;
+}
+.auth-switch a {
+  color: #1c1917;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-legal {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #a8a29e;
+}
+.auth-legal a {
+  color: #57534e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+</style>

@@ -20,6 +20,7 @@
 
 import { confirmPayment, getSubmission } from '../../utils/submissions'
 import { activateAdBooking, setAdBookingStatus, stopAdBooking } from '../../utils/ad-bookings'
+import { activateBillboardPlacement, deactivateBillboardPlacement } from '../../utils/billboard-fulfilment'
 import { useDb } from '../../utils/db'
 import { getPaymentProvider } from '../../utils/payments'
 import { findOrderByRef, getOrder, setOrderStatus, settleOrder } from '../../utils/payments/orders'
@@ -75,6 +76,9 @@ export default defineEventHandler(async (event) => {
         await setAdBookingStatus(db, order.id, 'cancelled')
       }
     }
+    if (order.plan === 'billboard' && parsed.status === 'refunded') {
+      await deactivateBillboardPlacement(db, order.id)
+    }
     return { ok: true, status: parsed.status }
   }
 
@@ -120,6 +124,20 @@ export default defineEventHandler(async (event) => {
   if (alreadySettled) {
     // Normal: the provider retried, or two events for one session arrived.
     return { ok: true, duplicate: true, status: settled.status }
+  }
+
+  if (settled.plan === 'billboard') {
+    const result = await activateBillboardPlacement(db, settled.id)
+    if (!result.ok) {
+      const note =
+        result.reason === 'removed'
+          ? 'PAID, BILLBOARD ALREADY REMOVED: refund or restore this order by hand'
+          : 'PAID, BILLBOARD RECORD MISSING: investigate before refunding'
+      await setOrderStatus(db, settled.id, 'paid', { note })
+      console.error('[payments] billboard fulfilment failed', settled.id, result.reason)
+      return { ok: true, status: 'paid', order: settled.id, fulfilment: result.reason }
+    }
+    return { ok: true, status: 'paid', order: settled.id, billboard: result.id, duplicate: result.duplicate }
   }
 
   /**
