@@ -152,7 +152,7 @@ test('boards drop hidden slugs and renumber from 1', () => {
   assert.equal(rankedBoard(rows, [])[0]?.rank, 1)
 
   const index = read('../../app/pages/index.vue')
-  assert.match(index, /boardRows\(latestWeek\.value, lang\.value, 6, overrides\.value\)/)
+  assert.match(index, /orderedTools\(lang\.value, overrides\.value\)/)
   const weekly = read('../../app/pages/weekly.vue')
   assert.match(weekly, /rankedBoard\(/)
   const rail = read('../../app/components/TopPicks.vue')

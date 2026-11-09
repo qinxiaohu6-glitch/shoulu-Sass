@@ -180,8 +180,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          'Billboard 是一次性的：入门 $15、标准 $29、优先 $49。标准档替代原来的榜单周租，不再按周出售。右栏仍是 $19/周（连投 4 周 $65）。Billboard 和每周投票榜不是同一份名单。',
-          'Billboard is one-time: Entry $15, Standard $29, Prime $49. Standard replaces the old weekly board rental, which is no longer sold. The sidebar is still $19 a week ($65 for four). Billboard is not the weekly vote list.',
+          'Billboard 是一次性的自己出价，从 $15 起。同一网站再付会累加，被人超过只掉名次。黑五不降低这个地板价。右栏仍是 $19/周（连投 4 周 $65，活动期见定价页）。Billboard 和每周投票榜不是同一份名单。',
+          'Billboard is one-time, name your price from $15. Another payment for the same website stacks, and being outbid only drops your rank. Black Friday does not lower that floor. The sidebar is still $19 a week ($65 for four; the pricing page shows the sale). Billboard is not the weekly vote list.',
         ),
         link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },

@@ -1,160 +1,183 @@
 <script setup lang="ts">
 /**
- * /billboard — fixed tiers and the same ranking as the homepage Top 10.
- * Checkout charges `effectiveAmountCents` on the server. This page never sends an amount.
- * When checkout is not ready, the form stores an invoice request and does not open a charge.
+ * /billboard — pay what you want, from $15.
+ *
+ * Guest claim exception: the claim modal and the invoice request do not
+ * require a session. Submitting a directory listing at /submit still uses
+ * the existing sign-in gate. A later payment for the same URL stacks on read.
+ * When card checkout is off, the button stores an invoice and does not charge.
  */
+import { BILLBOARD_TOP_N } from '~~/shared/content/billboard'
+import { centsLabel } from '~~/shared/content/campaign'
 import {
-  BILLBOARD_TIERS,
-  BILLBOARD_TOP_N,
-  campaignActive,
-  campaignDeadlineShanghai,
-  type BillboardTierId,
-} from '~~/shared/content/billboard'
-import { padBillboard } from '~~/shared/utils/billboard'
-import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+  amountToTakeRank,
+  backingLabel,
+  BILLBOARD_FLOOR_CENTS,
+  faviconForUrl,
+  type BidOccupant,
+} from '~~/shared/utils/billboard-bid'
+import { backingCents } from '~~/shared/utils/billboard'
 
 const { pick, isZh } = useLang()
 const { ranked } = await useBillboard()
 const { ready: paymentReady } = await usePayment()
 
-const picked = ref<BillboardTierId>('standard')
 const url = ref('')
-const email = ref('')
-const name = ref('')
 const busy = ref(false)
-const done = ref('')
+const done = ref(false)
 const error = ref('')
-const detailsOpen = ref(false)
-const emailInput = ref<HTMLInputElement | null>(null)
+const modalOpen = ref(false)
+const presetCents = ref<number | null>(null)
+const filter = ref<'top' | 'under50' | 'under20' | 'landed'>('top')
+const openFaq = ref(-1)
 
-const deadline = campaignDeadlineShanghai()
-const promoOn = computed(() => campaignActive())
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
-function tierQuote(id: BillboardTierId) {
-  return effectiveQuote('billboard', id, Date.now())
-}
-
-const selectedQuote = computed(() => tierQuote(picked.value))
-const fromQuote = computed(() => tierQuote('entry'))
-
-const slots = computed(() => padBillboard(ranked.value, BILLBOARD_TOP_N))
-const overflow = computed(() => ranked.value.slice(BILLBOARD_TOP_N))
-
-const tierLine = computed(() =>
-  (['entry', 'standard', 'prime'] as const).map((id) => tierQuote(id).priceLabel).join(' / '),
+const occupants = computed<BidOccupant[]>(() =>
+  ranked.value.map((row) => ({
+    url: row.url,
+    amountCents: backingCents(row),
+    paidAt: row.paidAt,
+  })),
 )
+
+const visible = computed(() => {
+  const rows = ranked.value
+  if (filter.value === 'under50') return rows.filter((row) => backingCents(row) < 5000)
+  if (filter.value === 'under20') return rows.filter((row) => backingCents(row) < 2000)
+  if (filter.value === 'landed') {
+    return [...rows].sort(
+      (a, b) => (b.latestPaidAt ?? b.paidAt) - (a.latestPaidAt ?? a.paidAt) || (a.id < b.id ? -1 : 1),
+    )
+  }
+  return rows
+})
+
+const openSlots = computed(() => Math.max(0, BILLBOARD_TOP_N - ranked.value.length))
+const totalBacked = computed(() => occupants.value.reduce((sum, row) => sum + row.amountCents, 0))
 
 const rules = computed(() => [
   {
-    n: '1',
-    title: pick('选择档位', 'Choose a tier'),
-    body: promoOn.value
-      ? pick(
-          `入门 / 标准 / 优先。一次付清。Black Friday：${tierLine.value}。`,
-          `Entry, Standard, or Prime. One-time payment. Black Friday: ${tierLine.value}.`,
-        )
+    n: '01',
+    title: pick('自己出价', 'Name your price'),
+    body: paymentReady.value
+      ? pick(`从 ${floorLabel} 起，一次付清。`, `Anything from ${floorLabel}. One-time payment.`)
       : pick(
-          '入门 / 标准 / 优先。一次付清。',
-          'Entry, Standard, or Prime. One-time payment.',
+          `从 ${floorLabel} 起，一次付清。通道未开通时请索取发票。`,
+          `Anything from ${floorLabel}. One-time payment. Request an invoice while card checkout is off.`,
         ),
   },
   {
-    n: '2',
-    title: pick('付款即上线', 'Live the second you pay'),
-    body: pick(
-      '付款成功后，展示位立即出现在本页与首页 Top 10。无需排队审核。',
-      'Your spot appears right away on this page and the homepage Top 10. No queue.',
-    ),
+    n: '02',
+    title: paymentReady.value ? pick('付款即上线', 'Live the second you pay') : pick('确认后上线', 'Live after confirmation'),
+    body: paymentReady.value
+      ? pick('付款到账后立即出现在本页。进入前 10 名时同步出现在首页。无需排队审核。', 'Your spot appears on this page the moment payment clears. Top 10 also shows on the homepage. No review queue.')
+      : pick('发票确认后上线。进入前 10 名时同步出现在首页。', 'It goes live after the invoice is confirmed. Top 10 also shows on the homepage.'),
   },
   {
-    n: '3',
-    title: pick('高档优先', 'Higher tiers rank first'),
+    n: '03',
+    title: pick('再付一次，向上爬', 'Pay again, climb'),
     body: pick(
-      '优先 > 标准 > 入门。同档先付款者排名更前。每周投票榜独立计算。',
-      'Prime, then Standard, then Entry. Within a tier, earlier payment ranks higher. Weekly vote rankings are separate.',
+      '同一网站的金额会累加。被人超过只掉名次，不会从榜上消失。',
+      'Amounts stack on the same website. If someone passes you, you only drop in rank.',
     ),
   },
 ])
 
 const faq = computed(() => [
   {
-    q: pick('购买内容是什么？', 'What am I buying?'),
+    q: pick('我买到的是什么？', 'What am I buying?'),
     a: pick(
-      '站内 Billboard 展示位。进入 Top 10 时同步出现在首页。不承诺搜索排名或流量。',
-      'An on-site Billboard placement. Top 10 also shown on the home page. No promise of search rank or traffic.',
+      '一个永久的站内展示位，按该网站累计金额排序。前 10 名同时出现在首页。不承诺搜索排名或流量。',
+      'A permanent on-site spot, ranked by the total backed for that website. The top 10 also appear on the homepage. No promise of search rank or traffic.',
     ),
   },
   {
-    q: pick('是否订阅制？', 'Is it a subscription?'),
-    a: pick('否。一次付清。', 'No. One-time payment.'),
-  },
-  {
-    q: pick('多久上线？', 'How soon does it go live?'),
-    a: pick('付款成功后立即上线。', 'Live the second you pay.'),
-  },
-  {
-    q: pick('免费收录是否保留？', 'Is free listing still available?'),
+    q: pick('这是订阅吗？', 'Is the payment recurring?'),
     a: pick(
-      '保留。免费走目录与周投票榜；付费位标注 BILLBOARD。',
-      'Yes. Free stays in the directory and weekly votes. Paid spots are marked BILLBOARD.',
+      `不是。每一笔都是一次性的，新出价从 ${floorLabel} 起。之后再付是另一次一次性加价，会累加到同一网站上。`,
+      `No. Every payment is one-time, from ${floorLabel}. A later payment is another one-time top-up and stacks on the same website.`,
+    ),
+  },
+  {
+    q: pick('被人超过会怎样？', 'Can someone knock me off?'),
+    a: pick(
+      '你的位置还在，只是名次下降。给同一网站再付任意金额（至少地板价）即可爬回去。',
+      'Your spot stays. You only drop in rank. Pay again for the same website — at least the floor — and it stacks.',
+    ),
+  },
+  {
+    q: pick('什么时候上线？', 'When does it go live?'),
+    a: paymentReady.value
+      ? pick('付款到账后立即上线，没有审核队列。', 'Live the moment payment clears. There is no review queue.')
+      : pick('索取发票后，要等发票确认才上线。确认之前不会公开。', 'After you request an invoice, it goes live once that invoice is confirmed. It is not public before then.'),
+  },
+  {
+    q: pick('要登录吗？', 'Do I need an account?'),
+    a: pick(
+      '认领这个展示位不需要登录。免费目录提交仍然走提交页的登录。',
+      'Claiming this spot does not require a sign-in. A free directory submission still uses the sign-in on the submit page.',
     ),
   },
 ])
 
-const openFaq = ref(-1)
+const filters = computed(() => [
+  { id: 'top' as const, label: pick('前列', 'Top spots') },
+  { id: 'under50' as const, label: pick('$50 以下', 'Under $50') },
+  { id: 'under20' as const, label: pick('$20 以下', 'Under $20') },
+  { id: 'landed' as const, label: pick('刚登上', 'Just landed') },
+])
 
-const ctaLabel = computed(() => {
-  const price = selectedQuote.value.priceLabel
-  return paymentReady.value
-    ? pick(`认领展示位 · ${price}`, `Claim your spot · ${price}`)
-    : pick(`索取发票 · ${price}`, `Request invoice · ${price}`)
-})
-
-function focusClaim(tier?: BillboardTierId) {
-  if (tier) picked.value = tier
-  document.getElementById('claim')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  document.getElementById('bb-url')?.focus()
+function openClaim(cents: number | null = null) {
+  error.value = ''
+  done.value = false
+  presetCents.value = cents
+  modalOpen.value = true
 }
 
-async function startCheckout() {
-  const quote = selectedQuote.value
-  const res = await $fetch<{ ok: boolean; url?: string; amount_cents: number; published: boolean }>(
-    '/api/billboard/checkout',
-    {
-      method: 'POST',
-      body: { tier: picked.value, url: url.value, email: email.value, name: name.value },
-    },
-  )
-  if (!res?.ok || res.published || res.amount_cents !== quote.amountCents || !res.url) {
-    throw new Error('unexpected')
-  }
-  window.location.assign(res.url)
+function rankOf(id: string): number {
+  const index = ranked.value.findIndex((row) => row.id === id)
+  return index < 0 ? 1 : index + 1
 }
 
-async function requestInvoice() {
-  const res = await $fetch<{ ok: boolean; published: boolean }>('/api/billboard/invoice', {
-    method: 'POST',
-    body: { tier: picked.value, url: url.value, email: email.value, name: name.value },
-  })
-  if (!res?.ok || res.published) throw new Error('unexpected')
-  done.value = 'requested'
+function claimAt(rank: number) {
+  openClaim(amountToTakeRank(rank, occupants.value, url.value))
 }
 
-async function onSubmit() {
+function onChangeUrl() {
+  modalOpen.value = false
+  nextTick(() => document.getElementById('bb-url')?.focus())
+}
+
+async function onSubmit(payload: { email: string; name: string; tagline: string; amountCents: number }) {
   if (busy.value) return
   error.value = ''
-  if (!email.value.trim()) {
-    detailsOpen.value = true
-    error.value = pick('请填写邮箱，以便发送发票。', 'Add an email so we can send the invoice.')
-    await nextTick()
-    emailInput.value?.focus()
-    return
-  }
   busy.value = true
   try {
-    if (paymentReady.value) await startCheckout()
-    else await requestInvoice()
+    const body = {
+      url: url.value,
+      email: payload.email,
+      name: payload.name,
+      tagline: payload.tagline,
+      amount_cents: payload.amountCents,
+    }
+    if (paymentReady.value) {
+      const res = await $fetch<{ ok: boolean; url?: string; amount_cents: number; published: boolean }>(
+        '/api/billboard/checkout',
+        { method: 'POST', body },
+      )
+      if (!res?.ok || res.published || res.amount_cents !== payload.amountCents || !res.url) {
+        throw new Error('unexpected')
+      }
+      window.location.assign(res.url)
+      return
+    }
+    const res = await $fetch<{ ok: boolean; published: boolean }>('/api/billboard/invoice', {
+      method: 'POST',
+      body,
+    })
+    if (!res?.ok || res.published) throw new Error('unexpected')
+    done.value = true
   } catch (err) {
     const info = (err as { data?: { message_zh?: string; message_en?: string } })?.data
     error.value =
@@ -169,8 +192,8 @@ useSeo({
   title: computed(() => pick('Billboard · Product Atlas', 'The Billboard · Product Atlas')),
   description: computed(() =>
     pick(
-      '一次付清。付款即上线。首页 Top 10 同步展示。',
-      'One payment. Own your spot. Live the second you pay. Top 10 also shown on the home page.',
+      `自己出价，从 ${floorLabel} 起。一次付清。前 10 名同步首页。`,
+      `Name your price, from ${floorLabel}. One-time. Top 10 also shown on the home page.`,
     ),
   ),
 })
@@ -199,135 +222,71 @@ useHead({
   <div class="bb-page">
     <div class="bb-page__hero">
       <div>
-        <p class="bb-page__from">
-          <s v-if="fromQuote.strikeLabel">{{ fromQuote.strikeLabel }}</s>
-          {{ pick(`起价 ${fromQuote.priceLabel} · 一次付清`, `From ${fromQuote.priceLabel} · one-time`) }}
-        </p>
+        <p class="bb-page__from">{{ pick(`从 ${floorLabel} 起 · 一次付清`, `From ${floorLabel} · one-time`) }}</p>
         <h1>{{ pick('Billboard', 'The Billboard') }}</h1>
-        <p class="bb-page__tag">
-          {{ pick('一次付清。永久占位。', 'One payment. Own your spot.') }}
-        </p>
+        <p class="bb-page__tag">{{ pick('自己出价。占住这个位置。', 'Name your price. Own your spot.') }}</p>
         <p class="bb-page__desc">
-          {{ pick('付款即上线。首页 Top 10 同步展示。', 'Goes live the second you pay. Top 10 also shown on the home page.') }}
+          {{
+            pick(
+              '按累计金额排名。前 10 名出现在首页。被人超过只掉名次。',
+              'Ranked by total backed. Top 10 on the homepage. If someone passes you, you only drop in rank.',
+            )
+          }}
         </p>
 
-        <form id="claim" class="bb-claim" @submit.prevent="onSubmit">
+        <form id="claim" class="bb-claim" @submit.prevent="openClaim(null)">
           <div class="bb-claim__head">
             <h2>{{ pick('认领展示位', 'Claim your spot') }}</h2>
-            <span>{{ pick('付款即上线', 'Live in seconds') }}</span>
+            <span>{{ paymentReady ? pick('付款即上线', 'Live the second you pay') : pick('确认后上线', 'After the invoice is confirmed') }}</span>
           </div>
-
           <label class="sr-only" for="bb-url">URL</label>
           <input id="bb-url" v-model="url" type="url" required placeholder="https://yourproduct.com" maxlength="500">
-
-          <fieldset class="bb-tiers">
-            <legend>{{ pick('选择档位', 'Choose a tier') }}</legend>
-            <label
-              v-for="tier in BILLBOARD_TIERS"
-              :key="tier.id"
-              class="bb-tier-card"
-              :class="{ 'is-picked': picked === tier.id }"
-            >
-              <input v-model="picked" type="radio" name="tier" :value="tier.id" required>
-              <span class="bb-tier-card__name">{{ isZh ? tier.name.zh : tier.name.en }}</span>
-              <span class="bb-tier-card__price">
-                <s v-if="tierQuote(tier.id).strikeLabel">{{ tierQuote(tier.id).strikeLabel }}</s>
-                {{ tierQuote(tier.id).priceLabel }}
-              </span>
-              <small>{{ isZh ? tier.blurb.zh : tier.blurb.en }}</small>
-            </label>
-          </fieldset>
-
-          <details class="bb-claim__more" :open="detailsOpen" @toggle="detailsOpen = ($event.target as HTMLDetailsElement).open">
-            <summary>{{ pick('结账信息', 'Checkout details') }}</summary>
-            <label class="sr-only" for="bb-email">Email</label>
-            <input
-              id="bb-email"
-              ref="emailInput"
-              v-model="email"
-              type="email"
-              placeholder="you@example.com"
-              maxlength="160"
-              autocomplete="email"
-            >
-            <label class="sr-only" for="bb-name">{{ pick('产品名（可选）', 'Product name (optional)') }}</label>
-            <input
-              id="bb-name"
-              v-model="name"
-              type="text"
-              maxlength="80"
-              :placeholder="pick('产品名（可选）', 'Product name (optional)')"
-            >
-          </details>
-
-          <button class="btn btn--primary btn--block" type="submit" :disabled="busy">
-            {{ busy ? pick('处理中…', 'Working…') : ctaLabel }}
+          <button class="btn btn--primary btn--block" type="submit">
+            {{ paymentReady ? pick('认领展示位', 'Claim your spot') : pick('索取发票', 'Request invoice') }}
+            →
           </button>
-          <p v-if="error" class="bb-claim__error">{{ error }}</p>
-          <p v-if="done === 'requested'" class="bb-claim__fine">
-            {{ pick('发票已记下。付款确认前不会上线。', 'Invoice requested. Nothing goes live until payment clears.') }}
-          </p>
-
           <ul class="bb-trust">
             <li>{{ pick('长期展示', 'Permanent') }}</li>
-            <li>{{ pick('一次付清', 'One-time payment') }}</li>
-            <li>{{ pick('安全结账', 'Secure checkout') }}</li>
+            <li>{{ pick('一次付清', 'One payment') }}</li>
+            <li>{{ pick('同一网站可累加', 'Stack on the same site') }}</li>
           </ul>
           <p class="bb-claim__fine">
             {{
-              pick(
-                '按钮价格即为实付金额。未付款不上线。',
-                'The button price is what you pay. Nothing goes live until payment clears.',
-              )
+              paymentReady
+                ? pick(`新出价从 ${floorLabel} 起。黑五不降低这个地板价。`, `New bids start at ${floorLabel}. Black Friday does not lower that floor.`)
+                : pick(`新出价从 ${floorLabel} 起。发票确认后才上线。`, `New bids start at ${floorLabel}. It goes live after the invoice is confirmed.`)
             }}
-            <template v-if="promoOn">
-              {{ pick(`Black Friday 截止 ${deadline} Asia/Shanghai。`, `Black Friday ends ${deadline} Asia/Shanghai.`) }}
-            </template>
           </p>
         </form>
       </div>
 
       <section class="bb-rank" aria-labelledby="bb-rank-title" data-billboard-source="api/billboard">
         <h2 id="bb-rank-title">{{ pick('实时排行', 'Live ranking') }}</h2>
-        <p>{{ pick('前 10 名同步展示于首页。', 'Top 10 also shown on the home page.') }}</p>
+        <p class="bb-rank__stats">
+          {{ centsLabel(totalBacked) }} {{ pick('累计', 'backed') }}
+          · {{ ranked.length }} {{ pick('个位置', 'spots') }}
+          · {{ pick('前 10 名同步首页', 'Top 10 on the homepage') }}
+        </p>
+        <div class="bb-filters" role="tablist">
+          <button
+            v-for="item in filters"
+            :key="item.id"
+            type="button"
+            :class="{ 'is-on': filter === item.id }"
+            @click="filter = item.id"
+          >
+            {{ item.label }}
+          </button>
+        </div>
         <ol>
           <li
-            v-for="cell in slots"
-            :key="cell.rank"
-            :class="{ 'is-top': cell.rank <= 3 && cell.kind === 'live', 'is-open': cell.kind === 'empty' }"
+            v-for="row in visible"
+            :key="row.id"
+            :class="{ 'is-top': rankOf(row.id) <= 3 }"
           >
-            <template v-if="cell.kind === 'live'">
-              <span class="bb-rank__n">{{ cell.rank }}</span>
-              <span class="bb-rank__logo">
-                <ToolLogo :logo="cell.placement.logo" :name="cell.placement.name" :size="40" decorative />
-              </span>
-              <span class="bb-rank__meta">
-                <strong>
-                  {{ cell.placement.name }}
-                  <em>BILLBOARD</em>
-                </strong>
-                <span>{{ cell.placement.tagline }}</span>
-              </span>
-              <button type="button" class="bb-rank__go" @click="focusClaim(cell.placement.tier)">
-                {{ cell.placement.tier }}
-              </button>
-            </template>
-            <template v-else>
-              <span class="bb-rank__n">{{ cell.rank }}</span>
-              <span class="bb-rank__logo" aria-hidden="true">+</span>
-              <span class="bb-rank__meta">
-                <strong>{{ pick('空位', 'Open slot') }}</strong>
-                <span>{{ pick('此处可放置你的产品。付款后公开。', 'Your product can go here. Goes live after payment.') }}</span>
-              </span>
-              <button type="button" class="bb-rank__go" @click="focusClaim()">
-                {{ pick('认领', 'Claim') }}
-              </button>
-            </template>
-          </li>
-          <li v-for="(row, index) in overflow" :key="row.id">
-            <span class="bb-rank__n">{{ BILLBOARD_TOP_N + index + 1 }}</span>
+            <span class="bb-rank__n">{{ rankOf(row.id) }}</span>
             <span class="bb-rank__logo">
-              <ToolLogo :logo="row.logo" :name="row.name" :size="40" decorative />
+              <ToolLogo :logo="row.logo || faviconForUrl(row.url)" :name="row.name" :size="40" decorative />
             </span>
             <span class="bb-rank__meta">
               <strong>
@@ -336,36 +295,42 @@ useHead({
               </strong>
               <span>{{ row.tagline }}</span>
             </span>
-            <button type="button" class="bb-rank__go" @click="focusClaim(row.tier)">
-              {{ row.tier }}
+            <span class="bb-price">{{ backingLabel(row) }}</span>
+            <button type="button" class="bb-rank__go" @click="claimAt(rankOf(row.id))">
+              {{ pick(`认领 #${rankOf(row.id)}`, `Claim #${rankOf(row.id)}`) }}
+              {{ centsLabel(amountToTakeRank(rankOf(row.id), occupants, url)) }}
+            </button>
+          </li>
+          <li v-for="n in filter === 'top' ? openSlots : 0" :key="`open-${n}`" class="is-open">
+            <span class="bb-rank__n">{{ ranked.length + n }}</span>
+            <span class="bb-rank__logo" aria-hidden="true">+</span>
+            <span class="bb-rank__meta">
+              <strong>{{ pick('空位', 'Open slot') }}</strong>
+              <span>{{ pick('付款确认后公开。', 'Public after payment is confirmed.') }}</span>
+            </span>
+            <button type="button" class="bb-rank__go" @click="claimAt(ranked.length + n)">
+              {{ pick(`认领 · ${floorLabel} 起`, `Claim · from ${floorLabel}`) }}
             </button>
           </li>
         </ol>
+        <p v-if="ranked.length > BILLBOARD_TOP_N" class="bb-claim__fine">
+          {{ pick('第 11 名及以后只在本页。再加一笔就可能进首页。', 'Rank 11 and below stay on this page. One more backing can reach the homepage.') }}
+        </p>
       </section>
     </div>
 
     <section class="bb-rules">
       <div>
         <p>HOW IT WORKS</p>
-        <h2>{{ pick('三条规则。无隐藏条款。', 'Three rules. No small print.') }}</h2>
+        <h2>{{ pick('三条规则。没有小字。', 'Three rules. No small print.') }}</h2>
         <p class="bb-rules__lead">
-          {{ pick('选档、付款、上线——全部公开。', 'Choose a tier, pay once, go live. That’s the whole offer.') }}
+          {{
+            pick(
+              '看一个产品在榜上的位置，然后出价，再往上爬。这就是全部。',
+              'Watch a product on the board, then pay again and take the top. That is the whole game.',
+            )
+          }}
         </p>
-        <ol class="bb-rules__sample" aria-hidden="true">
-          <li class="is-yours">
-            <span>1</span>
-            <b>{{ pick('你的产品', 'Your product') }}</b>
-            <em>Prime</em>
-          </li>
-          <li>
-            <span>2</span>
-            <b>Standard</b>
-          </li>
-          <li>
-            <span>3</span>
-            <b>Entry</b>
-          </li>
-        </ol>
       </div>
       <ol>
         <li v-for="rule in rules" :key="rule.n">
@@ -389,22 +354,30 @@ useHead({
 
     <section class="bb-close">
       <div>
-        <h2>
+        <h2>{{ pick(`首页前 10 名。从 ${floorLabel} 起。`, `Homepage Top 10. From ${floorLabel}.`) }}</h2>
+        <p>
           {{
-            promoOn
-              ? pick(
-                  `首页 Top 10。黑五起价 ${fromQuote.priceLabel}。`,
-                  `Homepage Top 10. From ${fromQuote.priceLabel} · Black Friday`,
-                )
-              : pick(
-                  `首页 Top 10，起价 ${fromQuote.priceLabel}。`,
-                  `Homepage Top 10. From ${fromQuote.priceLabel}.`,
-                )
+            paymentReady
+              ? pick('一次付清。付款即上线。位置长期保留。', 'One-time payment. Live the second you pay. The spot stays.')
+              : pick('一次付清。发票确认后上线。位置长期保留。', 'One-time payment. Live after the invoice is confirmed. The spot stays.')
           }}
-        </h2>
-        <p>{{ pick('一次付清。付款即上线。长期展示。', 'One-time payment. Live the second you pay. Permanent listing.') }}</p>
+        </p>
       </div>
       <a href="#claim">{{ paymentReady ? pick('认领展示位', 'Claim your spot') : pick('索取发票', 'Request invoice') }} →</a>
     </section>
+
+    <BillboardClaimDialog
+      :open="modalOpen"
+      :url="url"
+      :occupants="occupants"
+      :payment-ready="paymentReady"
+      :busy="busy"
+      :error="error"
+      :done="done"
+      :preset-cents="presetCents"
+      @close="modalOpen = false"
+      @change-url="onChangeUrl"
+      @submit="onSubmit"
+    />
   </div>
 </template>

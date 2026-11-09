@@ -1,16 +1,17 @@
 /**
- * POST /api/billboard/checkout — pay for one fixed Billboard tier.
+ * POST /api/billboard/checkout — pay a chosen backing amount.
  *
- * The body names a tier, a URL, and an email. It does not name a price.
- * `effectiveAmountCents('billboard', tier)` is the only amount written to
- * `payment_order` and to the pending placement. The row stays `pending`
- * until the webhook moves it to `live`, so it cannot appear on the public board.
+ * The body names a URL, an email, and whole-dollar cents. The server clamps
+ * that amount to the $15 floor and refuses anything above the abuse cap.
+ * Black Friday does not reduce it. The row stays `pending` until the webhook
+ * marks it live, so it cannot appear on the public board by itself.
+ *
+ * Guest claim: this route does not require a session. Directory submit stays gated.
  */
 
 import { campaignSnapshot } from '~~/shared/content/campaign'
-import { billboardTier } from '~~/shared/content/billboard'
-import { effectiveAmountCents, listAmountCents } from '~~/shared/utils/pricing-effective'
-import { billboardInvoiceDraft } from '~~/shared/utils/billboard'
+import { billboardBidDraft, BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { centsLabel } from '~~/shared/content/campaign'
 import { insertBillboardCheckout } from '../../utils/billboard'
 import { useDb } from '../../utils/db'
 import { getPaymentProvider, paymentConfig, returnUrls } from '../../utils/payments'
@@ -25,27 +26,27 @@ export default defineEventHandler(async (event) => {
   setResponseHeader(event, 'cache-control', 'no-store')
 
   const body = (await readBody<{
-    tier?: unknown
     url?: unknown
     email?: unknown
     name?: unknown
     tagline?: unknown
+    amount_cents?: unknown
   }>(event).catch(() => null)) ?? {}
 
-  const draft = billboardInvoiceDraft({
-    tier: String(body.tier ?? ''),
+  const draft = billboardBidDraft({
     url: String(body.url ?? ''),
     email: String(body.email ?? ''),
     name: String(body.name ?? ''),
+    amountCents: body.amount_cents,
   })
-  if (!draft || !billboardTier(draft.tier)) {
+  if (!draft) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Bad Request',
       data: {
         reason: 'bad_checkout',
-        message_en: 'Send a real http(s) URL, an email, and Entry, Standard or Prime.',
-        message_zh: '请填写有效的 http(s) 网址、邮箱，以及入门、标准或优先档。',
+        message_en: 'Send a real http(s) URL, an email, and a whole-dollar amount from $15.',
+        message_zh: '请填写有效的 http(s) 网址、邮箱，以及从 $15 起的整数美元金额。',
       },
     })
   }
@@ -57,25 +58,19 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Conflict',
       data: {
         reason: 'unconfigured',
-        message_en: 'Card payment is not switched on yet — we will email you how to pay.',
-        message_zh: '在线支付还没开通，我们会用邮件告诉你付款方式。',
+        message_en: 'Card payment is not switched on yet — request an invoice instead.',
+        message_zh: '在线支付还没开通，请改为索取发票。',
       },
     })
   }
 
-  const amountCents = effectiveAmountCents('billboard', draft.tier)
-  const listCents = listAmountCents('billboard', draft.tier)
-  if (!amountCents) {
-    throw createError({ statusCode: 409, statusMessage: 'Conflict', data: { reason: 'nothing_to_pay' } })
-  }
-
+  const amountCents = draft.amountCents
   const db = await useDb(event)
   const config = paymentConfig(event)
   const orderId = newOrderId()
   const urls = returnUrls(event, orderId)
   const placementId = newBillboardId()
   const tagline = String(body.tagline ?? '').trim().slice(0, 140)
-  const tier = billboardTier(draft.tier)!
 
   await createOrder(db, {
     id: orderId,
@@ -90,7 +85,7 @@ export default defineEventHandler(async (event) => {
     id: placementId,
     orderId,
     tier: draft.tier,
-    name: draft.name || tier.name.en,
+    name: draft.name,
     tagline,
     url: draft.url,
     email: draft.email,
@@ -106,7 +101,7 @@ export default defineEventHandler(async (event) => {
       amountCents,
       currency: config.currency,
       email: draft.email,
-      description: `Billboard ${tier.name.en} — ${draft.url}`,
+      description: `Billboard ${centsLabel(amountCents)} — ${draft.url}`,
       successUrl: urls.successUrl,
       cancelUrl: urls.cancelUrl,
     })
@@ -116,7 +111,7 @@ export default defineEventHandler(async (event) => {
       order: orderId,
       url: session.url,
       amount_cents: amountCents,
-      list_cents: listCents,
+      floor_cents: BILLBOARD_FLOOR_CENTS,
       campaign: campaignSnapshot(),
       published: false,
     }

@@ -5,7 +5,6 @@ import {
   SOCIAL_X_URL,
   contactHref,
 } from '~~/shared/content/site-contact'
-import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/billboard'
 
 const { locale, setLocale, pick } = useLang()
 
@@ -274,17 +273,7 @@ watch(() => route.fullPath, () => {
 <template>
   <IconSprite />
 
-  <div v-if="campaignActive()" class="promo-bar">
-    <p>
-      {{
-        pick(
-          `黑五 · 表价七折，截止 ${campaignDeadlineShanghai()}（Asia/Shanghai）。页面价等于结账实付。`,
-          `Black Friday · 30% off list price until ${campaignDeadlineShanghai()} (Asia/Shanghai). The price on the page is the checkout charge.`,
-        )
-      }}
-      <NuxtLink :to="`${localePath('/pricing')}#black-friday`">{{ pick('看定价', 'See pricing') }}</NuxtLink>
-    </p>
-  </div>
+  <BlackFridayBar />
 
   <div class="shell shell--topnav">
     <!-- ── Left rail ─────────────────────────────────────────────────────── -->
@@ -452,10 +441,6 @@ watch(() => route.fullPath, () => {
           </div>
         </div>
       </header>
-
-      <p class="free-strip">
-        {{ pick('免费目录页会留下来。付费位置一次付清，付款成功后自动发布。', 'A free listing page stays up. Paid placement is one payment, and it publishes when payment succeeds.') }}
-      </p>
 
       <main>
         <slot />
