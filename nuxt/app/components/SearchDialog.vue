@@ -113,7 +113,7 @@ watch(open, async (value) => {
         <NuxtLink
           v-for="tool in results"
           :key="tool.slug"
-          :to="localePath(`/tools/${tool.slug}`)"
+          :to="localePath(`/products/${tool.slug}`)"
           class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-[var(--secondary)]"
           @click="close"
         >
@@ -136,7 +136,7 @@ watch(open, async (value) => {
 
       <div class="flex items-center justify-between border-t border-[var(--border)] px-4 py-2 text-xs text-[var(--muted-foreground)]">
         <span>{{ isZh ? '回车打开 · Esc 关闭' : 'Enter to open · Esc to close' }}</span>
-        <NuxtLink :to="localePath('/tools')" class="hover:text-[var(--foreground)]" @click="close">
+        <NuxtLink :to="localePath('/products')" class="hover:text-[var(--foreground)]" @click="close">
           {{ pick('浏览全部', 'Browse all') }} →
         </NuxtLink>
       </div>

@@ -223,7 +223,7 @@ useHead({
             v-for="tool in heroLeft"
             :key="tool.slug"
             class="feat-card"
-            :to="localePath(`/tools/${tool.slug}`)"
+            :to="localePath(`/products/${tool.slug}`)"
           >
             <ToolLogo :logo="tool.logo" :name="tool.name" :size="36" decorative />
             <span>
@@ -272,7 +272,7 @@ useHead({
             v-for="tool in heroRight"
             :key="tool.slug"
             class="feat-card"
-            :to="localePath(`/tools/${tool.slug}`)"
+            :to="localePath(`/products/${tool.slug}`)"
           >
             <ToolLogo :logo="tool.logo" :name="tool.name" :size="36" decorative />
             <span>
@@ -339,7 +339,7 @@ useHead({
         </div>
         <ol class="home-feed">
           <li v-for="(tool, index) in feed" :key="tool.slug" class="launch-row">
-            <NuxtLink class="launch-row__link" :to="localePath(`/tools/${tool.slug}`)">
+            <NuxtLink class="launch-row__link" :to="localePath(`/products/${tool.slug}`)">
               <span class="launch-row__rank">{{ index + 1 }}</span>
               <span class="launch-row__logo">
                 <ToolLogo :logo="tool.logo" :name="tool.name" :size="40" decorative />
@@ -398,7 +398,7 @@ useHead({
         </section>
         <ul class="feat-mini">
           <li v-for="tool in featuredPool.slice(0, 4)" :key="tool.slug">
-            <NuxtLink :to="localePath(`/tools/${tool.slug}`)">
+            <NuxtLink :to="localePath(`/products/${tool.slug}`)">
               <ToolLogo :logo="tool.logo" :name="tool.name" :size="32" decorative />
               <span>
                 <strong>{{ tool.name }}</strong>

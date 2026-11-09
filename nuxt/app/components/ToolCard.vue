@@ -33,7 +33,7 @@ const pinned = computed(
       </div>
       <div class="tool-card__body">
         <div class="tool-card__name">
-          <h3><NuxtLink :to="localePath(`/tools/${tool.slug}`)">{{ tool.name }}</NuxtLink></h3>
+          <h3><NuxtLink :to="localePath(`/products/${tool.slug}`)">{{ tool.name }}</NuxtLink></h3>
           <span v-if="pinned" class="star" :title="pick('精选', 'Featured')">
             <Icon name="sparkles" />
             <span class="sr-only">{{ pick('精选', 'Featured') }}</span>

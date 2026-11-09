@@ -61,7 +61,7 @@ const localePath = useLocalePath()
       <p class="home-cols__month">{{ monthLabel }}</p>
       <ol class="home-cols__feed">
         <li v-for="(item, index) in launches" :key="item.slug" class="launch-row">
-          <NuxtLink class="launch-row__link" :to="localePath(`/tools/${item.slug}`)">
+          <NuxtLink class="launch-row__link" :to="localePath(`/products/${item.slug}`)">
             <span class="launch-row__rank">{{ index + 1 }}</span>
             <span class="launch-row__logo">
               <ToolLogo :logo="item.logo" :name="item.name" :size="40" decorative />
@@ -100,7 +100,7 @@ const localePath = useLocalePath()
       </div>
       <ul class="feat-list">
         <li v-for="item in featured" :key="item.slug">
-          <NuxtLink :to="localePath(`/tools/${item.slug}`)">
+          <NuxtLink :to="localePath(`/products/${item.slug}`)">
             <ToolLogo :logo="item.logo" :name="item.name" :size="32" decorative />
             <span>
               <strong>{{ item.name }}</strong>

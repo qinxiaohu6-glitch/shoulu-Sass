@@ -9,6 +9,7 @@ import { isAdmin } from '../../../utils/admin'
 import { useDb } from '../../../utils/db'
 import { createAdminTool, tagSlugError } from '../../../utils/admin-directory'
 import { slugify } from '../../../../shared/utils/catalog'
+import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 
 function readInput(body: Record<string, unknown>) {
   const str = (key: string) => String(body?.[key] ?? '').trim()
@@ -49,6 +50,17 @@ export default defineEventHandler(async (event) => {
       statusCode: 400,
       statusMessage: 'Bad Request',
       data: { message_en: 'name is required', message_zh: '名称不能为空' },
+    })
+  }
+
+  if (isReservedProductSlug(input.slug)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      data: {
+        message_en: 'That slug is reserved for a site tool.',
+        message_zh: '这个 slug 留给站内工具，不能当成产品。',
+      },
     })
   }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * /tools/:slug — ported from `shipany-dir/src/routes/tools/$slug.tsx`.
+ * /products/:slug — product detail. /tools/:slug (except dr-checker) redirects here.
  *
  * Two columns: the tool itself on the left (header, outbound button, metadata,
  * tags, collections, screenshot gallery, sticky section nav, long-form sections)
@@ -199,7 +199,7 @@ const sectionTabs = computed<SectionTabItem[]>(() => {
 const openFaq = ref<number | null>(null)
 
 const canonicalPath = computed(
-  () => `https://dirtool.com${isZh.value ? '/zh' : ''}/tools/${slug.value}`,
+  () => `https://dirtool.com${isZh.value ? '/zh' : ''}/products/${slug.value}`,
 )
 
 useSeo({
@@ -243,7 +243,7 @@ useHead({
               '@type': 'ListItem',
               position: 1,
               name: t('directory.tools'),
-              item: `https://dirtool.com${isZh.value ? '/zh' : ''}/tools`,
+              item: `https://dirtool.com${isZh.value ? '/zh' : ''}/products`,
             },
             ...(category.value
               ? [
@@ -279,7 +279,7 @@ useHead({
         {{ t('directory.discover') }}
       </NuxtLink>
       <Icon name="chevron-right" :size="14" class="shrink-0 opacity-50" />
-      <NuxtLink :to="localePath('/tools')" class="shrink-0 transition-colors hover:text-foreground">
+      <NuxtLink :to="localePath('/products')" class="shrink-0 transition-colors hover:text-foreground">
         {{ t('directory.tools') }}
       </NuxtLink>
       <Icon name="chevron-right" :size="14" class="shrink-0 opacity-50" />
@@ -338,7 +338,7 @@ useHead({
               </dt>
               <dd class="truncate text-sm font-medium">
                 <NuxtLink
-                  :to="localePath({ path: '/tools', query: { category: category.slug } })"
+                  :to="localePath({ path: '/products', query: { category: category.slug } })"
                   class="transition-colors hover:text-primary"
                 >
                   {{ category.name }}
@@ -369,7 +369,7 @@ useHead({
             <NuxtLink
               v-for="tag in tagLinks"
               :key="tag.slug"
-              :to="localePath({ path: '/tools', query: { tag: tag.slug } })"
+              :to="localePath({ path: '/products', query: { tag: tag.slug } })"
               class="inline-flex h-8 items-center rounded-full bg-secondary px-3.5 text-sm font-medium text-secondary-foreground transition hover:bg-primary/10 hover:text-primary"
             >
               #{{ tag.name }}
@@ -420,7 +420,7 @@ useHead({
         </h2>
         <NuxtLink
           v-if="category"
-          :to="localePath({ path: '/tools', query: { category: category.slug } })"
+          :to="localePath({ path: '/products', query: { category: category.slug } })"
           class="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-muted-foreground transition hover:text-foreground"
         >
           <span>{{ t('directory.view_all') }}</span>

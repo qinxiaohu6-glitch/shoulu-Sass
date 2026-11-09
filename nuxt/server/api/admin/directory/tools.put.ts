@@ -12,6 +12,7 @@
  */
 
 import { isAdmin } from '../../../utils/admin'
+import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { useDb } from '../../../utils/db'
 import { saveAdminListing, setAdminToolStatus } from '../../../utils/admin-directory'
 
@@ -53,6 +54,16 @@ export default defineEventHandler(async (event) => {
       statusCode: 400,
       statusMessage: 'Bad Request',
       data: { message_en: 'ID is required', message_zh: '缺少 ID' },
+    })
+  }
+  if (isReservedProductSlug(id)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+      data: {
+        message_en: 'That slug is reserved for a site tool.',
+        message_zh: '这个 slug 留给站内工具，不能当成产品。',
+      },
     })
   }
 

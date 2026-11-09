@@ -60,13 +60,19 @@ test('the report names Product Atlas and only the three live dirtool.com paths',
   assert.match(report.cover.brand, /https:\/\/dirtool\.com/)
   assert.deepEqual(
     report.next.map((item) => item.url.split('?')[0]),
-    ['https://dirtool.com/seo-check', 'https://dirtool.com/submit', 'https://dirtool.com/pricing'],
+    [
+      'https://dirtool.com/seo-check',
+      'https://dirtool.com/submit',
+      'https://dirtool.com/pricing',
+      'https://dirtool.com/tools',
+      'https://dirtool.com/tools/dr-checker',
+    ],
   )
   assert.match(report.next[1]?.url ?? '', /url=https%3A%2F%2Fexample\.com%2Fpricing/)
   const blob = JSON.stringify(report)
-  assert.equal(blob.includes('/tools/'), false)
   assert.equal(blob.includes('/lab'), false)
-  assert.equal(blob.includes('Domain Rating'), false)
+  assert.equal(blob.includes('keyword-research'), false)
+  assert.equal(blob.includes('Ahrefs'), false)
   assert.equal(blob.includes('50%'), false)
   assert.equal(report.fixes.length, 2)
   assert.match(report.fixes[0]?.tag ?? '', /Must fix/)
@@ -94,8 +100,9 @@ test('a real PDF carries https://dirtool.com on the cover, section 6, and every 
   assert.match(flat, /https:\/\/dirtool\.com\/seo-check/)
   assert.match(flat, /https:\/\/dirtool\.com\/submit/)
   assert.match(flat, /https:\/\/dirtool\.com\/pricing/)
-  assert.equal(flat.includes('/tools/'), false)
+  assert.match(flat, /https:\/\/dirtool\.com\/tools\/dr-checker/)
   assert.equal(flat.includes('/lab'), false)
+  assert.equal(flat.includes('keyword-research'), false)
 })
 
 test('the pdf route re-runs the audit and does not invent a file when that fails', () => {
@@ -106,7 +113,8 @@ test('the pdf route re-runs the audit and does not invent a file when that fails
   assert.ok(route.indexOf('await audit(') < route.indexOf('await renderSeoPdf'))
   assert.ok(route.indexOf('instanceof AuditError') > route.indexOf('await audit('))
   assert.equal(route.includes('INSERT'), false)
-  assert.equal(route.includes('/tools/'), false)
+  assert.equal(route.includes('keyword-research'), false)
+  assert.equal(route.includes('/lab'), false)
   assert.equal(route.includes('pagespeed'), false)
   assert.match(page, /\/api\/audit\/pdf/)
   assert.match(deal, /~30% OFF/)

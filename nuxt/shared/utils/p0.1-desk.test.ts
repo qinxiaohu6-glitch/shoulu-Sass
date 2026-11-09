@@ -157,7 +157,7 @@ test('boards drop hidden slugs and renumber from 1', () => {
   assert.match(weekly, /rankedBoard\(/)
   const rail = read('../../app/components/TopPicks.vue')
   assert.match(rail, /overrides\.value/)
-  const detail = read('../../app/pages/tools/[slug].vue')
+  const detail = read('../../app/pages/products/[slug].vue')
   assert.match(detail, /overrides\.value/)
   const catalog = read('./catalog.ts')
   assert.match(catalog, /rankedBoard\(source, overrides\.hidden, limit\)/)

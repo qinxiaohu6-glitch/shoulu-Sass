@@ -14,7 +14,8 @@ const open = ref(false)
 
 const links = computed(() => [
   { label: pick('发现', 'Discover'), to: '/' },
-  { label: pick('产品', 'Products'), to: '/tools' },
+  { label: pick('产品', 'Products'), to: '/products' },
+  { label: pick('工具', 'Tools'), to: '/tools' },
   { label: pick('周榜', 'Weekly'), to: '/weekly' },
   { label: 'Billboard', to: '/billboard' },
   { label: pick('定价', 'Pricing'), to: '/pricing' },

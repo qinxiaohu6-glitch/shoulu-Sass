@@ -52,7 +52,7 @@ const categoryName = computed(() => {
         <div class="flex items-center gap-1.5">
           <h3 class="min-w-0 truncate text-[15px] leading-tight font-semibold">
             <NuxtLink
-              :to="localePath(`/tools/${tool.slug}`)"
+              :to="localePath(`/products/${tool.slug}`)"
               class="after:absolute after:inset-0 after:rounded-xl"
             >
               {{ tool.name }}

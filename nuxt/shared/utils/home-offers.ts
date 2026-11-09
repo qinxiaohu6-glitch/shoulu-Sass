@@ -156,7 +156,7 @@ function listingOccupant(tool: OfferListing): OfferOccupant {
     name: tool.name,
     line: tool.short,
     logo: tool.logo,
-    href: `/tools/${tool.slug}`,
+    href: `/products/${tool.slug}`,
     external: false,
   }
 }

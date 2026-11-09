@@ -49,7 +49,7 @@ const groups = computed<AnswerGroup[]>(() => [
           '一个人工审核的 AI 产品目录。每个收录都有自己的页面，写清它做什么、属于哪个分类、谁做的；付费收录带一条永久 dofollow 反链，免费收录是 nofollow。',
           'A hand-reviewed directory of AI products. Every listing gets its own page with what the tool does, its category and its maker. Paid listings carry a permanent dofollow link; free listings are nofollow.',
         ),
-        link: { label: pick('看全部收录', 'Browse the directory'), to: '/tools' },
+        link: { label: pick('看全部收录', 'Browse the directory'), to: '/products' },
       },
       {
         q: pick('可以免费收录吗？', 'Can I list for free?'),

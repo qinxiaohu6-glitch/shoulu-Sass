@@ -90,6 +90,8 @@ const COPY = {
     rerun: 'Re-run the check',
     submit: 'Submit this product',
     pricing: 'See pricing',
+    tools: 'Tools',
+    dr: 'Domain Rating checker',
   },
   zh: {
     kicker: 'Product Atlas · SEO 诊断报告',
@@ -124,6 +126,8 @@ const COPY = {
     rerun: '再跑一次诊断',
     submit: '提交这个产品',
     pricing: '查看定价',
+    tools: '工具',
+    dr: 'Domain Rating 查询',
   },
 } as const
 
@@ -166,6 +170,8 @@ export function seoReportLinks(finalUrl: string, lang: SeoReportLang): SeoReport
     { label: copy.rerun, url: `${BRAND_URL}/seo-check` },
     { label: copy.submit, url: submit },
     { label: copy.pricing, url: `${BRAND_URL}/pricing` },
+    { label: copy.tools, url: `${BRAND_URL}/tools` },
+    { label: copy.dr, url: `${BRAND_URL}/tools/dr-checker` },
   ]
 }
 

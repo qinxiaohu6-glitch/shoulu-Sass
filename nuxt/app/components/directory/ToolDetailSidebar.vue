@@ -30,7 +30,7 @@ const picks = computed(() => props.topPicks.slice(0, 5))
       <ol class="space-y-2">
         <li v-for="(tool, index) in picks" :key="tool.slug">
           <NuxtLink
-            :to="localePath(`/tools/${tool.slug}`)"
+            :to="localePath(`/products/${tool.slug}`)"
             class="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-2.5 transition hover:border-primary/35"
           >
             <span
