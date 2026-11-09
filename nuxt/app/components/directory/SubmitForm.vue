@@ -42,6 +42,20 @@ const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
 const t = useDirectoryCopy()
+const { user, ensure } = useSession()
+
+/**
+ * Submitting is a signed-in action. The form is not rendered until Google
+ * login has come back to this page, and POST /api/submit refuses a missing
+ * session on its own.
+ */
+await ensure()
+const signInHref = computed(() =>
+  localePath({ path: '/sign-in', query: { next: route.fullPath } }),
+)
+if (!user.value) {
+  await navigateTo(signInHref.value)
+}
 
 const { categories: liveCategories } = useDirectoryMeta()
 const payment = await usePayment()
@@ -72,10 +86,8 @@ const form = reactive({
   category: '',
   intro: '',
   tags: [] as string[],
-  // The source reads this from the signed-in account. Anonymous submissions
-  // have no account, and a paid listing without an address has nowhere to send
-  // the receipt — nor any way for us to reach the buyer if the charge is
-  // disputed. Optional on the free tier, required once money is involved.
+  // Receipts still go to an address the submitter types. The Google account
+  // is what owns the row; this field is where the mail is sent.
   email: '',
   // Filled by the URL preview only. `submissions` already has both columns;
   // the form never sent them, so an approved listing had no logo and no maker
@@ -215,6 +227,10 @@ function mapError(code?: string): string {
 }
 
 async function submit() {
+  if (!user.value) {
+    await navigateTo(signInHref.value)
+    return
+  }
   // Paste-then-submit never blurs the URL field, so fill first, validate after.
   // Category counts too: it is a required select, and a link-only submission
   // has no other way to get one.
@@ -305,7 +321,22 @@ function reset() {
 </script>
 
 <template>
-  <div v-if="done" class="flex flex-col items-center gap-3 py-10 text-center">
+  <div v-if="!user" class="flex max-w-md flex-col items-start gap-3 py-6">
+    <h2 class="text-lg font-semibold">
+      {{ pick('提交产品需要先用 Google 登录', 'Sign in with Google to submit a product') }}
+    </h2>
+    <p class="text-sm text-muted-foreground">
+      {{ pick('登录后会回到这个页面。未登录不能填写或提交。', 'You will come back to this page. The form stays closed until you are signed in.') }}
+    </p>
+    <NuxtLink
+      :to="signInHref"
+      class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+    >
+      {{ pick('使用 Google 登录', 'Sign in with Google') }}
+    </NuxtLink>
+  </div>
+
+  <div v-else-if="done" class="flex flex-col items-center gap-3 py-10 text-center">
     <Icon name="circle-check" :size="40" class="text-emerald-500" />
     <h2 class="text-lg font-semibold">{{ t('directory.submit_success_title') }}</h2>
     <p class="max-w-md text-sm text-muted-foreground">

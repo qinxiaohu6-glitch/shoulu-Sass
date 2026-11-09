@@ -61,6 +61,11 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
     en: 'That listing belongs to a different account.',
   },
   signin_required: { status: 401, zh: '登录后才能操作。', en: 'Sign in to continue.' },
+  submit_signin_required: {
+    status: 401,
+    zh: '提交产品需要先用 Google 登录。',
+    en: 'Sign in with Google before submitting a product.',
+  },
   bad_action: { status: 400, zh: '未知的操作。', en: 'Unknown action.' },
   payment_required: {
     status: 409,

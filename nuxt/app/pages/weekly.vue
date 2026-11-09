@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { rankedBoard } from '~~/shared/utils/listing-desk'
+
 const { lang, isZh, pick } = useLang()
 const localePath = useLocalePath()
 const { categories: liveCategories } = useDirectoryMeta()
+const overrides = useOverrides()
 
 // The board slot is sold as "one row inside the leaderboard, after third
 // place". Nothing booked means no row at all.
@@ -40,7 +43,11 @@ type Panel = {
 function rankOf(week: (typeof weeks)[number] | undefined) {
   const map = new Map<string, number>()
   if (!week) return map
-  week.ranking.forEach((row, i) => map.set(row.slug, i + 1))
+  // Same filter as the rows below, so "up / down" compares the ranks a visitor
+  // actually sees after hidden products have been removed.
+  for (const row of rankedBoard(week.ranking, overrides.value.hidden)) {
+    map.set(row.slug, row.rank)
+  }
   return map
 }
 
@@ -70,11 +77,14 @@ const currentLabel = computed(() => currentRange(lang.value))
 const panels = computed<Panel[]>(() => {
   const list: Panel[] = []
 
-  const live = [...tools]
-    .map((t) => ({ slug: t.slug, votes: t.votes_week }))
-    .sort((a, b) => b.votes - a.votes)
-  const liveRows = live.map((row, i) => ({
-    rank: i + 1,
+  const live = rankedBoard(
+    [...tools]
+      .map((t) => ({ slug: t.slug, votes: t.votes_week }))
+      .sort((a, b) => b.votes - a.votes),
+    overrides.value.hidden,
+  )
+  const liveRows = live.map((row) => ({
+    rank: row.rank,
     slug: row.slug,
     votes: row.votes,
     move: { kind: 'flat' as const, delta: 0 },
@@ -89,8 +99,8 @@ const panels = computed<Panel[]>(() => {
 
   archive.value.slice(1).forEach((week, i) => {
     const prev = rankOf(archive.value[i + 2])
-    const rows = week.ranking.map((row, idx) => {
-      const rank = idx + 1
+    const rows = rankedBoard(week.ranking, overrides.value.hidden).map((row) => {
+      const rank = row.rank
       const before = prev.get(row.slug)
       const move = before === undefined
         ? { kind: 'new' as const, delta: 0 }

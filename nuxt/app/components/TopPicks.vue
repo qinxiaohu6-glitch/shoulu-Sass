@@ -11,11 +11,12 @@ const props = withDefaults(
 
 const { lang, pick } = useLang()
 const localePath = useLocalePath()
+const overrides = useOverrides()
 
 const latestWeek = computed(() =>
   [...weeks].sort((a, b) => (a.id < b.id ? 1 : -1))[0],
 )
-const rows = computed(() => boardRows(latestWeek.value, lang.value, props.limit))
+const rows = computed(() => boardRows(latestWeek.value, lang.value, props.limit, overrides.value))
 </script>
 
 <template>
