@@ -21,8 +21,9 @@ const overrides = useOverrides()
    The layout is untouched — only the words in it follow the database. */
 const { categories: liveCategories, tags: liveTags } = useDirectoryMeta()
 
-// A booked sidebar placement renders above the rail; `null` renders nothing.
-const { sidebar: sidebarAd } = await useAds()
+// Booked placements. `null` is the normal empty state: the offer card then
+// recruits, and the rail renders nothing until a campaign is actually live.
+const { board: boardAd, sidebar: sidebarAd } = await useAds()
 
 /**
  * The sidebar slot's price, read from the same table `/pricing` renders so the
@@ -117,26 +118,33 @@ const tiles = computed(() =>
 )
 
 const cats = computed(() =>
-  liveCategories.value.map((c) => {
-    const list = toolsByCategory(c.slug, lang.value, overrides.value)
-    // The card's count and vote bar have to match what the category page shows,
-    // so submitted listings are counted here too. Thumbnails stay catalogue-only:
-    // they are a preview of the curated set, and a submission may have no icon.
-    const extra = submitted.value.filter((t) => t.category === c.slug)
-    return {
-      ...localizeCategory(c, lang.value),
-      count: list.length + extra.length,
-      votes:
-        list.reduce((sum, t) => sum + t.votes_week, 0) +
-        extra.reduce((sum, t) => sum + t.votes_week, 0),
-      // Thumbnails follow the raw catalogue sequence, not the paid/featured
-      // directory order — same rule as the categories index.
-      mix: tools
-        .filter((t) => !isHiddenTool(t, overrides.value))
-        .filter((t) => t.category === c.slug)
-        .slice(0, 4)
-        .map((t) => localizeTool(t, lang.value)),
-    }
+  liveCategories.value
+    .filter((entry) => entry.status !== 'deleted')
+    .map((entry) => {
+      const model = categoryBrowseModel(
+        entry.slug,
+        tools,
+        submitted.value,
+        overrides.value.hidden,
+      )
+      return {
+        ...localizeCategory(entry, lang.value),
+        ...model,
+        links: emptyCategoryLinks(entry.slug),
+      }
+    }),
+)
+
+/**
+ * Four bookable spots where the benefit cards used to be. Occupants are real
+ * paid submissions (`plan` + `is_paid`) or a live ad. Catalogue seed products
+ * are not passed in, so an empty database stays four recruit cards.
+ */
+const offerSlots = computed(() =>
+  homeOfferSlots({
+    listings: submitted.value,
+    board: boardAd.value,
+    sidebar: sidebarAd.value,
   }),
 )
 
@@ -161,41 +169,6 @@ const proofs = computed(() => [
   pick('30 秒提交', '30-second submit'),
   pick('付费收录 dofollow', 'Dofollow on paid'),
   pick('付款成功自动上线', 'Live automatically on payment'),
-])
-
-const benefits = computed(() => [
-  {
-    title: pick('付费即得 dofollow 反链', 'A dofollow link when you pay'),
-    body: pick(
-      '付费收录给 dofollow 外链，免费收录是 nofollow —— 页面照样永久保留。',
-      'Dofollow on paid listings, nofollow on free ones — either way the page stays online.',
-    ),
-    icon: 'link',
-  },
-  {
-    title: pick('AI 搜索读得懂', 'Readable by AI search'),
-    body: pick(
-      '每个收录都带结构化数据和纯文本版本，ChatGPT、Perplexity 这类 AI 搜索可以直接引用你。',
-      'Every listing ships structured data and a plain-markdown copy, so ChatGPT and Perplexity can cite you.',
-    ),
-    icon: 'sparkles',
-  },
-  {
-    title: pick('每周一次冲榜机会', 'A weekly shot at the top'),
-    body: pick(
-      '榜单每周一重置。前三名在首页榜单里高亮，也排在周榜页最前 —— 每周重新开始，谁都有机会。',
-      'The board resets every Monday. The top three are highlighted on the home board and sit at the top of the weekly page — everyone starts level again each week.',
-    ),
-    icon: 'trophy',
-  },
-  {
-    title: pick('30 秒完成提交', 'Submitted in 30 seconds'),
-    body: pick(
-      '粘贴产品链接，我们自动填好资料，你只需确认。不用从空白表单开始。',
-      'Paste your URL, we prefill the listing, you confirm. No blank form to fill from scratch.',
-    ),
-    icon: 'clock',
-  },
 ])
 
 const faq = computed(() =>
@@ -402,20 +375,86 @@ useHead({
     <!-- ── Main + rail ──────────────────────────────────────────────────── -->
     <div class="home-layout">
       <div class="home-main">
-        <!-- What you get -->
-        <section>
+        <!-- Bookable spots. The four benefit lines moved to /pricing. -->
+        <section id="home-offers" class="home-offers" aria-labelledby="home-offers-title">
           <div class="section-head">
             <div class="section-head__title">
-              <h2>{{ pick('收录后你能得到什么', 'What you get when you list') }}</h2>
-              <p>{{ pick('四件事，每一条收录都有。', 'Four things, on every listing.') }}</p>
+              <h2 id="home-offers-title">{{ pick('这些位置可以订', 'Spots you can book') }}</h2>
+              <p>
+                {{
+                  pick(
+                    '有真实订单就展示那个产品。空着写「你的产品」，不放示例。',
+                    'A paid order shows that product. An empty spot says “Your product” and is not filled with a sample.',
+                  )
+                }}
+              </p>
             </div>
           </div>
-          <div class="get-grid">
-            <article v-for="item in benefits" :key="item.title" class="get-card">
-              <span class="get-card__ico"><Icon :name="item.icon" /></span>
-              <h3>{{ item.title }}</h3>
-              <p>{{ item.body }}</p>
-            </article>
+          <div class="offer-grid">
+            <template v-for="offer in offerSlots" :key="offer.id">
+              <a
+                v-if="offer.occupant?.external"
+                class="offer-card is-taken"
+                :href="offer.occupant.href"
+                rel="sponsored nofollow noopener"
+                target="_blank"
+              >
+                <span class="offer-card__logo">
+                  <ToolLogo :logo="offer.occupant.logo" :name="offer.occupant.name" :size="40" decorative />
+                </span>
+                <span class="offer-card__body">
+                  <span class="offer-card__kicker">
+                    {{ pick(offer.name.zh, offer.name.en) }}
+                    <b>{{ offer.price }}</b>
+                    <small>{{ pick(offer.unit.zh, offer.unit.en) }}</small>
+                  </span>
+                  <strong>{{ offer.occupant.name }}</strong>
+                  <span v-if="offer.occupant.line" class="offer-card__line">{{ offer.occupant.line }}</span>
+                  <span class="offer-card__detail">{{ pick(offer.detail.zh, offer.detail.en) }}</span>
+                  <span class="offer-card__cta">
+                    {{ pick('查看', 'View') }}
+                    <Icon name="arrow-right" :size="14" />
+                  </span>
+                </span>
+              </a>
+              <NuxtLink
+                v-else
+                class="offer-card"
+                :class="{ 'is-taken': Boolean(offer.occupant) }"
+                :to="localePath(offer.occupant ? offer.occupant.href : offer.href)"
+              >
+                <span class="offer-card__logo">
+                  <ToolLogo
+                    v-if="offer.occupant"
+                    :logo="offer.occupant.logo"
+                    :name="offer.occupant.name"
+                    :size="40"
+                    decorative
+                  />
+                  <span v-else class="offer-card__ghost" aria-hidden="true">+</span>
+                </span>
+                <span class="offer-card__body">
+                  <span class="offer-card__kicker">
+                    {{ pick(offer.name.zh, offer.name.en) }}
+                    <b>{{ offer.price }}</b>
+                    <small>{{ pick(offer.unit.zh, offer.unit.en) }}</small>
+                  </span>
+                  <strong>{{ offer.occupant ? offer.occupant.name : pick('你的产品', 'Your product') }}</strong>
+                  <span class="offer-card__line">
+                    {{
+                      offer.occupant
+                        ? offer.occupant.line
+                        : pick('这个位置可订', 'This spot is open')
+                    }}
+                  </span>
+                  <span class="offer-card__detail">{{ pick(offer.detail.zh, offer.detail.en) }}</span>
+                  <span class="offer-card__cta">
+                    {{ offer.occupant ? pick('查看', 'View') : pick('预订这个位置', 'Book this spot') }}
+                    <Icon name="arrow-right" :size="14" />
+                  </span>
+                </span>
+              </NuxtLink>
+            </template>
           </div>
         </section>
 
@@ -531,7 +570,7 @@ useHead({
         </section>
 
         <!-- Browse by category -->
-        <section>
+        <section id="browse-by-category">
           <div class="section-head">
             <div class="section-head__title">
               <h2>{{ pick('按分类浏览', 'Browse by category') }}</h2>
@@ -543,43 +582,70 @@ useHead({
           </div>
 
           <div class="cat-grid">
-            <NuxtLink
+            <article
               v-for="cat in cats"
               :key="cat.slug"
               class="cat-card"
-              :to="localePath(`/categories/${cat.slug}`)"
+              :class="{ 'is-open': cat.empty }"
             >
-              <span class="cat-card__mix" aria-hidden="true">
-                <img
-                  v-for="tool in cat.mix"
-                  :key="tool.slug"
-                  :src="`/${tool.logo}`"
-                  alt=""
-                  width="18"
-                  height="18"
-                  loading="lazy"
-                >
+              <div v-if="cat.empty" class="cat-card__open">
+                <span class="cat-card__icon"><Icon :name="cat.icon" /></span>
+                <span class="cat-card__body">
+                  <span class="cat-card__title">{{ cat.name }}</span>
+                  <span class="cat-card__desc">
+                    {{ pick('这个分类还没有产品。', 'No products in this category yet.') }}
+                  </span>
+                  <span class="cat-card__actions">
+                    <NuxtLink :to="localePath(cat.links.list)">
+                      {{ pick('成为该分类第一个', 'Be the first in this category') }}
+                    </NuxtLink>
+                    <NuxtLink :to="localePath(cat.links.sponsor)">
+                      {{ pick('赞助这个分类', 'Sponsor this category') }}
+                    </NuxtLink>
+                  </span>
+                </span>
+              </div>
+              <NuxtLink
+                v-else
+                class="cat-card__fill"
+                :to="localePath(`/categories/${cat.slug}`)"
+              >
                 <span
-                  v-for="n in Math.max(0, 4 - cat.mix.length)"
-                  :key="`empty-${n}`"
-                  class="cat-card__mix-empty"
+                  v-if="cat.thumbs.length"
+                  class="cat-card__mix"
+                  :data-n="cat.thumbs.length"
                   aria-hidden="true"
-                />
-              </span>
-              <span class="cat-card__body">
-                <span class="cat-card__title">
-                  {{ cat.name }}
-                  <span class="cat-card__count">{{ cat.count }} {{ pick('个产品', 'products') }}</span>
+                >
+                  <img
+                    v-for="tool in cat.thumbs"
+                    :key="tool.slug"
+                    :src="logoSrc(tool.logo)"
+                    alt=""
+                    width="18"
+                    height="18"
+                    loading="lazy"
+                  >
                 </span>
-                <span class="cat-card__desc">{{ cat.desc }}</span>
-              </span>
-              <span class="cat-card__heat" :title="`${cat.votes} ${pick('票 / 本周', 'votes this week')}`">
-                <span class="cat-card__bar">
-                  <span :style="{ width: `${Math.round((cat.votes / maxCatVotes) * 100)}%` }" />
+                <span v-else class="cat-card__icon"><Icon :name="cat.icon" /></span>
+                <span class="cat-card__body">
+                  <span class="cat-card__title">
+                    {{ cat.name }}
+                    <span class="cat-card__count">{{ cat.count }} {{ pick('个产品', 'products') }}</span>
+                  </span>
+                  <span class="cat-card__desc">{{ cat.desc }}</span>
                 </span>
-                <span class="cat-card__num">{{ cat.votes }}</span>
-              </span>
-            </NuxtLink>
+                <span
+                  v-if="cat.showVoteBar"
+                  class="cat-card__heat"
+                  :title="`${cat.votes} ${pick('票 / 本周', 'votes this week')}`"
+                >
+                  <span class="cat-card__bar">
+                    <span :style="{ width: `${Math.round((cat.votes / maxCatVotes) * 100)}%` }" />
+                  </span>
+                  <span class="cat-card__num">{{ cat.votes }}</span>
+                </span>
+              </NuxtLink>
+            </article>
           </div>
         </section>
 

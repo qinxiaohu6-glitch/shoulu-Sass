@@ -79,11 +79,21 @@ const requestedPlan = ref(planFromQuery(route.query.plan))
 /** The plan actually selected in the form — one of `tiers`' ids, free included. */
 const plan = ref<string>(requestedPlan.value || DEFAULT_PLAN)
 
+/** Homepage empty-category cards link here with `?category=<slug>`. */
+function categoryFromQuery(raw: unknown): string {
+  const value = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim()
+  if (!value) return ''
+  const known = liveCategories.value.some(
+    (entry) => entry.slug === value && entry.status !== 'deleted',
+  )
+  return known ? value : ''
+}
+
 const form = reactive({
   name: '',
   website: '',
   tagline: '',
-  category: '',
+  category: categoryFromQuery(route.query.category),
   intro: '',
   tags: [] as string[],
   // Receipts still go to an address the submitter types. The Google account

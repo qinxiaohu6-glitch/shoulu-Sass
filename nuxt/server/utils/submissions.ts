@@ -671,6 +671,10 @@ export function publicTool(row: SubmissionRow, votesWeek = 0): Tool {
     // invoice did not make.
     is_paid: isPaidPlan(row.plan) && Boolean(row.paid_at),
     featured_until: '',
+    // Which tier was paid for. The homepage offer slots read this so a real
+    // Featured or Pro order can replace its recruit card. It does not change
+    // rank, the dofollow flag, or what checkout charges.
+    plan: row.plan,
     votes_total: votes,
     votes_week: votes,
     created_at: isoDate(row.created_at),

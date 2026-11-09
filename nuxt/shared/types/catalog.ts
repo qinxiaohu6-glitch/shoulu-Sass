@@ -57,6 +57,12 @@ export interface Tool {
   /** Editorial sections. Absent on most records until the admin fills them. */
   detail_en?: PartialDetail
   detail_zh?: PartialDetail
+  /**
+   * The tier a community submission actually bought (`free`, `standard`,
+   * `featured`, `pro`). Catalogue rows omit it. Display only — checkout never
+   * reads this field.
+   */
+  plan?: string
 }
 
 export interface Category {

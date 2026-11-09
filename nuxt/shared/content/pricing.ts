@@ -362,6 +362,42 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   },
 ]
 
+/**
+ * The four lines that used to sit on the homepage under "What you get when
+ * you list". They describe the listing; they are not a placement for sale,
+ * so they live on the pricing page instead of the homepage grid.
+ */
+export const listingBenefits: { title: Pair; body: Pair }[] = [
+  {
+    title: { en: 'A dofollow link when you pay', zh: '付费即得 dofollow 反链' },
+    body: {
+      en: 'Dofollow on paid listings, nofollow on free ones — either way the page stays online.',
+      zh: '付费收录给 dofollow 外链，免费收录是 nofollow —— 页面照样永久保留。',
+    },
+  },
+  {
+    title: { en: 'Readable by AI search', zh: 'AI 搜索读得懂' },
+    body: {
+      en: 'Every listing ships structured data and a plain-markdown copy, so ChatGPT and Perplexity can cite you.',
+      zh: '每个收录都带结构化数据和纯文本版本，ChatGPT、Perplexity 这类 AI 搜索可以直接引用你。',
+    },
+  },
+  {
+    title: { en: 'A weekly shot at the top', zh: '每周一次冲榜机会' },
+    body: {
+      en: 'The board resets every Monday. The top three are highlighted on the home board and sit at the top of the weekly page — everyone starts level again each week.',
+      zh: '榜单每周一重置。前三名在首页榜单里高亮，也排在周榜页最前 —— 每周重新开始，谁都有机会。',
+    },
+  },
+  {
+    title: { en: 'Submitted in 30 seconds', zh: '30 秒完成提交' },
+    body: {
+      en: 'Paste your URL, we prefill the listing, you confirm. No blank form to fill from scratch.',
+      zh: '粘贴产品链接，我们自动填好资料，你只需确认。不用从空白表单开始。',
+    },
+  },
+]
+
 /* -------------------------------------------------------------------------
    what a plan costs, in minor units
 
