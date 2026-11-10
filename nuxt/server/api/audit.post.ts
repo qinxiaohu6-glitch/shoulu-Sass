@@ -1,8 +1,11 @@
 /**
  * POST /api/audit — fetch a public page and run the 20 on-page checks.
  *
- * Four outbound requests per call (the page, then llms.txt / robots.txt /
- * sitemap.xml), so the endpoint is capped. The cap is per isolate, which is
+ * Four reads per call (the page, then llms.txt / robots.txt / sitemap.xml).
+ * A host other than this Worker is an outbound fetch. This Worker's own
+ * hosts are an in-process `localFetch` — a public fetch of the custom domain
+ * is answered 522 by the edge, because the zone has no origin behind it.
+ * The endpoint is capped either way. The cap is per isolate, which is
  * the honest description of it: Workers spin up many short-lived isolates, so
  * this bounds what one of them will do for one address, not the fleet. The
  * real ceiling on cost is the 12s timeout and the 3 MB read cap inside
@@ -15,7 +18,8 @@
  */
 
 import type { H3Event } from 'h3'
-import { AUDIT_ERRORS, AuditError, audit } from '../utils/audit'
+import { AUDIT_ERRORS, AuditError } from '../utils/audit'
+import { auditForRequest } from '../utils/audit-self'
 import { clientIp } from '../utils/http'
 
 const WINDOW_MS = 60_000
@@ -71,7 +75,7 @@ export default defineEventHandler(async (event) => {
     : 'en'
 
   try {
-    const result = await audit(raw, lang)
+    const result = await auditForRequest(event, raw, lang)
     setHeader(event, 'cache-control', 'no-store')
     return result
   } catch (err) {

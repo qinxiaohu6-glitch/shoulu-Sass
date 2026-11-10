@@ -8,7 +8,8 @@
  */
 
 import type { H3Event } from 'h3'
-import { AUDIT_ERRORS, AuditError, audit } from '../../utils/audit'
+import { AUDIT_ERRORS, AuditError } from '../../utils/audit'
+import { auditForRequest } from '../../utils/audit-self'
 import { clientIp } from '../../utils/http'
 import { buildSeoReport, type SeoReportLang } from '~~/shared/utils/seo-report'
 import { renderSeoPdf } from '~~/shared/utils/seo-pdf'
@@ -55,7 +56,7 @@ export default defineEventHandler(async (event) => {
     : 'en'
 
   try {
-    const result = await audit(raw, lang)
+    const result = await auditForRequest(event, raw, lang)
     const report = buildSeoReport(result, lang)
     const bytes = await renderSeoPdf(report)
     setHeader(event, 'content-type', 'application/pdf')
