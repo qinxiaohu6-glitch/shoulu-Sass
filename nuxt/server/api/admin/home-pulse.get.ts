@@ -32,7 +32,7 @@ const PRICE_ROWS: { kind: PriceKind; id: string; label: string }[] = [
   { kind: 'listing', id: 'pro', label: '专业' },
   { kind: 'sidebar', id: '1', label: '侧栏 1 周' },
   { kind: 'sidebar', id: '4', label: '侧栏 4 周' },
-  { kind: 'billboard', id: 'entry', label: 'Billboard 地板价' },
+  { kind: 'billboard', id: 'floor', label: 'Billboard 地板价' },
 ]
 
 export default defineEventHandler(async (event) => {

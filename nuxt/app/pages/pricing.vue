@@ -6,7 +6,7 @@
  * Why not the source's plans: the source sells SaaS subscriptions — Starter $9/mo,
  * Pro $29/mo, Enterprise $99/mo, in monthly / yearly / lifetime groups, with
  * credits and API access as the benefits. This build sells listings: Free,
- * Standard $19, Featured $39, Pro $69, all one-time, plus two weekly ad slots. The
+ * Standard $9, Featured $19, Pro $29, all one-time, plus a weekly sidebar. The
  * credits ledger the source's tiers pay out does not exist here, so porting those
  * three cards verbatim would advertise something the site cannot deliver.
  *
@@ -86,7 +86,7 @@ const plans = computed<PricingPlan[]>(() =>
       originalPrice: quote.strikeLabel ?? undefined,
       featured: tier.id === 'featured',
       badge: tier.badge ? t(tier.badge) : undefined,
-      kicker: quote.active ? pick('BLACK FRIDAY · 约 30% OFF', 'BLACK FRIDAY · ~30% OFF') : undefined,
+      kicker: quote.active ? pick('上线定价', 'LAUNCH PRICING') : undefined,
       features: tl(tier.features),
       buttonText: listingCta(tier.id, tier.name),
     }
@@ -105,6 +105,8 @@ const groups = computed<PricingGroup[]>(() => [
 function choosePlan(plan: PricingPlan) {
   router.push({ path: localePath('/submit'), query: { plan: plan.id } })
 }
+
+const floorLabel = computed(() => skuQuote('billboard', 'floor').priceLabel)
 
 function band(kind: 'listing' | 'billboard', ids: string[]) {
   return ids.map((id) => skuQuote(kind, id).priceLabel).join(' / ')
@@ -127,12 +129,12 @@ const steps = computed(() => [
     n: '2',
     title: pick('被看到', 'Get seen'),
     price: pick(
-      `Billboard 从 $15 起 · 右栏 ${skuQuote('sidebar', '1').priceLabel}/周`,
-      `Billboard from $15 · sidebar ${skuQuote('sidebar', '1').priceLabel}/wk`,
+      `Billboard 从 ${floorLabel.value} 起 · 右栏 ${skuQuote('sidebar', '1').priceLabel}/周`,
+      `Billboard from ${floorLabel.value} · sidebar ${skuQuote('sidebar', '1').priceLabel}/wk`,
     ),
     body: pick(
-      '自己出价，从 $15 起，一次付清。黑五不降低 Billboard 地板价。右栏仍按周。',
-      'Name your price from $15, one-time. Black Friday does not lower the Billboard floor. Sidebar stays weekly.',
+      `自己出价，从 ${floorLabel.value} 起，一次付清。冷启动地板，此前从 $15 起。右栏仍按周。`,
+      `Name your price from ${floorLabel.value}, one-time. Cold-start floor; was from $15. Sidebar stays weekly.`,
     ),
     cta: pick('看 Billboard', 'See Billboard'),
     to: '#ads',
@@ -153,7 +155,7 @@ function salePhrase(quote: { priceLabel: string; strikeLabel: string | null }) {
 const scenarios = computed(() => {
   const standard = salePhrase(skuQuote('listing', 'standard'))
   const featured = salePhrase(skuQuote('listing', 'featured'))
-  const entry = salePhrase(skuQuote('billboard', 'entry'))
+  const entry = salePhrase(skuQuote('billboard', 'floor'))
   const billboardTo = paymentReady.value ? `${localePath('/billboard')}#claim` : invoiceMail('Billboard')
   return [
     {
@@ -397,11 +399,14 @@ useHead({
               <span class="text-sm font-medium">Billboard</span>
               <span class="text-right">
                 <span class="text-sm text-muted-foreground">{{ pick('从', 'from') }}</span>
-                <span class="ml-1 font-serif text-3xl tracking-tight">$15</span>
+                <span class="ml-1 font-serif text-3xl tracking-tight">{{ floorLabel }}</span>
               </span>
             </div>
             <p class="text-[11px] font-semibold tracking-wide text-muted-foreground">
-              {{ pick('自己出价 · 黑五不减地板价', 'Name your price · Black Friday does not cut the floor') }}
+              {{ pick('自己出价 · 冷启动地板', 'Name your price · cold-start floor') }}
+            </p>
+            <p class="mt-1 text-xs text-muted-foreground">
+              {{ pick('此前从 $15 起。竞价步进 +$1。', 'Was from $15. Bid step +$1.') }}
             </p>
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
               {{
@@ -417,14 +422,14 @@ useHead({
                 :to="`${localePath('/billboard')}#claim`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
-                {{ pick('认领展示位 · $15 起', 'Claim your spot · from $15') }}
+                {{ pick(`认领展示位 · ${floorLabel} 起`, `Claim your spot · from ${floorLabel}`) }}
               </NuxtLink>
               <a
                 v-else
                 :href="invoiceMail('Billboard')"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
-                {{ pick('索取发票 · $15 起', 'Request invoice · from $15') }}
+                {{ pick(`索取发票 · ${floorLabel} 起`, `Request invoice · from ${floorLabel}`) }}
               </a>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
@@ -464,13 +469,7 @@ useHead({
               </li>
             </ul>
             <p class="mt-4 text-xs text-muted-foreground">
-              <s v-if="skuQuote('sidebar', '4').strikeLabel" class="mr-1">{{ skuQuote('sidebar', '4').strikeLabel }}</s>
-              {{
-                pick(
-                  `连投 4 周 ${skuQuote('sidebar', '4').priceLabel}`,
-                  `4 weeks ${skuQuote('sidebar', '4').priceLabel}`,
-                )
-              }}
+              {{ t(plan.bundle) }}
             </p>
             <div class="mt-auto pt-6">
               <!--
@@ -478,7 +477,7 @@ useHead({
                 submission. `/book-ad` reads the slot from the query and shows
                 only the weeks still open; sending this to `/submit` used to ask
                 for a product name and category for something that is not a
-                product, and could only ever charge the single legacy $29.
+                product, and could only ever charge the retired board amount.
               -->
               <NuxtLink
                 :to="`${localePath('/book-ad')}?slot=${plan.id}&weeks=1`"
@@ -501,8 +500,8 @@ useHead({
           {{
             promoOn
               ? pick(
-                  `页面价格即为实付。发票确认后上线。Black Friday 截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
-                  `The price on the page is what you pay. Invoice confirmed, then it goes live. Black Friday ends ${deadline} Asia/Shanghai. No promise of search rank.`,
+                  `页面价格即为实付。发票确认后上线。上线定价截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
+                  `The price on the page is what you pay. Invoice confirmed, then it goes live. Launch pricing ends ${deadline} Asia/Shanghai. No promise of search rank.`,
                 )
               : pick(
                   '页面价格即为实付。发票确认后上线。不承诺搜索排名。',

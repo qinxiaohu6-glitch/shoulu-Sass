@@ -107,13 +107,12 @@ test('offer slots keep the published prices and stay empty without a real order'
     slots.map((slot) => slot.id),
     ['featured', 'pro', 'billboard', 'sidebar'],
   )
-  assert.equal(slots[0]?.price, '$39')
-  assert.equal(slots[1]?.price, '$69')
-  assert.equal(slots[2]?.price, '$29')
-  assert.equal(slots[3]?.price, '$19')
+  assert.equal(slots[0]?.price, '$19')
+  assert.equal(slots[1]?.price, '$29')
+  assert.equal(slots[2]?.price, 'from $10')
+  assert.equal(slots[3]?.price, '$9')
   assert.equal(slots[0]?.price, tiers.find((tier) => tier.id === 'featured')?.price)
   assert.equal(slots[1]?.price, tiers.find((tier) => tier.id === 'pro')?.price)
-  assert.equal(slots[2]?.price, BILLBOARD_TIERS.find((tier) => tier.id === 'standard')?.price)
   assert.equal(slots[3]?.price, adPlans.find((plan) => plan.id === 'sidebar')?.price)
   assert.equal(slots.every((slot) => slot.occupant === null), true)
   assert.deepEqual(slots[0]?.href, { path: '/submit', query: { plan: 'featured' } })
@@ -124,14 +123,14 @@ test('offer slots keep the published prices and stay empty without a real order'
   assert.equal(slots[2]?.flag, 'BILLBOARD')
   assert.equal(slots[0]?.detail.zh, '7 天置顶 + 首页卡')
   assert.equal(slots[1]?.detail.zh, '分类置顶 90 天')
-  assert.equal(offerSpotLine(slots[0]!, 'zh'), '精选 $39 一次性')
-  assert.equal(offerSpotLine(slots[0]!, 'en'), 'Featured $39 one-time')
-  assert.equal(offerSpotLine(slots[1]!, 'zh'), '专业 $69 一次性')
-  assert.equal(offerSpotLine(slots[1]!, 'en'), 'Pro $69 one-time')
-  assert.equal(offerSpotLine(slots[2]!, 'zh'), 'Billboard $29 一次性')
-  assert.equal(offerSpotLine(slots[2]!, 'en'), 'Billboard $29 one-time')
-  assert.equal(offerSpotLine(slots[3]!, 'zh'), '右栏位 $19/周')
-  assert.equal(offerSpotLine(slots[3]!, 'en'), 'Sidebar slot $19/week')
+  assert.equal(offerSpotLine(slots[0]!, 'zh'), '精选 $19 一次性')
+  assert.equal(offerSpotLine(slots[0]!, 'en'), 'Featured $19 one-time')
+  assert.equal(offerSpotLine(slots[1]!, 'zh'), '专业 $29 一次性')
+  assert.equal(offerSpotLine(slots[1]!, 'en'), 'Pro $29 one-time')
+  assert.equal(offerSpotLine(slots[2]!, 'zh'), 'Billboard 从 $10 起 一次性')
+  assert.equal(offerSpotLine(slots[2]!, 'en'), 'Billboard from $10 one-time')
+  assert.equal(offerSpotLine(slots[3]!, 'zh'), '右栏位 $9/周')
+  assert.equal(offerSpotLine(slots[3]!, 'en'), 'Sidebar slot $9/week')
   assert.equal(slots.some((slot) => /spots left|\d+\/\d+/.test(offerSpotLine(slot, 'en'))), false)
   assert.equal(slots.some((slot) => /周租|\/week board|Board slot/.test(`${slot.name.en} ${slot.detail.en}`)), false)
 })
@@ -224,11 +223,11 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   )
   assert.deepEqual(
     tiers.map((tier) => `${tier.id}:${tier.price}`),
-    ['free:$0', 'standard:$19', 'featured:$39', 'pro:$69'],
+    ['free:$0', 'standard:$9', 'featured:$19', 'pro:$29'],
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}`),
-    ['sidebar:$19'],
+    ['sidebar:$9'],
   )
   assert.deepEqual(
     BILLBOARD_TIERS.map((tier) => `${tier.id}:${tier.price}`),

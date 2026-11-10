@@ -36,55 +36,46 @@ function row(partial: Partial<BillboardRow> & Pick<BillboardRow, 'id' | 'tier' |
   }
 }
 
-test('listing prices stay locked and Billboard is the only new price set', () => {
+test('listing prices are the cold-start charges; Billboard tiers stay storage labels', () => {
   assert.deepEqual(
     tiers.map((tier) => `${tier.id}:${tier.price}:${tier.amountCents}`),
-    ['free:$0:0', 'standard:$19:1900', 'featured:$39:3900', 'pro:$69:6900'],
+    ['free:$0:0', 'standard:$9:900', 'featured:$19:1900', 'pro:$29:2900'],
   )
   assert.deepEqual(
     BILLBOARD_TIERS.map((tier) => `${tier.id}:${tier.price}:${tier.amountCents}`),
     ['entry:$15:1500', 'standard:$29:2900', 'prime:$49:4900'],
   )
   assert.deepEqual(
-    adPlans.map((plan) => `${plan.id}:${plan.price}:${plan.weeklyCents}`),
-    ['sidebar:$19:1900'],
+    adPlans.map((plan) => `${plan.id}:${plan.price}:${plan.weeklyCents}:${plan.bundleCents}`),
+    ['sidebar:$9:900:3200'],
   )
   assert.equal(billboardStandardCents(), 2900)
   assert.equal(planAmountCents('ad'), 2900)
-  assert.equal(planAmountCents('standard'), 1900)
-  assert.equal(adPriceCents('sidebar', 1), 1900)
-  assert.equal(adPriceCents('sidebar', 4), 6500)
+  assert.equal(planAmountCents('standard'), 900)
+  assert.equal(adPriceCents('sidebar', 1), 900)
+  assert.equal(adPriceCents('sidebar', 4), 3200)
+  assert.equal(adPriceCents('sidebar', 2), 0)
   assert.equal(adPriceCents('board', 1), 0)
   assert.equal(adPriceCents('board', 4), 0)
 })
 
-test('campaign strikes the list price and stops at the deadline', () => {
+test('percent-off stays at zero and the countdown clock still ends', () => {
   const before = Date.parse('2026-12-01T06:58:59+08:00')
   const atEnd = Date.parse(BLACK_FRIDAY.endsAt)
   assert.equal(campaignDeadlineShanghai(), '2026-12-01 06:59')
   assert.equal(campaignActive(before), true)
   assert.equal(campaignActive(atEnd), false)
   assert.equal(campaignActive(before, false), false)
+  assert.equal(BLACK_FRIDAY.off, 0)
 
-  const standard = quoteCents(1900, before)
-  assert.equal(standard.listLabel, '$19')
-  assert.equal(standard.priceLabel, '$13')
-  assert.equal(standard.strikeLabel, '$19')
-  assert.equal(quoteCents(3900, before).priceLabel, '$27')
-  assert.equal(quoteCents(3900, before).strikeLabel, '$39')
-  assert.equal(quoteCents(6900, before).priceLabel, '$48')
-  assert.equal(quoteCents(6900, before).strikeLabel, '$69')
-  assert.equal(quoteCents(2900, before).priceLabel, '$20')
-  assert.equal(quoteCents(4900, before).priceLabel, '$34')
-  assert.equal(quoteCents(1900, before, 0).priceLabel, '$13')
-
-  const entry = quoteCents(1500, before, 1500)
-  assert.equal(entry.priceLabel, '$15')
-  assert.equal(entry.strikeLabel, null)
-
-  const after = quoteCents(1900, atEnd)
-  assert.equal(after.priceLabel, '$19')
-  assert.equal(after.strikeLabel, null)
+  const standard = quoteCents(900, before)
+  assert.equal(standard.priceLabel, '$9')
+  assert.equal(standard.strikeLabel, null)
+  assert.equal(quoteCents(1900, before).priceLabel, '$19')
+  assert.equal(quoteCents(1900, before).strikeLabel, null)
+  assert.equal(quoteCents(1500, before, 1500).priceLabel, '$15')
+  assert.equal(quoteCents(1500, before, 1500).strikeLabel, null)
+  assert.equal(saleCents(1900), 1900)
   assert.equal(saleCents(0), 0)
 })
 

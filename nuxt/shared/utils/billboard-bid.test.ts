@@ -24,18 +24,18 @@ const board: BidOccupant[] = [
   { url: 'https://seven.example', amountCents: 1000, paidAt: 7 },
 ]
 
-test('aim rank is occupant + $1, and the $15 floor wins when that is higher', () => {
+test('aim rank is occupant + $1, and the $10 floor wins when that is higher', () => {
   assert.equal(amountToTakeRank(1, board), 3100)
   assert.equal(amountToTakeRank(2, board), 2800)
   assert.equal(amountToTakeRank(5, board), 2100)
   assert.equal(amountToTakeRank(6, board), 1600)
-  assert.equal(amountToTakeRank(7, board), 1500)
+  assert.equal(amountToTakeRank(7, board), 1100)
   assert.equal(rankForPayment(3100, board).rank, 1)
   assert.equal(rankForPayment(2100, board).rank, 5)
   assert.equal(rankForPayment(1500, board).rank, 7)
   assert.equal(rankForPayment(5000, board).rank, 1)
-  assert.equal(rankForPayment(1000, board).chargeCents, 1500)
-  assert.equal(rankForPayment(1000, board).rank, 7)
+  assert.equal(rankForPayment(1000, board).chargeCents, 1000)
+  assert.equal(rankForPayment(1000, board).rank, 8)
 })
 
 test('a same-URL top-up stacks before the rank is predicted', () => {
@@ -47,7 +47,8 @@ test('a same-URL top-up stacks before the rank is predicted', () => {
 })
 
 test('the floor clamps, fractional dollars are refused, and the name comes from the host', () => {
-  assert.equal(clampBillboardBid(1000), 1500)
+  assert.equal(clampBillboardBid(1000), 1000)
+  assert.equal(clampBillboardBid(500), 1000)
   assert.equal(clampBillboardBid(3100), 3100)
   assert.equal(clampBillboardBid(1550), null)
   assert.equal(clampBillboardBid(1_000_001), null)
@@ -58,7 +59,7 @@ test('the floor clamps, fractional dollars are refused, and the name comes from 
     email: 'Buyer@Example.com',
     amountCents: 1000,
   })
-  assert.equal(draft?.amountCents, 1500)
+  assert.equal(draft?.amountCents, 1000)
   assert.equal(draft?.name, 'Pancake')
   assert.equal(draft?.published, false)
   assert.equal(draft?.paidAt, null)

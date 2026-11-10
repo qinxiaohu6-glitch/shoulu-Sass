@@ -1,27 +1,24 @@
 /**
- * One campaign clock for every strikethrough and every checkout.
+ * Launch-pricing clock for the countdown shell and the anchor strikethroughs.
  *
- * `scope` is the set of SKUs that actually charge the sale price. A card
- * outside this set must not draw a strikethrough. Flip `enabled` off to drop
- * the bar, the float, and every sale at once. After `endsAt` they drop on
- * their own, using the server clock.
- */
-
-/**
- * Billboard is pay-what-you-want from $15. The campaign does not discount
- * that floor. Launch listings and the sidebar still take the sale price.
- * The homepage promo bar may still *display* Prime $49 → $34 as a narrative
- * strikethrough; that figure is not a Billboard charge.
+ * Live charges are the list prices in `pricing.ts`. `off` stays 0 so a
+ * percentage never rewrites them. Strikes are explicit previous list prices
+ * (`anchorCents`), not this rate. Flip `enabled` off to drop the bar, the
+ * float, and the strikes. After `endsAt` they drop on their own; the live
+ * prices stay. Billboard's floor is not in `scope` and is not struck.
  */
 export const CAMPAIGN_SCOPE = ['listing', 'sidebar'] as const
 export type CampaignScope = (typeof CAMPAIGN_SCOPE)[number]
 
 export const CAMPAIGN = {
   enabled: true,
-  /** Exclusive end: 2026-12-01 06:59 Asia/Shanghai. */
+  /** Exclusive end: 2026-12-01 06:59 Asia/Shanghai. Countdown shell only. */
   endsAt: '2026-12-01T06:59:00+08:00',
-  /** Taken off the current list price. The list price itself does not move. */
-  off: 0.3,
+  /**
+   * Percent taken off the list price. Cold start keeps this at 0: display
+   * price equals the charge. Do not turn a percentage back on to fake a sale.
+   */
+  off: 0,
   scope: CAMPAIGN_SCOPE,
 } as const
 
@@ -52,7 +49,10 @@ export function campaignClockMs(iso = CAMPAIGN.endsAt): number | null {
   return Number.isFinite(ms) ? ms : null
 }
 
-/** Nearest whole dollar after `off`, never above the list price. */
+/**
+ * Nearest whole dollar after `off`, never above the list price.
+ * Launch pricing passes `off: 0`, which returns the list price unchanged.
+ */
 export function saleCents(listCents: number, off = CAMPAIGN.off): number {
   if (!Number.isInteger(listCents) || listCents <= 0) return 0
   const dollars = Math.round((listCents * (1 - off)) / 100)

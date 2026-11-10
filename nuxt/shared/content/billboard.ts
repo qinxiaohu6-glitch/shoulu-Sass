@@ -1,14 +1,13 @@
 /**
  * Billboard — the one price table for the homepage Top 10 and /billboard.
  *
- * The live board is pay-what-you-want from $15 (`shared/utils/billboard-bid.ts`).
- * These three tiers are no longer the claim UI. `tierForBid` still stores one
- * of these ids on a row so older reads keep a label; public order is the
- * summed `amount_cents`, not the tier. Black Friday does not discount the
- * $15 floor. The promo bar's Prime $49 → $34 line is display-only.
+ * The live board is pay-what-you-want from the floor in
+ * `shared/utils/billboard-bid.ts` (`BILLBOARD_FLOOR_CENTS`). These three tiers
+ * are storage labels for `tierForBid`, not claim prices. Public order is the
+ * summed `amount_cents`, not the tier. The floor is not struck as a discount.
  *
  * Set `BLACK_FRIDAY.enabled` to false to hide the promo bar and the strikes
- * immediately. After `endsAt` they hide on their own.
+ * immediately. After `endsAt` they hide on their own. Live prices stay.
  */
 
 export type BillboardTierId = 'entry' | 'standard' | 'prime'
@@ -20,8 +19,8 @@ export type BillboardTier = {
   amountCents: number
   price: string
   /**
-   * Optional minimum. Entry is 0: the campaign discounts every Billboard tier.
-   * A positive floor would keep the list price instead of a deeper cut.
+   * Unused by the bid floor. Claim prices read `BILLBOARD_FLOOR_CENTS`.
+   * These rows stay as storage labels for `tierForBid`.
    */
   floorCents: number
   name: { en: string; zh: string }

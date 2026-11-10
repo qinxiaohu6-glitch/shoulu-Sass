@@ -110,7 +110,7 @@ export interface SubmitTier {
   recommended?: boolean
 }
 
-/** `SUBMIT_TIERS` — free review, or $39 for immediate publication. */
+/** Source-shaped tiers. Checkout does not read this table; `/submit` uses `tiers`. */
 export const SUBMIT_TIERS: SubmitTier[] = [
   {
     id: 'free',
@@ -123,8 +123,8 @@ export const SUBMIT_TIERS: SubmitTier[] = [
   {
     id: 'premium',
     nameKey: 'dir.submit.plan_premium',
-    price: '$39',
-    priceInCents: 3900,
+    price: '$19',
+    priceInCents: 1900,
     featuredDays: 30,
     featureKeys: [
       'dir.submit.plan_premium_f1',
@@ -152,7 +152,7 @@ export const SUBMIT_FAQ_ITEMS: SubmitFaqItem[] = [
   {
     questionKey: 'dir.submit.faq_q2',
     answerKey: 'dir.submit.faq_a2',
-    params: { price: '$39', days: 30 },
+    params: { price: '$19', days: 30 },
   },
   { questionKey: 'dir.submit.faq_q3', answerKey: 'dir.submit.faq_a3' },
   { questionKey: 'dir.submit.faq_q4', answerKey: 'dir.submit.faq_a4' },

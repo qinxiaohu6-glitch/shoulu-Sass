@@ -22,8 +22,8 @@ function dismiss() {
 <template>
   <aside v-if="campaignActive() && !hidden" class="campaign-float">
     <NuxtLink :to="`${localePath('/pricing')}#black-friday`">
-      <strong>{{ pick('黑五', 'Black Friday') }}</strong>
-      <span>{{ pick(`七折 · 截止 ${campaignDeadlineShanghai()}`, `30% off · ends ${campaignDeadlineShanghai()}`) }}</span>
+      <strong>{{ pick('上线定价', 'Launch pricing') }}</strong>
+      <span>{{ pick(`截止 ${campaignDeadlineShanghai()}`, `ends ${campaignDeadlineShanghai()}`) }}</span>
     </NuxtLink>
     <button type="button" :aria-label="pick('关闭', 'Dismiss')" @click="dismiss">×</button>
   </aside>

@@ -19,10 +19,9 @@
  *   `description`   `long`
  *   `plan`          `'free'`, or one of `standard` / `featured` / `pro`
  *
- * That last line is the one mapping worth spelling out: the source's Premium tier
- * is $39 for 30 days of featured placement, and this site's `featured` plan is
- * $39 for a pinned placement. Same product, different word — so the button says
- * Premium (the source's copy) and the record says `featured` (this site's plan).
+ * That last line is the one mapping worth spelling out: the source called the
+ * paid tier Premium. This site records that choice as `featured` and shows the
+ * live Featured charge from `tiers`. The button can still say Premium.
  * `/pricing` has four columns, so it sends `?plan=`; the form keeps the source's
  * two cards and only uses the parameter to choose which real plan is submitted
  * and which price is shown. The amount is never taken from the URL — checkout
@@ -63,11 +62,11 @@ const payment = await usePayment()
 /**
  * The three one-time tiers `/pricing` can preselect. `ad` is deliberately not
  * here: those weekly slots are sold on `/book-ad` with their own week picker,
- * and `planAmountCents('ad')` cannot tell a $19 sidebar from a $29 board.
+ * and `planAmountCents('ad')` is the legacy Billboard Standard label, not a sidebar week.
  */
 const PAYABLE_PLANS = ['standard', 'featured', 'pro'] as const
 
-/** $39 Featured. Every new submission starts here unless the URL says otherwise. */
+/** Featured. Every new submission starts here unless the URL says otherwise. */
 const DEFAULT_PLAN = 'featured'
 
 function planFromQuery(raw: unknown): string {
@@ -177,7 +176,7 @@ const selectedPlan = computed(() => plan.value)
 
 /**
  * Every tier is shown, not just the two the source shipped. A buyer who lands
- * on `/submit` should be able to pick $19 / $39 / $69 (or free) without going
+ * on `/submit` should be able to pick Standard, Featured, Pro (or free) without going
  * back to `/pricing` — and the price on each card comes from `tiers`, so the
  * button can never quote an amount the server will not charge.
  */
