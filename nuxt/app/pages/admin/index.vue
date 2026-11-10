@@ -140,7 +140,7 @@ const cards = computed(() => {
       <div>
         <h2 class="text-lg font-semibold">首页正在卖的价，和刚刚发布</h2>
         <p class="text-muted-foreground text-sm">
-          价格是结账实际收取的金额，黑五结束或未开始时等于标价。Billboard 地板价不参加打折。周/月按上海时间切，和首页 Just launched 同一窗口。票数来自本周 votes 表（{{ pulse?.weekId || '…' }}）。这里只读。
+          价格是结账实际收取的金额。划线是上线定价前的标价，截止后划线消失，实付不变。Billboard 地板价不做划线。周/月按上海时间切，和首页 Just launched 同一窗口。票数来自本周 votes 表（{{ pulse?.weekId || '…' }}）。这里只读。
         </p>
       </div>
       <p v-if="pulseError" class="text-sm text-muted-foreground">首页数据暂时读不出来。</p>

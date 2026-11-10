@@ -21,7 +21,7 @@
  * cancel page's "start the payment again from My submissions" a dead end: the
  * only place that could start a payment was the submit form itself.
  */
-import type { MySubmission } from '~/composables/useMySubmissions'
+import { planLabelOf, planPriceOf, type MySubmission } from '~/composables/useMySubmissions'
 import { Crown, ExternalLink } from 'lucide-vue-next'
 
 const props = defineProps<{ items: MySubmission[] }>()
@@ -46,8 +46,16 @@ function statusLabel(status: Status) {
   return t('directory.settings_status_pending')
 }
 
-/** The source's `SUBMIT_TIERS` lookup, with its own `$39` fallback. */
-const premiumPrice = '$39'
+const { isZh } = useLang()
+
+/** Live charge for this row, with the plan name so Pro is never a bare amount. */
+function payPrice(plan: string): string {
+  const named = plan === 'paid' ? 'featured' : plan
+  if (named === 'standard' || named === 'featured' || named === 'pro') {
+    return `${planLabelOf(named, isZh.value)} ${planPriceOf(named)}`
+  }
+  return planPriceOf(plan)
+}
 
 const payError = ref('')
 
@@ -172,7 +180,7 @@ async function onPay(item: MySubmission) {
             @click="onPay(item)"
           >
             <Crown class="size-3 text-amber-500" />
-            <span>{{ t('dir.submit.btn_pay', { price: premiumPrice }) }}</span>
+            <span>{{ t('dir.submit.btn_pay', { price: payPrice(item.plan) }) }}</span>
           </button>
         </div>
       </div>

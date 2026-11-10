@@ -1,4 +1,8 @@
+import { centsLabel } from './campaign.ts'
 import { billboardStandardCents } from './billboard.ts'
+import { BILLBOARD_FLOOR_CENTS } from '../utils/billboard-bid.ts'
+
+const billboardFloorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
 /**
  * Pricing copy, ported verbatim from the site that is live today
@@ -20,6 +24,11 @@ export interface PriceTier {
   price: string
   /** The same number as `price`, in minor units — see `planAmountCents`. */
   amountCents: number
+  /**
+   * Previous list price, struck through while launch pricing is on.
+   * Checkout ignores this. It is not a percentage off the live price.
+   */
+  anchorCents?: number
   unit: Pair
   features: PairList
   cta: Pair
@@ -60,8 +69,9 @@ export const tiers: PriceTier[] = [
       en: 'Skip the wait. Get a dofollow link.',
       zh: '跳过等待。获得 dofollow 链接。',
     },
-    price: '$19',
-    amountCents: 1900,
+    price: '$9',
+    amountCents: 900,
+    anchorCents: 1900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: ['Live on payment', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
@@ -76,8 +86,9 @@ export const tiers: PriceTier[] = [
       en: 'Skip the queue — and take the pin.',
       zh: '跳过排队，并拿到置顶。',
     },
-    price: '$39',
-    amountCents: 3900,
+    price: '$19',
+    amountCents: 1900,
+    anchorCents: 3900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: [
@@ -98,8 +109,9 @@ export const tiers: PriceTier[] = [
       en: 'Hold the category pin longer.',
       zh: '分类置顶留得更久。',
     },
-    price: '$69',
-    amountCents: 6900,
+    price: '$29',
+    amountCents: 2900,
+    anchorCents: 6900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: [
@@ -130,6 +142,8 @@ export interface AdPlan {
    * the price without changing the charge.
    */
   weeklyCents: number
+  /** Previous weekly list price. Struck through in the UI only. */
+  anchorWeeklyCents?: number
   bundleWeeks: number
   bundleCents: number
 }
@@ -141,10 +155,11 @@ export const adPlans: AdPlan[] = [
   {
     id: 'sidebar',
     name: { en: 'Sidebar slot', zh: '右栏位' },
-    price: '$19',
-    weeklyCents: 1900,
+    price: '$9',
+    weeklyCents: 900,
+    anchorWeeklyCents: 1900,
     bundleWeeks: 4,
-    bundleCents: 6500,
+    bundleCents: 3200,
     unit: { en: '/ week', zh: '/ 周' },
     where: {
       en: 'The rail on the homepage and the just-added feed',
@@ -162,7 +177,7 @@ export const adPlans: AdPlan[] = [
       ],
       zh: ['首页 + 最新收录页的右栏顶部', '卡片形态，含 logo 与一句话', '展示 7 天，周一起算'],
     },
-    bundle: { en: '4 weeks $65 — save $11', zh: '连投 4 周 $65 · 省 $11' },
+    bundle: { en: '4 weeks $32 — save $4', zh: '连投 4 周 $32 · 省 $4' },
   },
 ]
 
@@ -230,7 +245,7 @@ export const pricingBillboardBlurb: Record<string, Pair> = {
 }
 
 export const pricingBillboardChecks: Pair[] = [
-  { en: 'Name your price, from $15', zh: '自己出价，从 $15 起' },
+  { en: `Name your price, from ${billboardFloorLabel}`, zh: `自己出价，从 ${billboardFloorLabel} 起` },
   { en: 'Top 10 on the homepage', zh: '前 10 名出现在首页' },
   { en: 'One-time payment', zh: '一次付清' },
   { en: 'Pay again and the amount stacks', zh: '再付一次，金额累加' },

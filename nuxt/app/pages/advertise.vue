@@ -11,7 +11,7 @@ const { pick } = useLang()
 const localePath = useLocalePath()
 
 const cards = computed(() => {
-  const entry = effectiveQuote('billboard', 'entry')
+  const entry = effectiveQuote('billboard', 'floor')
   const side = effectiveQuote('sidebar', '1')
   const featured = effectiveQuote('listing', 'featured')
   return [

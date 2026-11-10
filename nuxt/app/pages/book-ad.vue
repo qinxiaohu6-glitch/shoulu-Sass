@@ -69,6 +69,7 @@ const available = computed(() => data.value?.available ?? {})
 const openWeeks = computed(() => openAdWeeks(data.value))
 const plan = computed(() => adPlans.find((entry) => entry.id === slot.value) ?? adPlans[0]!)
 const quote = computed(() => effectiveQuote('sidebar', String(weeks.value)))
+const weekQuote = computed(() => effectiveQuote('sidebar', '1'))
 const priceCents = computed(() => quote.value.amountCents)
 const price = computed(() => quote.value.priceLabel)
 
@@ -272,7 +273,10 @@ useHead({
             >
               <div class="flex items-baseline justify-between gap-2">
                 <span class="font-medium">{{ isZh ? entry.name.zh : entry.name.en }}</span>
-                <span class="font-serif text-xl tabular-nums">{{ entry.price }}</span>
+                <span class="font-serif text-xl tabular-nums">
+                  <s v-if="weekQuote.strikeLabel" class="mr-1 text-sm text-muted-foreground">{{ weekQuote.strikeLabel }}</s>
+                  {{ entry.price }}
+                </span>
               </div>
               <p class="mt-1 text-xs text-muted-foreground">
                 {{ isZh ? entry.where.zh : entry.where.en }}
@@ -424,7 +428,10 @@ useHead({
           </div>
           <div class="mt-4 flex items-baseline justify-between border-t border-border pt-4">
             <dt class="font-medium">{{ pick('合计', 'Total') }}</dt>
-            <dd class="font-serif text-2xl tabular-nums">{{ price }}</dd>
+            <dd class="font-serif text-2xl tabular-nums">
+              <s v-if="quote.strikeLabel" class="mr-1 text-base font-normal text-muted-foreground">{{ quote.strikeLabel }}</s>
+              {{ price }}
+            </dd>
           </div>
         </dl>
 

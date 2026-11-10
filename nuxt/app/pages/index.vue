@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { contactHref } from '~~/shared/content/site-contact'
+import { centsLabel } from '~~/shared/content/campaign'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
 import { samePlacementUrl } from '~~/shared/utils/billboard'
 import {
   filterByWindow,
@@ -104,6 +106,7 @@ const monthLabel = computed(() => {
   }).format(new Date(tick.value))
 })
 
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 const featuredQuote = computed(() => effectiveQuote('listing', 'featured', tick.value))
 const standardQuote = computed(() => effectiveQuote('listing', 'standard', tick.value))
 const proQuote = computed(() => effectiveQuote('listing', 'pro', tick.value))
@@ -119,8 +122,8 @@ const featuredTo = computed(() =>
 )
 const featuredCta = computed(() =>
   paymentReady.value
-    ? pick(`获得推荐 · ${featuredQuote.value.priceLabel}`, `Get Featured · ${featuredQuote.value.priceLabel}`)
-    : pick(`索取发票 · ${featuredQuote.value.priceLabel}`, `Request invoice · ${featuredQuote.value.priceLabel}`),
+    ? pick(`获得推荐 · 精选 ${featuredQuote.value.priceLabel}`, `Get Featured · ${featuredQuote.value.priceLabel}`)
+    : pick(`索取发票 · 精选 ${featuredQuote.value.priceLabel}`, `Request invoice · Featured ${featuredQuote.value.priceLabel}`),
 )
 
 function categoryName(slug: string): string {
@@ -142,7 +145,7 @@ const faq = computed(() => {
     ? [
         {
           q: '提交要花钱吗？',
-          a: `免费收录 0 元，进人工审核队列，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。Billboard 从 $15 起自己出价，黑五不降低这个地板价。`,
+          a: `免费收录 0 元，进人工审核队列，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。Billboard 从 ${floorLabel} 起自己出价。冷启动地板，此前从 $15 起。`,
         },
         {
           q: '多久能上线？',
@@ -160,7 +163,7 @@ const faq = computed(() => {
     : [
         {
           q: 'How much does it cost?',
-          a: `A free listing costs nothing, waits in the review queue (usually 7–14 days, not guaranteed; busy periods can take longer), and carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription. Billboard is name-your-price from $15, and Black Friday does not lower that floor.`,
+          a: `A free listing costs nothing, waits in the review queue (usually 7–14 days, not guaranteed; busy periods can take longer), and carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription. Billboard is name-your-price from ${floorLabel}. Cold-start floor; was from $15.`,
         },
         {
           q: 'How fast does my listing go live?',
@@ -188,8 +191,8 @@ useSeo({
   ),
   description: computed(() =>
     isZh.value
-      ? '产品目录。Billboard 从 $15 起自己出价，一次付清，和每周投票榜分开。'
-      : 'A product directory. Billboard is name-your-price from $15, one-time, kept separate from the weekly vote list.',
+      ? `产品目录。Billboard 从 ${floorLabel} 起自己出价，一次付清，和每周投票榜分开。`
+      : `A product directory. Billboard is name-your-price from ${floorLabel}, one-time, kept separate from the weekly vote list.`,
   ),
 })
 

@@ -11,7 +11,15 @@
  * review windows, the vote rule, the link types and the prices all come from
  * `shared/content/pricing.ts` and `server/utils/votes.ts`.
  */
+import { centsLabel } from '~~/shared/content/campaign'
+import { adPlans, tiers } from '~~/shared/content/pricing'
+import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+
 const { pick } = useLang()
+const tierPrice = (id: string) => tiers.find((tier) => tier.id === id)?.price ?? ''
+const sidebar = adPlans[0]!
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const bundleLabel = centsLabel(sidebar.bundleCents)
 const localePath = useLocalePath()
 
 useSeo({
@@ -172,16 +180,16 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('有哪些档位，多少钱？', 'What are the plans and prices?'),
         a: pick(
-          '四档，全部一次性付款：免费 $0、标准 $19、精选 $39、专业 $69。没有订阅，没有自动续费，没有积分。',
-          'Four plans, all one-time: free $0, Standard $19, Featured $39 and Pro $69. No subscription, no auto-renewal, no credits.',
+          `四档，全部一次性付款：免费 ${tierPrice('free')}、标准 ${tierPrice('standard')}、精选 ${tierPrice('featured')}、专业 ${tierPrice('pro')}。没有订阅，没有自动续费，没有积分。`,
+          `Four plans, all one-time: free ${tierPrice('free')}, Standard ${tierPrice('standard')}, Featured ${tierPrice('featured')} and Pro ${tierPrice('pro')}. No subscription, no auto-renewal, no credits.`,
         ),
         link: { label: pick('完整定价表', 'Full pricing table'), to: '/pricing' },
       },
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          'Billboard 是一次性的自己出价，从 $15 起。同一网站再付会累加，被人超过只掉名次。黑五不降低这个地板价。右栏仍是 $19/周（连投 4 周 $65，活动期见定价页）。Billboard 和每周投票榜不是同一份名单。',
-          'Billboard is one-time, name your price from $15. Another payment for the same website stacks, and being outbid only drops your rank. Black Friday does not lower that floor. The sidebar is still $19 a week ($65 for four; the pricing page shows the sale). Billboard is not the weekly vote list.',
+          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。同一网站再付会累加，被人超过只掉名次。冷启动地板，此前从 $15 起。右栏 ${sidebar.price}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
+          `Billboard is one-time, name your price from ${floorLabel}. Another payment for the same website stacks, and being outbid only drops your rank. Cold-start floor; was from $15. The sidebar is ${sidebar.price} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
         ),
         link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },

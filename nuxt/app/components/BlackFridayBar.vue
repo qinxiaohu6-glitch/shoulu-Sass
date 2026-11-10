@@ -1,10 +1,12 @@
 <script setup lang="ts">
 /**
- * Dark promo bar. The Prime $49 → $34 pair is the approved banner narrative
- * only. Billboard checkout stays pay-what-you-want from $15, with no campaign cut.
+ * Dark promo bar. Launch pricing: Featured at the live charge, and Billboard
+ * from the bid floor. No Prime pair, and no percent-off line.
  */
-import { CAMPAIGN, campaignActive } from '~~/shared/content/campaign'
+import { CAMPAIGN, campaignActive, centsLabel } from '~~/shared/content/campaign'
 import { remainingDayHour } from '~~/shared/utils/directory-window'
+import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
 const localePath = useLocalePath()
@@ -13,6 +15,8 @@ let timer: ReturnType<typeof setInterval> | undefined
 
 const active = computed(() => campaignActive(now.value))
 const left = computed(() => remainingDayHour(Date.parse(CAMPAIGN.endsAt), now.value))
+const featured = computed(() => effectiveQuote('listing', 'featured', now.value))
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 const href = computed(() => `${localePath('/pricing')}#black-friday`)
 
 onMounted(() => {
@@ -27,12 +31,12 @@ onBeforeUnmount(() => {
 
 <template>
   <NuxtLink v-if="active" class="bf-bar" :to="href">
-    <span class="bf-bar__pill">{{ pick('黑色星期五', 'Black Friday') }}</span>
+    <span class="bf-bar__pill">{{ pick('上线定价', 'LAUNCH PRICING') }}</span>
     <span class="bf-bar__copy">
-      {{ pick('最高约三折优惠', 'up to ~30% off') }}
-      · {{ pick('优先档', 'Prime') }}
-      <s>$49</s>
-      $34
+      {{ pick('精选', 'Featured') }}
+      <s v-if="featured.strikeLabel">{{ featured.strikeLabel }}</s>
+      {{ featured.priceLabel }}
+      · {{ pick(`Billboard 从 ${floorLabel} 起`, `Billboard from ${floorLabel}`) }}
       · {{ pick(`剩余 ${left.d}天 ${left.h}小时`, `ends in ${left.d}d ${left.h}h`) }}
     </span>
     <span class="bf-bar__go" aria-hidden="true">→</span>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Homepage Top 10. The price pill is the website's current backing.
- * Empty cells are a dashed claim from $15. No stock screenshot is invented.
+ * Empty cells are a dashed claim from the bid floor. No stock screenshot is invented.
  */
 import { BILLBOARD_FLOOR_CENTS, backingLabel, faviconForUrl } from '~~/shared/utils/billboard-bid'
 import { centsLabel } from '~~/shared/content/campaign'

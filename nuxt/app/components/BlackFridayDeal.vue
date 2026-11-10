@@ -54,7 +54,7 @@ const cells = computed<Cell[]>(() => {
     {
       id: 'billboard',
       name: 'Billboard',
-      quote: effectiveQuote('billboard', 'entry', at),
+      quote: effectiveQuote('billboard', 'floor', at),
       from: true,
     },
   ]
@@ -63,6 +63,8 @@ const cells = computed<Cell[]>(() => {
 function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
+
+const floorLabel = computed(() => effectiveQuote('billboard', 'floor', now.value).priceLabel)
 
 const units = computed(() => {
   const value = left.value
@@ -79,21 +81,20 @@ const units = computed(() => {
 <template>
   <section id="black-friday" class="bf-deal" aria-labelledby="bf-deal-title">
     <div class="bf-deal__badges">
-      <span class="bf-deal__badge">{{ pick('黑五', 'Black Friday') }}</span>
+      <span class="bf-deal__badge">{{ pick('上线定价', 'LAUNCH PRICING') }}</span>
       <span v-if="live" class="bf-deal__live">{{ pick('进行中', 'Live now') }}</span>
     </div>
 
     <div class="bf-deal__grid">
       <div class="bf-deal__copy">
         <template v-if="live">
-          <p class="bf-deal__eye">{{ pick('最高', 'Up to') }}</p>
-          <h2 id="bf-deal-title" class="bf-deal__h1">~30% OFF</h2>
-          <p class="bf-deal__h2">{{ pick('适用于 Launch 档与侧栏位', 'on Launch listings & sidebar') }}</p>
+          <h2 id="bf-deal-title" class="bf-deal__h1">{{ pick('上线定价', 'Launch pricing') }}</h2>
+          <p class="bf-deal__h2">{{ pick('收录档与右栏', 'on listings and the sidebar') }}</p>
           <p class="bf-deal__sub">
             {{
               pick(
-                `页上标价即实付。截止 ${deadline}（上海时间）。Billboard 地板 $15，黑五不降。`,
-                `The price on the page is what you pay. Ends ${deadline} Asia/Shanghai. Billboard stays from $15 — the floor does not drop.`,
+                `页上标价即实付。截止 ${deadline}（上海时间）。Billboard 从 ${floorLabel} 起。冷启动地板，此前从 $15 起。`,
+                `The price on the page is what you pay. Ends ${deadline} Asia/Shanghai. Billboard is from ${floorLabel}. Cold-start floor; was from $15.`,
               )
             }}
           </p>
@@ -105,8 +106,8 @@ const units = computed(() => {
           <p class="bf-deal__sub">
             {{
               pick(
-                'Billboard 从 $15 起，一次付清。黑五不降低这个地板价。',
-                'Billboard is name-your-price from $15. Black Friday does not lower that floor.',
+                `Billboard 从 ${floorLabel} 起，一次付清。冷启动地板，此前从 $15 起。`,
+                `Billboard is name-your-price from ${floorLabel}. Cold-start floor; was from $15.`,
               )
             }}
           </p>
@@ -153,7 +154,12 @@ const units = computed(() => {
           </li>
         </ul>
         <p class="bf-deal__floor">
-          {{ pick('Billboard：从 $15 起出价 · 地板不变', 'Billboard: name your price from $15 · floor holds') }}
+          {{
+            pick(
+              `Billboard：从 ${floorLabel} 起 · 冷启动地板，此前从 $15 起 · 步进 +$1`,
+              `Billboard: from ${floorLabel} · cold-start floor; was from $15 · bid step +$1`,
+            )
+          }}
         </p>
         <p class="bf-deal__fine">
           {{
@@ -218,8 +224,8 @@ const units = computed(() => {
 }
 .bf-deal__h1 {
   margin: 4px 0 0;
-  font-size: clamp(52px, 6vw, 76px);
-  line-height: 0.9;
+  font-size: clamp(40px, 5vw, 64px);
+  line-height: 0.95;
   letter-spacing: -0.04em;
   background: linear-gradient(180deg, #ffe7a3 0%, #f5c451 45%, #d97706 100%);
   -webkit-background-clip: text;
@@ -308,6 +314,6 @@ const units = computed(() => {
 @media (max-width: 800px) {
   .bf-deal { padding: 22px 16px 18px; }
   .bf-deal__grid { grid-template-columns: 1fr; }
-  .bf-deal__h1 { font-size: 56px; }
+  .bf-deal__h1 { font-size: 40px; }
 }
 </style>

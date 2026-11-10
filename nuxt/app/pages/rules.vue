@@ -15,7 +15,14 @@
  *   - review times, pins, link types, prices   → `shared/content/pricing.ts`
  *   - ad slots run Monday to Sunday, 7 days    → `server/utils/ad-bookings.ts`
  */
+import { centsLabel } from '~~/shared/content/campaign'
+import { adPlans } from '~~/shared/content/pricing'
+import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+
 const { pick } = useLang()
+const sidebar = adPlans[0]!
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const bundleLabel = centsLabel(sidebar.bundleCents)
 const localePath = useLocalePath()
 
 useSeo({
@@ -159,12 +166,12 @@ const sections = computed<RuleSection[]>(() => [
     ),
     items: [
       pick(
-        'Billboard 从 $15 起自己出价，一次付清。按累计金额排名，不插进每周投票榜。',
-        'Billboard is name-your-price from $15, one-time. Rank follows total backed. It is not inserted into the weekly vote list.',
+        `Billboard 从 ${floorLabel} 起自己出价，一次付清。按累计金额排名，不插进每周投票榜。冷启动地板，此前从 $15 起。`,
+        `Billboard is name-your-price from ${floorLabel}, one-time. Rank follows total backed. It is not inserted into the weekly vote list. Cold-start floor; was from $15.`,
       ),
       pick(
-        '右栏位 $19/周，出现在首页与「最新收录」页的右栏；连投 4 周 $65。',
-        'Sidebar slot $19 a week, in the rail on the homepage and the just-added feed; $65 for four weeks.',
+        `右栏位 ${sidebar.price}/周，出现在首页与「最新收录」页的右栏；连投 4 周 ${bundleLabel}。`,
+        `Sidebar slot ${sidebar.price} a week, in the rail on the homepage and the just-added feed; ${bundleLabel} for four weeks.`,
       ),
       pick(
         '广告链接一律带 rel="sponsored nofollow"，不传递权重 —— 付费外链传递权重正是搜索引擎明确处罚的做法。',

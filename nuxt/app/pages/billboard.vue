@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * /billboard — pay what you want, from $15.
+ * /billboard — pay what you want, from the bid floor.
  *
  * Guest claim exception: the claim modal and the invoice request do not
  * require a session. Submitting a directory listing at /submit still uses
@@ -253,8 +253,14 @@ useHead({
           <p class="bb-claim__fine">
             {{
               paymentReady
-                ? pick(`新出价从 ${floorLabel} 起。黑五不降低这个地板价。`, `New bids start at ${floorLabel}. Black Friday does not lower that floor.`)
-                : pick(`新出价从 ${floorLabel} 起。发票确认后才上线。`, `New bids start at ${floorLabel}. It goes live after the invoice is confirmed.`)
+                ? pick(
+                    `新出价从 ${floorLabel} 起。冷启动地板，此前从 $15 起。`,
+                    `New bids start at ${floorLabel}. Cold-start floor; was from $15.`,
+                  )
+                : pick(
+                    `新出价从 ${floorLabel} 起。冷启动地板，此前从 $15 起。发票确认后才上线。`,
+                    `New bids start at ${floorLabel}. Cold-start floor; was from $15. It goes live after the invoice is confirmed.`,
+                  )
             }}
           </p>
         </form>

@@ -6,7 +6,8 @@
  * Guest claim: no session is required. Directory submit stays gated.
  */
 
-import { billboardBidDraft } from '~~/shared/utils/billboard-bid'
+import { centsLabel } from '~~/shared/content/campaign'
+import { BILLBOARD_FLOOR_CENTS, billboardBidDraft } from '~~/shared/utils/billboard-bid'
 import { insertBillboardRequest } from '../../utils/billboard'
 import { seedBillboardScreenshot } from '../../utils/billboard-media'
 import { useDb } from '../../utils/db'
@@ -38,8 +39,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Bad Request',
       data: {
         reason: 'bad_invoice',
-        message_en: 'Send a real http(s) URL, an email, and a whole-dollar amount from $15.',
-        message_zh: '请填写有效的 http(s) 网址、邮箱，以及从 $15 起的整数美元金额。',
+        message_en: `Send a real http(s) URL, an email, and a whole-dollar amount from ${centsLabel(BILLBOARD_FLOOR_CENTS)}.`,
+        message_zh: `请填写有效的 http(s) 网址、邮箱，以及从 ${centsLabel(BILLBOARD_FLOOR_CENTS)} 起的整数美元金额。`,
       },
     })
   }

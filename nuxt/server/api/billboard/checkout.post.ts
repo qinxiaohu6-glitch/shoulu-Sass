@@ -2,9 +2,8 @@
  * POST /api/billboard/checkout — pay a chosen backing amount.
  *
  * The body names a URL, an email, and whole-dollar cents. The server clamps
- * that amount to the $15 floor and refuses anything above the abuse cap.
- * Black Friday does not reduce it. The row stays `pending` until the webhook
- * marks it live, so it cannot appear on the public board by itself.
+ * that amount to the bid floor and refuses anything above the abuse cap.
+ * The row stays `pending` until the webhook marks it live, so it cannot appear on the public board by itself.
  *
  * Guest claim: this route does not require a session. Directory submit stays gated.
  */
@@ -46,8 +45,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Bad Request',
       data: {
         reason: 'bad_checkout',
-        message_en: 'Send a real http(s) URL, an email, and a whole-dollar amount from $15.',
-        message_zh: '请填写有效的 http(s) 网址、邮箱，以及从 $15 起的整数美元金额。',
+        message_en: `Send a real http(s) URL, an email, and a whole-dollar amount from ${centsLabel(BILLBOARD_FLOOR_CENTS)}.`,
+        message_zh: `请填写有效的 http(s) 网址、邮箱，以及从 ${centsLabel(BILLBOARD_FLOOR_CENTS)} 起的整数美元金额。`,
       },
     })
   }

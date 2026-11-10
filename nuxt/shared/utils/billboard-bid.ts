@@ -3,7 +3,7 @@
  *
  * Rank is total backed for a website, highest first. The same amount keeps
  * the earlier payment ahead. A new bid must beat the occupant by $1, and
- * every new payment is at least $15. Black Friday does not lower that floor.
+ * every new payment is at least $10. That floor is the cold-start minimum.
  * A later payment for the same URL stacks; it does not open a second spot.
  *
  * The $10,000 ceiling is an abuse cap, not a product price.
@@ -14,7 +14,7 @@ import { centsLabel } from '../content/campaign.ts'
 import { backingCents, normalizeEmail, publicHttpUrl, samePlacementUrl } from './billboard.ts'
 import { screenshotSrc } from './screenshot.ts'
 
-export const BILLBOARD_FLOOR_CENTS = 1500
+export const BILLBOARD_FLOOR_CENTS = 1000
 export const BILLBOARD_BID_MAX_CENTS = 1_000_000
 
 const GENERIC_HOST_LABELS = new Set(['www', 'app', 'get', 'try', 'use', 'go'])
@@ -38,7 +38,7 @@ export function tierForBid(cents: number): BillboardTierId {
 
 /**
  * Whole-dollar cents, clamped up to the floor and rejected above the cap.
- * `1000` ($10) becomes `1500`. A non-integer or a fractional dollar is refused.
+ * `500` ($5) becomes `1000` ($10). A non-integer or a fractional dollar is refused.
  */
 export function clampBillboardBid(raw: unknown): number | null {
   if (typeof raw === 'string' && raw.trim() === '') return null

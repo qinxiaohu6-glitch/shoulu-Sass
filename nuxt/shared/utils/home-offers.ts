@@ -12,8 +12,9 @@
  *    seed rows are not orders, and an empty spot stays a recruit card.
  */
 
-import { billboardTier } from '../content/billboard.ts'
+import { centsLabel } from '../content/campaign.ts'
 import { adPlans, tiers, type Pair } from '../content/pricing.ts'
+import { BILLBOARD_FLOOR_CENTS } from './billboard-bid.ts'
 
 export type BrowseTool = {
   slug: string
@@ -141,6 +142,11 @@ export type HomeOfferSlot = {
  * real remaining-capacity number exists.
  */
 export function offerSpotLine(slot: Pick<HomeOfferSlot, 'name' | 'price' | 'unit'>, locale: 'zh' | 'en'): string {
+  if (slot.price.startsWith('from ')) {
+    const amount = slot.price.slice('from '.length)
+    if (locale === 'zh') return `${slot.name.zh} 从 ${amount} 起 ${slot.unit.zh}`
+    return `${slot.name.en} from ${amount} ${slot.unit.en}`
+  }
   const unit = slot.unit[locale].replace(/\s+/g, '')
   const name = slot.name[locale]
   if (unit.startsWith('/')) return `${name} ${slot.price}${unit}`
@@ -187,11 +193,11 @@ export function homeOfferSlots(input: {
 }): HomeOfferSlot[] {
   const featuredTier = tiers.find((tier) => tier.id === 'featured')
   const proTier = tiers.find((tier) => tier.id === 'pro')
-  const standard = billboardTier('standard')
   const sidebarPlan = adPlans.find((plan) => plan.id === 'sidebar')
-  if (!featuredTier || !proTier || !standard || !sidebarPlan) {
+  if (!featuredTier || !proTier || !sidebarPlan) {
     throw new Error('homepage offer slots are missing a row in the pricing tables')
   }
+  const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
   const featured = paidListing(input.listings, 'featured')
   const pro = paidListing(input.listings, 'pro')
@@ -220,12 +226,12 @@ export function homeOfferSlots(input: {
     {
       id: 'billboard',
       flag: 'BILLBOARD',
-      price: standard.price,
+      price: `from ${floorLabel}`,
       unit: { en: 'one-time', zh: '一次性' },
       name: { en: 'Billboard', zh: 'Billboard' },
       detail: {
-        zh: '入门 $15 · 标准 $29 · 优先 $49，不再按周租',
-        en: 'Entry $15 · Standard $29 · Prime $49, not a weekly rental',
+        zh: `自己出价，从 ${floorLabel} 起。冷启动地板，此前从 $15 起。`,
+        en: `Name your price, from ${floorLabel}. Cold-start floor; was from $15.`,
       },
       href: { path: '/billboard', hash: '#claim' },
       occupant: adOccupant(input.billboard ?? null),
