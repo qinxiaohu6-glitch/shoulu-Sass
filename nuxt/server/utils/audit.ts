@@ -39,6 +39,12 @@
  *  3. `urlopen` raises on 4xx/5xx. Here a non-2xx is reported as `http_error`
  *     rather than being folded into `unreachable` — "your page 404s" and
  *     "your page timed out" are different problems with different fixes.
+ *  4. `fetch("https://dirtool.com/…")` from this Worker does not hit this
+ *     Worker. On a custom domain Cloudflare forwards a same-zone subrequest
+ *     to the zone origin, and there is no origin — the Worker is the site —
+ *     so the edge returns 522. Own-host reads go through Nitro `localFetch`
+ *     (the call the Worker already uses to serve the page). Every other host
+ *     still uses `globalThis.fetch`, unchanged.
  */
 
 const UA =
@@ -102,11 +108,14 @@ export const AUDIT_ERRORS: Record<string, ErrorCopy> = {
 }
 
 export class AuditError extends Error {
+  /** Machine code (`http_error`, `unreachable`, …). */
+  code: keyof typeof AUDIT_ERRORS | string
   /** HTTP status the *target* returned, when the failure was the target's. */
   upstream?: number
 
-  constructor(public code: keyof typeof AUDIT_ERRORS | string, upstream?: number) {
+  constructor(code: keyof typeof AUDIT_ERRORS | string, upstream?: number) {
     super(code)
+    this.code = code
     this.upstream = upstream
   }
 }
@@ -225,26 +234,177 @@ type FetchedPage = {
   html: string
 }
 
-async function fetchPage(target: URL): Promise<FetchedPage> {
+/**
+ * In-process GET of a path on this Worker.
+ *
+ * Nitro's Cloudflare handler serves the site by calling `localFetch` with a
+ * path (`/zh`), not with an absolute URL. An absolute URL falls through to
+ * `globalThis.fetch` and is the 522 above. `host` / `protocol` are the
+ * node-mock-http fields that localFetch forwards onto the synthetic request.
+ */
+export type OwnSiteFetch = (
+  path: string,
+  init?: RequestInit & { host?: string; protocol?: string },
+) => Promise<Response>
+
+export type AuditOptions = {
+  /**
+   * Host that invoked `/api/audit`. A self-check of that host (a preview
+   * subdomain, or `*.workers.dev`) is also in-process. It is never taken from
+   * the submitted URL alone, so a caller cannot point this at some other site.
+   */
+  requestHost?: string
+  /** Production wires Nitro's `localFetch`. Tests pass a fake. */
+  localFetch?: OwnSiteFetch
+  /** Test seam. Unset means `globalThis.fetch` — the external-site path. */
+  publicFetch?: typeof fetch
+}
+
+const OWN_APEX = 'dirtool.com'
+const REDIRECT_STATUS = new Set([301, 302, 303, 307, 308])
+const MAX_OWN_HOPS = 5
+
+function normalizeHost(hostname: string): string {
+  return hostname.trim().toLowerCase().replace(/\.$/, '')
+}
+
+/** A host this Worker actually serves, so a public fetch of it would 522. */
+function isThisWorkerHost(host: string): boolean {
+  return host === OWN_APEX || host.endsWith(`.${OWN_APEX}`) || host.endsWith('.workers.dev')
+}
+
+/**
+ * `dirtool.com` and `www.dirtool.com` always. Any other hostname only when
+ * it is the host this request arrived on, and that host belongs to this Worker.
+ */
+export function isOwnAuditHost(hostname: string, requestHost = ''): boolean {
+  const host = normalizeHost(hostname)
+  if (host === OWN_APEX || host === `www.${OWN_APEX}`) return true
+  const req = normalizeHost(requestHost)
+  return Boolean(req && host === req && isThisWorkerHost(host))
+}
+
+type SendInit = { signal?: AbortSignal; headers: HeadersInit }
+
+function publicFetchOf(options?: AuditOptions): typeof fetch {
+  return options?.publicFetch ?? globalThis.fetch
+}
+
+/**
+ * `localFetch` does not honour `AbortSignal` (it is an in-process call). Race
+ * it so the same 12s / 8s cap that bounds a public fetch bounds a self-check.
+ */
+function withSignal(promise: Promise<Response>, signal?: AbortSignal): Promise<Response> {
+  if (!signal) return promise
+  if (signal.aborted) return Promise.reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))
+    signal.addEventListener('abort', onAbort, { once: true })
+    promise.then(
+      (value) => {
+        signal.removeEventListener('abort', onAbort)
+        resolve(value)
+      },
+      (err) => {
+        signal.removeEventListener('abort', onAbort)
+        reject(err)
+      },
+    )
+  })
+}
+
+/** Follow in-process redirects (www → apex, http → https) without leaving the Worker. */
+async function sendOwn(
+  start: URL,
+  init: SendInit,
+  options: AuditOptions,
+): Promise<{ res: Response; finalUrl: string }> {
+  const localFetch = options.localFetch!
+  let current = start
+
+  for (let hop = 0; hop < MAX_OWN_HOPS; hop++) {
+    const headers = new Headers(init.headers)
+    const proto = current.protocol === 'http:' ? 'http' : 'https'
+    headers.set('host', current.hostname)
+    headers.set('x-forwarded-proto', proto)
+
+    const res = await withSignal(
+      localFetch(current.pathname + current.search, {
+        method: 'GET',
+        headers,
+        redirect: 'manual',
+        signal: init.signal,
+        host: current.hostname,
+        protocol: proto,
+      }),
+      init.signal,
+    )
+
+    if (!REDIRECT_STATUS.has(res.status)) return { res, finalUrl: current.toString() }
+
+    const loc = res.headers.get('location')
+    void res.body?.cancel().catch(() => {})
+    if (!loc) return { res, finalUrl: current.toString() }
+
+    const next = new URL(loc, current)
+    if (!['http:', 'https:'].includes(next.protocol) || isPrivateHost(next.hostname)) {
+      throw new AuditError('blocked_host')
+    }
+    // A redirect that leaves the zone (it does not, today) must not be served
+    // from this Worker's renderer. Finish it on the public path.
+    if (!isOwnAuditHost(next.hostname, options.requestHost) || !options.localFetch) {
+      const followed = await publicFetchOf(options)(next.toString(), {
+        signal: init.signal,
+        redirect: 'follow',
+        headers: init.headers,
+      })
+      return { res: followed, finalUrl: followed.url || next.toString() }
+    }
+    current = next
+  }
+
+  throw new AuditError('unreachable')
+}
+
+async function send(
+  target: URL,
+  init: SendInit,
+  options?: AuditOptions,
+): Promise<{ res: Response; finalUrl: string }> {
+  if (options?.localFetch && isOwnAuditHost(target.hostname, options.requestHost)) {
+    return sendOwn(target, init, options)
+  }
+
+  const res = await publicFetchOf(options)(target.toString(), {
+    signal: init.signal,
+    redirect: 'follow',
+    headers: init.headers,
+  })
+  return { res, finalUrl: res.url || target.toString() }
+}
+
+async function fetchPage(target: URL, options?: AuditOptions): Promise<FetchedPage> {
   if (isPrivateHost(target.hostname)) throw new AuditError('blocked_host')
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
   try {
-    const res = await fetch(target.toString(), {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: {
-        'user-agent': UA,
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8',
+    const { res, finalUrl } = await send(
+      target,
+      {
+        signal: controller.signal,
+        headers: {
+          'user-agent': UA,
+          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'accept-language': 'en-US,en;q=0.9,zh-CN;q=0.8',
+        },
       },
-    })
+      options,
+    )
 
-    // A redirect can land somewhere the guard would have refused. `res.url` is
-    // the URL actually served, not the one we asked for.
-    const finalUrl = res.url || target.toString()
+    // A redirect can land somewhere the guard would have refused. `finalUrl`
+    // is the URL actually served, not the one we asked for.
     let finalHost = ''
     try {
       finalHost = new URL(finalUrl).hostname
@@ -282,16 +442,19 @@ type Probe = { status: number; size: number; text: string }
  * `OAI-SearchBot` is the single most common way a site quietly removes itself
  * from ChatGPT Search while believing it did nothing.
  */
-async function probe(url: string, wantText = false): Promise<Probe> {
+async function probe(url: string, wantText = false, options?: AuditOptions): Promise<Probe> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS)
 
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow',
-      headers: { 'user-agent': UA, accept: 'text/plain,application/xml,text/xml,*/*' },
-    })
+    const { res } = await send(
+      new URL(url),
+      {
+        signal: controller.signal,
+        headers: { 'user-agent': UA, accept: 'text/plain,application/xml,text/xml,*/*' },
+      },
+      options,
+    )
 
     const reader = res.body?.getReader()
     let size = 0
@@ -766,11 +929,11 @@ function collectNodes(node: unknown, depth = 0, out: Record<string, unknown>[] =
   return out
 }
 
-export async function audit(rawUrl: string, lang: AuditLang = 'en'): Promise<AuditResult> {
+export async function audit(rawUrl: string, lang: AuditLang = 'en', options?: AuditOptions): Promise<AuditResult> {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en)
 
   const target = normalizeUrl(rawUrl)
-  const res = await fetchPage(target)
+  const res = await fetchPage(target, options)
 
   const finalUrl = res.finalUrl
   let final: URL
@@ -784,9 +947,9 @@ export async function audit(rawUrl: string, lang: AuditLang = 'en'): Promise<Aud
 
   // Start the three file probes now; they overlap with the parsing below
   // instead of stacking three timeouts after it.
-  const llmsProbe = probe(origin + '/llms.txt')
-  const robotsProbe = probe(origin + '/robots.txt', true)
-  const sitemapProbe = probe(origin + '/sitemap.xml')
+  const llmsProbe = probe(origin + '/llms.txt', false, options)
+  const robotsProbe = probe(origin + '/robots.txt', true, options)
+  const sitemapProbe = probe(origin + '/sitemap.xml', false, options)
 
   const page = parseHtml(res.html)
   const [llms, robotsTxt, sitemap] = await Promise.all([llmsProbe, robotsProbe, sitemapProbe])

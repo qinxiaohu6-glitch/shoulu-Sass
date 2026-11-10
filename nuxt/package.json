@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare",
     "deploy": "NITRO_PRESET=cloudflare_module nuxt build && wrangler deploy",
     "typecheck": "nuxt typecheck",
-    "test": "node --experimental-strip-types --test shared/utils/*.test.ts",
+    "test": "node --experimental-strip-types --test shared/utils/*.test.ts server/utils/audit-self.test.ts",
     "db:local": "wrangler d1 execute product-atlas --local --file server/database/schema.sql",
     "db:remote": "wrangler d1 execute product-atlas --remote --file server/database/schema.sql",
     "seed:directory": "node scripts/seed-directory.mjs",
