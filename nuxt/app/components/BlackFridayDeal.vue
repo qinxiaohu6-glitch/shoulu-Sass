@@ -229,7 +229,11 @@ const units = computed(() => {
 .bf-deal__h2 { margin: 8px 0 0; font-size: 22px; font-weight: 750; }
 .bf-deal__h2--solo { font-size: 28px; letter-spacing: -0.02em; }
 .bf-deal__sub { margin: 12px 0 0; max-width: 38rem; color: #d6d3d1; font-size: 14px; line-height: 1.5; }
-.bf-deal__cta {
+/* `#black-friday` is required. Pricing lives in `.src-page`, whose link reset
+   is `:is(.src-page, body > :not(#__nuxt)) a { color: revert-layer }`. The
+   `#__nuxt` argument raises that rule above a plain class, so the label was
+   inheriting the card's cream (#f6f1e7) onto this white pill. */
+#black-friday .bf-deal__cta {
   display: inline-flex;
   margin-top: 18px;
   padding: 12px 18px;

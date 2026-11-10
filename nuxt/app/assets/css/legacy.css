@@ -315,7 +315,9 @@ kbd {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: color-mix(in oklab, var(--background) 85%, transparent);
+  /* Solid, not 85% glass. Scrolled pills (the pricing hero's "Submit free")
+     were readable through the bar and sat on top of Discover. */
+  background: var(--background);
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
