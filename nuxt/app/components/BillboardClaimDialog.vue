@@ -40,7 +40,8 @@ const dialog = ref<HTMLDialogElement | null>(null)
 const email = ref('')
 const name = ref('')
 const tagline = ref('')
-const amountDollars = ref(15)
+const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const amountDollars = ref(BILLBOARD_FLOOR_CENTS / 100)
 const nameTouched = ref(false)
 
 const chargeCents = computed(() => {
@@ -193,7 +194,7 @@ function onClose() {
             <span>$</span>
             <input v-model.number="amountDollars" type="number" min="1" step="1" inputmode="numeric" required>
           </span>
-          <small>{{ pick('自己出价，从 15 起', 'Name your amount, from 15') }}</small>
+          <small>{{ pick(`自己出价，从 ${floorLabel} 起`, `Name your amount, from ${floorLabel}`) }}</small>
         </label>
 
         <div class="bb-modal__aim">

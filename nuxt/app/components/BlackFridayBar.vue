@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * Dark promo bar. Launch pricing: Featured at the live charge, and Billboard
- * from the bid floor. No Prime pair, and no percent-off line.
+ * Dark promo bar. Black Friday: Featured at the live charge, and Billboard
+ * from the bid minimum. No Prime pair, and no percent-off line.
  */
 import { CAMPAIGN, campaignActive, centsLabel } from '~~/shared/content/campaign'
 import { remainingDayHour } from '~~/shared/utils/directory-window'
@@ -31,7 +31,7 @@ onBeforeUnmount(() => {
 
 <template>
   <NuxtLink v-if="active" class="bf-bar" :to="href">
-    <span class="bf-bar__pill">{{ pick('上线定价', 'LAUNCH PRICING') }}</span>
+    <span class="bf-bar__pill">{{ pick('黑五', 'BLACK FRIDAY') }}</span>
     <span class="bf-bar__copy">
       {{ pick('精选', 'Featured') }}
       <s v-if="featured.strikeLabel">{{ featured.strikeLabel }}</s>

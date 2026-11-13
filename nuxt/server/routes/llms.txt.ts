@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
     `- Free listings on Product Atlas are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
     `- Listing plans on Product Atlas are one-time, not subscriptions: free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel}.${saleNote} ([pricing](${SITE}/pricing))`,
     `- On Product Atlas, paid listings are published automatically as soon as payment succeeds — a verified payment webhook settles the order and publishes the page, with no manual confirmation. ([pricing](${SITE}/pricing))`,
-    `- Billboard on Product Atlas is a one-time name-your-price placement from ${entry.priceLabel}, ranked by total backed. The cold-start floor is ${entry.priceLabel}; it was from $15. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. A confirmed payment publishes the placement. Unconfirmed rows are not public. ([billboard](${SITE}/billboard))`,
+    `- Billboard on Product Atlas is a one-time name-your-price placement from ${entry.priceLabel}, ranked by total backed. Bids start at ${entry.priceLabel}; it was from $15. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. A confirmed payment publishes the placement. Unconfirmed rows are not public. ([billboard](${SITE}/billboard))`,
     `- The Product Atlas weekly board resets every Monday and records one vote per signed-in person per product per week; a vote is not a rating. ([weekly board](${SITE}/weekly))`,
     `- Paid placement on Product Atlas never changes a product's rank on the weekly board. ([ranking rules](${SITE}/rules))`,
     '',

@@ -86,7 +86,7 @@ const plans = computed<PricingPlan[]>(() =>
       originalPrice: quote.strikeLabel ?? undefined,
       featured: tier.id === 'featured',
       badge: tier.badge ? t(tier.badge) : undefined,
-      kicker: quote.active ? pick('上线定价', 'LAUNCH PRICING') : undefined,
+      kicker: quote.active ? pick('黑五', 'BLACK FRIDAY') : undefined,
       features: tl(tier.features),
       buttonText: listingCta(tier.id, tier.name),
     }
@@ -133,8 +133,8 @@ const steps = computed(() => [
       `Billboard from ${floorLabel.value} · sidebar ${skuQuote('sidebar', '1').priceLabel}/wk`,
     ),
     body: pick(
-      `自己出价，从 ${floorLabel.value} 起，一次付清。冷启动地板，此前从 $15 起。右栏仍按周。`,
-      `Name your price from ${floorLabel.value}, one-time. Cold-start floor; was from $15. Sidebar stays weekly.`,
+      `自己出价，从 ${floorLabel.value} 起，一次付清。此前从 $15 起。右栏仍按周。`,
+      `Name your price from ${floorLabel.value}, one-time. Was from $15. Sidebar stays weekly.`,
     ),
     cta: pick('看 Billboard', 'See Billboard'),
     to: '#ads',
@@ -403,7 +403,7 @@ useHead({
               </span>
             </div>
             <p class="text-[11px] font-semibold tracking-wide text-muted-foreground">
-              {{ pick('自己出价 · 冷启动地板', 'Name your price · cold-start floor') }}
+              {{ pick(`自己出价 · 从 ${floorLabel} 起`, `Name your price · from ${floorLabel}`) }}
             </p>
             <p class="mt-1 text-xs text-muted-foreground">
               {{ pick('此前从 $15 起。竞价步进 +$1。', 'Was from $15. Bid step +$1.') }}
@@ -500,8 +500,8 @@ useHead({
           {{
             promoOn
               ? pick(
-                  `页面价格即为实付。发票确认后上线。上线定价截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
-                  `The price on the page is what you pay. Invoice confirmed, then it goes live. Launch pricing ends ${deadline} Asia/Shanghai. No promise of search rank.`,
+                  `页面价格即为实付。发票确认后上线。黑五优惠截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
+                  `The price on the page is what you pay. Invoice confirmed, then it goes live. Black Friday pricing ends ${deadline} Asia/Shanghai. No promise of search rank.`,
                 )
               : pick(
                   '页面价格即为实付。发票确认后上线。不承诺搜索排名。',

@@ -102,8 +102,8 @@ const faq = computed(() => [
   {
     q: pick('被人超过会怎样？', 'Can someone knock me off?'),
     a: pick(
-      '你的位置还在，只是名次下降。给同一网站再付任意金额（至少地板价）即可爬回去。',
-      'Your spot stays. You only drop in rank. Pay again for the same website — at least the floor — and it stacks.',
+      `你的位置还在，只是名次下降。给同一网站再付任意金额（至少 ${floorLabel}）即可爬回去。`,
+      `Your spot stays. You only drop in rank. Pay again for the same website — at least ${floorLabel} — and it stacks.`,
     ),
   },
   {
@@ -254,12 +254,12 @@ useHead({
             {{
               paymentReady
                 ? pick(
-                    `新出价从 ${floorLabel} 起。冷启动地板，此前从 $15 起。`,
-                    `New bids start at ${floorLabel}. Cold-start floor; was from $15.`,
+                    `新出价从 ${floorLabel} 起，此前从 $15 起。`,
+                    `New bids start at ${floorLabel}; was from $15.`,
                   )
                 : pick(
-                    `新出价从 ${floorLabel} 起。冷启动地板，此前从 $15 起。发票确认后才上线。`,
-                    `New bids start at ${floorLabel}. Cold-start floor; was from $15. It goes live after the invoice is confirmed.`,
+                    `新出价从 ${floorLabel} 起，此前从 $15 起。发票确认后才上线。`,
+                    `New bids start at ${floorLabel}; was from $15. It goes live after the invoice is confirmed.`,
                   )
             }}
           </p>
