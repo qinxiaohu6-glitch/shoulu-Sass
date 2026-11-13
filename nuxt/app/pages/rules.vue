@@ -166,8 +166,8 @@ const sections = computed<RuleSection[]>(() => [
     ),
     items: [
       pick(
-        `Billboard 从 ${floorLabel} 起自己出价，一次付清。按累计金额排名，不插进每周投票榜。冷启动地板，此前从 $15 起。`,
-        `Billboard is name-your-price from ${floorLabel}, one-time. Rank follows total backed. It is not inserted into the weekly vote list. Cold-start floor; was from $15.`,
+        `Billboard 从 ${floorLabel} 起自己出价，一次付清。按累计金额排名，不插进每周投票榜。此前从 $15 起。`,
+        `Billboard is name-your-price from ${floorLabel}, one-time. Rank follows total backed. It is not inserted into the weekly vote list. Was from $15.`,
       ),
       pick(
         `右栏位 ${sidebar.price}/周，出现在首页与「最新收录」页的右栏；连投 4 周 ${bundleLabel}。`,

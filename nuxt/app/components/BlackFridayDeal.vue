@@ -81,20 +81,20 @@ const units = computed(() => {
 <template>
   <section id="black-friday" class="bf-deal" aria-labelledby="bf-deal-title">
     <div class="bf-deal__badges">
-      <span class="bf-deal__badge">{{ pick('上线定价', 'LAUNCH PRICING') }}</span>
+      <span class="bf-deal__badge">{{ pick('黑五', 'BLACK FRIDAY') }}</span>
       <span v-if="live" class="bf-deal__live">{{ pick('进行中', 'Live now') }}</span>
     </div>
 
     <div class="bf-deal__grid">
       <div class="bf-deal__copy">
         <template v-if="live">
-          <h2 id="bf-deal-title" class="bf-deal__h1">{{ pick('上线定价', 'Launch pricing') }}</h2>
+          <h2 id="bf-deal-title" class="bf-deal__h1">{{ pick('黑五优惠', 'Black Friday pricing') }}</h2>
           <p class="bf-deal__h2">{{ pick('收录档与右栏', 'on listings and the sidebar') }}</p>
           <p class="bf-deal__sub">
             {{
               pick(
-                `页上标价即实付。截止 ${deadline}（上海时间）。Billboard 从 ${floorLabel} 起。冷启动地板，此前从 $15 起。`,
-                `The price on the page is what you pay. Ends ${deadline} Asia/Shanghai. Billboard is from ${floorLabel}. Cold-start floor; was from $15.`,
+                `页上标价即实付。截止 ${deadline}（上海时间）。Billboard 从 ${floorLabel} 起，此前从 $15 起。`,
+                `The price on the page is what you pay. Ends ${deadline} Asia/Shanghai. Billboard is from ${floorLabel}; was from $15.`,
               )
             }}
           </p>
@@ -106,8 +106,8 @@ const units = computed(() => {
           <p class="bf-deal__sub">
             {{
               pick(
-                `Billboard 从 ${floorLabel} 起，一次付清。冷启动地板，此前从 $15 起。`,
-                `Billboard is name-your-price from ${floorLabel}. Cold-start floor; was from $15.`,
+                `Billboard 从 ${floorLabel} 起，一次付清。此前从 $15 起。`,
+                `Billboard is name-your-price from ${floorLabel}; was from $15.`,
               )
             }}
           </p>
@@ -156,8 +156,8 @@ const units = computed(() => {
         <p class="bf-deal__floor">
           {{
             pick(
-              `Billboard：从 ${floorLabel} 起 · 冷启动地板，此前从 $15 起 · 步进 +$1`,
-              `Billboard: from ${floorLabel} · cold-start floor; was from $15 · bid step +$1`,
+              `Billboard：从 ${floorLabel} 起 · 此前从 $15 起 · 步进 +$1`,
+              `Billboard: from ${floorLabel} · was from $15 · bid step +$1`,
             )
           }}
         </p>

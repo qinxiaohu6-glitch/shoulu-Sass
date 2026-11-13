@@ -230,8 +230,8 @@ export function homeOfferSlots(input: {
       unit: { en: 'one-time', zh: '一次性' },
       name: { en: 'Billboard', zh: 'Billboard' },
       detail: {
-        zh: `自己出价，从 ${floorLabel} 起。冷启动地板，此前从 $15 起。`,
-        en: `Name your price, from ${floorLabel}. Cold-start floor; was from $15.`,
+        zh: `自己出价，从 ${floorLabel} 起。此前从 $15 起。`,
+        en: `Name your price, from ${floorLabel}. Was from $15.`,
       },
       href: { path: '/billboard', hash: '#claim' },
       occupant: adOccupant(input.billboard ?? null),

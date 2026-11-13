@@ -67,7 +67,25 @@ test('user-facing copy no longer sells the Black Friday percent-off', () => {
     '../../server/routes/llms.txt.ts',
     '../../shared/utils/home-offers.ts',
   ]
-  const banned = ['~30% OFF', '30% off', '$34', '$65', '$13', 'does not lower', '不降低', '地板不变', '不减地板']
+  const banned = [
+    '~30% OFF',
+    '30% off',
+    '50% off everything',
+    '$34',
+    '$65',
+    '$13',
+    'does not lower',
+    '不降低',
+    '地板不变',
+    '不减地板',
+    'Launch pricing',
+    'LAUNCH PRICING',
+    '上线定价',
+    'cold-start',
+    'Cold-start',
+    '冷启动',
+    '地板',
+  ]
   for (const file of files) {
     const text = readFileSync(join(here, file), 'utf8')
     for (const phrase of banned) {
@@ -79,6 +97,16 @@ test('user-facing copy no longer sells the Black Friday percent-off', () => {
       assert.match(window, /Pro|专业/, `${file} has a bare $29`)
     }
   }
+})
+
+test('the claim dialog names its minimum from the bid floor constant', () => {
+  const dialog = readFileSync(join(here, '../../app/components/BillboardClaimDialog.vue'), 'utf8')
+  assert.match(dialog, /const floorLabel = centsLabel\(BILLBOARD_FLOOR_CENTS\)/)
+  assert.match(dialog, /Name your amount, from \$\{floorLabel\}/)
+  assert.match(dialog, /自己出价，从 \$\{floorLabel\} 起/)
+  assert.equal(dialog.includes('from 15'), false)
+  assert.equal(dialog.includes('从 15'), false)
+  assert.equal(dialog.includes('ref(15)'), false)
 })
 
 test('fixed checkouts ignore a client amount; Billboard clamps a bid and does not discount it', () => {

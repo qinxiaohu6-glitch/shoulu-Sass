@@ -188,8 +188,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。同一网站再付会累加，被人超过只掉名次。冷启动地板，此前从 $15 起。右栏 ${sidebar.price}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
-          `Billboard is one-time, name your price from ${floorLabel}. Another payment for the same website stacks, and being outbid only drops your rank. Cold-start floor; was from $15. The sidebar is ${sidebar.price} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
+          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。同一网站再付会累加，被人超过只掉名次。此前从 $15 起。右栏 ${sidebar.price}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
+          `Billboard is one-time, name your price from ${floorLabel}. Another payment for the same website stacks, and being outbid only drops your rank. Was from $15. The sidebar is ${sidebar.price} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
         ),
         link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },
