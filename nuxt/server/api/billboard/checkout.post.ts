@@ -58,8 +58,8 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Conflict',
       data: {
         reason: 'unconfigured',
-        message_en: 'Card payment is not switched on yet — request an invoice instead.',
-        message_zh: '在线支付还没开通，请改为索取发票。',
+        message_en: 'Card payment is not switched on yet — we will email you how to pay.',
+        message_zh: '在线支付还没开通，我们会用邮件告诉你付款方式。',
       },
     })
   }

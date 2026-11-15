@@ -211,7 +211,9 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   assert.equal(home.includes('最新收录'), false)
   assert.equal(home.includes('Your product here'), true)
   assert.equal(home.includes('Just launched'), true)
-  assert.equal(home.includes('Schedule opens soon'), true)
+  assert.equal(home.includes('Schedule opens soon'), false)
+  assert.equal(home.includes('List your product.'), true)
+  assert.equal(home.includes('Keep the page.'), true)
   assert.equal(home.includes('spots left'), false)
   assert.equal(home.includes('Your ad here'), false)
   assert.equal(home.includes('成为该分类第一个'), false)
@@ -219,7 +221,7 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   assert.equal(pricing.includes('收录后你能得到什么'), true)
   assert.deepEqual(
     listingBenefits.map((item) => item.title.zh),
-    ['付费即得 dofollow 反链', 'AI 搜索读得懂', '每周一次冲榜机会', '30 秒完成提交'],
+    ['付费即得 dofollow 反链', 'AI 搜索读得懂', '每周一次冲榜机会', '先粘贴网址'],
   )
   assert.deepEqual(
     tiers.map((tier) => `${tier.id}:${tier.price}`),

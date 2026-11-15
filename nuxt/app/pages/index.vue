@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { contactHref } from '~~/shared/content/site-contact'
 import { centsLabel } from '~~/shared/content/campaign'
+import { englishCount } from '~~/shared/utils/english-count'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
 import { samePlacementUrl } from '~~/shared/utils/billboard'
@@ -21,7 +21,6 @@ const submitted = await useSubmittedTools()
 const overrides = useOverrides()
 const { categories: liveCategories } = useDirectoryMeta()
 const { homeGrid, ranked: billboardRanked } = await useBillboard()
-const { ready: paymentReady } = await usePayment()
 const requestFetch = useRequestFetch()
 const { data: weekVotes } = await useAsyncData(
   'home-week-votes',
@@ -111,20 +110,8 @@ const featuredQuote = computed(() => effectiveQuote('listing', 'featured', tick.
 const standardQuote = computed(() => effectiveQuote('listing', 'standard', tick.value))
 const proQuote = computed(() => effectiveQuote('listing', 'pro', tick.value))
 
-function invoiceHref(plan: string): string {
-  const href = contactHref()
-  const subject = encodeURIComponent(`Invoice request · ${plan}`)
-  return href ? `${href}?subject=${subject}` : localePath('/pricing')
-}
-
-const featuredTo = computed(() =>
-  paymentReady.value ? `${localePath('/submit')}?plan=featured` : invoiceHref('Featured'),
-)
-const featuredCta = computed(() =>
-  paymentReady.value
-    ? pick(`获得推荐 · 精选 ${featuredQuote.value.priceLabel}`, `Get Featured · ${featuredQuote.value.priceLabel}`)
-    : pick(`索取发票 · 精选 ${featuredQuote.value.priceLabel}`, `Request invoice · Featured ${featuredQuote.value.priceLabel}`),
-)
+const featuredTo = computed(() => `${localePath('/submit')}?plan=featured`)
+const featuredCta = computed(() => pick('去付款 · 精选', 'Pay · Featured'))
 
 function categoryName(slug: string): string {
   const found = categoryBySlug(slug, liveCategories.value)
@@ -132,9 +119,12 @@ function categoryName(slug: string): string {
 }
 
 const proofs = computed(() => [
-  pick('永久产品页', 'Permanent listing page'),
-  pick('数分钟即可提交', 'Submit in minutes'),
-  pick('一次性 Billboard · 无订阅', 'One-time Billboard · no subscription'),
+  pick('页面会留下来', 'A page that stays up'),
+  pick(
+    '可以免费提交，或一次付费，付款成功后上线。',
+    'Free to list, or pay once to go live when payment succeeds.',
+  ),
+  pick('Billboard 从 $10 起，无订阅', 'Billboard from $10, no subscription'),
 ])
 
 const faq = computed(() => {
@@ -145,11 +135,11 @@ const faq = computed(() => {
     ? [
         {
           q: '提交要花钱吗？',
-          a: `免费收录 0 元，进人工审核队列，通常 7–14 天，不保证；高峰可能更长，链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。Billboard 从 ${floorLabel} 起自己出价，此前从 $15 起。`,
+          a: `免费收录 0 元。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。Billboard 从 ${floorLabel} 起自己出价，此前从 $15 起。`,
         },
         {
           q: '多久能上线？',
-          a: '付费档在付款成功后自动发布。若走发票，则在发票确认后上线。免费收录由人工审核，通常 7–14 天，不保证；高峰可能更长。',
+          a: '付费档在付款成功后自动发布。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
         },
         {
           q: '免费收录的链接是 nofollow 吗？',
@@ -163,11 +153,11 @@ const faq = computed(() => {
     : [
         {
           q: 'How much does it cost?',
-          a: `A free listing costs nothing, waits in the review queue (usually 7–14 days, not guaranteed; busy periods can take longer), and carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription. Billboard is name-your-price from ${floorLabel}; was from $15.`,
+          a: `A free listing costs nothing. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy. It carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription. Billboard is name-your-price from ${floorLabel}; was from $15.`,
         },
         {
           q: 'How fast does my listing go live?',
-          a: 'Paid listings publish when payment succeeds. An invoice request goes live after that invoice is confirmed. Free listings are reviewed by a person, usually 7–14 days, not guaranteed; busy periods can take longer.',
+          a: 'Paid listings go live when payment succeeds. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
         },
         {
           q: 'Is the free link nofollow?',
@@ -186,13 +176,13 @@ const browseOpen = ref(false)
 useSeo({
   title: computed(() =>
     isZh.value
-      ? 'Product Atlas — 发布你的产品，反链永久保留'
-      : 'Product Atlas — Launch your product, keep the backlink',
+      ? '提交你的产品。把页面留下来。 | Product Atlas'
+      : 'List your product. Keep the page. | Product Atlas',
   ),
   description: computed(() =>
     isZh.value
-      ? `产品目录。Billboard 从 ${floorLabel} 起自己出价，一次付清，和每周投票榜分开。`
-      : `A product directory. Billboard is name-your-price from ${floorLabel}, one-time, kept separate from the weekly vote list.`,
+      ? '在 Product Atlas 提交产品。可以免费提交，或一次付费换更快上线和 dofollow 链接。Billboard 另付，从 $10 起。'
+      : 'List your product on Product Atlas. Free to submit, or pay once for a faster go-live and a dofollow link. Billboard is separate, from $10.',
   ),
 })
 
@@ -237,24 +227,24 @@ useHead({
         </aside>
 
         <section class="mk-hero mk-hero--center mk-hero--launch">
-          <p class="mk-eyebrow">{{ pick('发现优质 AI 与 SaaS 产品', 'Discover the best AI & SaaS tools') }}</p>
+          <p class="mk-eyebrow">{{ pick('产品目录，每个产品都有一页会留下来的页面', 'A directory of products, with a lasting page for each one') }}</p>
           <h1 v-if="isZh" class="mk-h1">
-            今日上线，<br><span class="mk-h1__em">即被发现。</span>
+            提交你的产品。<br><span class="mk-h1__em">把页面留下来。</span>
           </h1>
           <h1 v-else class="mk-h1">
-            Launch today.<br><span class="mk-h1__em">Get discovered.</span>
+            List your product.<br><span class="mk-h1__em">Keep the page.</span>
           </h1>
           <p class="mk-sub">
             {{
               pick(
-                '首页 Billboard 展示、永久产品页，以及上线之后持续被发现。',
-                'Homepage Billboard placement, a permanent listing page, and founders discovering your product long after launch day.',
+                '获得一页永久产品页。一次付费，得到 dofollow 链接和更快上线。Billboard 另付，从 $10 起自己出价。',
+                'Get a permanent listing page. Pay once for a dofollow link and a faster go-live. Billboard is separate: name your price from $10.',
               )
             }}
           </p>
           <div class="mk-cta">
             <NuxtLink class="btn btn--primary btn--lg" :to="localePath('/submit')">
-              {{ pick('立即上线', 'Launch Now') }}
+              {{ pick('提交产品', 'Submit a product') }}
               <Icon name="arrow-right" />
             </NuxtLink>
             <NuxtLink class="btn btn--outline btn--lg" :to="localePath('/billboard')">
@@ -304,7 +294,7 @@ useHead({
         </button>
         <div class="home-dir__panel">
           <p class="home-dir__kicker">{{ pick('目录', 'DIRECTORY') }}</p>
-          <p class="home-dir__stat"><strong>{{ all.length }}</strong> {{ pick('个产品已收录', 'products listed') }}</p>
+          <p class="home-dir__stat"><strong>{{ all.length }}</strong> {{ isZh ? '个产品已收录' : `${englishCount(all.length, 'product')} listed` }}</p>
           <p class="home-dir__kicker">{{ pick('类别', 'CATEGORIES') }}</p>
           <ul class="home-dir__cats">
             <li v-for="cat in cats" :key="cat.slug">
@@ -326,9 +316,6 @@ useHead({
             <b>{{ clock.h }}h</b>
             <b>{{ clock.m }}m</b>
             <b>{{ clock.s }}s</b>
-          </p>
-          <p v-else class="home-clock home-clock--empty">
-            {{ pick('即将开放排期', 'Schedule opens soon') }}
           </p>
         </div>
         <p class="home-dir__month">{{ monthLabel }}</p>
@@ -365,7 +352,7 @@ useHead({
               ? pick('本周还没有新发布。', 'No launches this week.')
               : pick('本月还没有新发布。', 'No launches this month.')
           }}
-          <NuxtLink :to="localePath('/submit')">{{ pick('立即上线', 'Launch Now') }}</NuxtLink>
+          <NuxtLink :to="localePath('/submit')">{{ pick('提交产品', 'Submit a product') }}</NuxtLink>
         </p>
       </section>
 
@@ -385,18 +372,11 @@ useHead({
             <b>{{ featuredQuote.priceLabel }}</b>
             <span>{{ pick('一次性', 'one-time') }}</span>
           </p>
-          <a v-if="!paymentReady" class="btn btn--primary btn--block" :href="featuredTo">
-            {{ featuredCta }}
-          </a>
-          <NuxtLink v-else class="btn btn--primary btn--block" :to="featuredTo">
+          <NuxtLink class="btn btn--primary btn--block" :to="featuredTo">
             {{ featuredCta }}
           </NuxtLink>
           <p class="feat-sell__note">
-            {{
-              paymentReady
-                ? pick('付款成功后上线。', 'Live when payment succeeds.')
-                : pick('发票确认后上线。', 'Live after the invoice is confirmed.')
-            }}
+            {{ pick('付款成功后上线。', 'It goes live when payment succeeds.') }}
           </p>
         </section>
         <ul class="feat-mini">

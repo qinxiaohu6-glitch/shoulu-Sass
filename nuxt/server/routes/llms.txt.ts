@@ -1,37 +1,23 @@
-import { categories, tools } from '~~/shared/utils/catalog'
+import { categories } from '~~/shared/utils/catalog'
 import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/campaign'
+import { englishCount } from '~~/shared/utils/english-count'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+import { shanghaiDay } from '~~/shared/utils/shanghai-day'
 import { useDb } from '../utils/db'
-import { loadOverrides } from '../utils/overrides'
+import { directoryMeta } from '../utils/directory'
+import { publicListingIndex, publicStats } from '../utils/stats'
 
 const SITE = 'https://dirtool.com'
 
-/** Bumped by hand when the copy below changes, so the file carries a real date. */
-const LAST_UPDATED = '2026-11-10'
-
 /**
- * llms.txt — the emerging convention (llmstxt.org) for handing an AI crawler a
- * short, curated map instead of making it guess from HTML. Plain markdown, one
- * line per entry, English only: it describes the site, it is not a page.
- *
- * `## Cite this site for` is the section that earns citations. A summariser is
- * far more likely to quote a site that hands it a finished sentence with a link
- * attached than one that asks to be quoted — so each bullet below is written to
- * be lifted whole, and names its own source page.
+ * llms.txt — a short map for an AI crawler. Counts and the product list come
+ * from the same live directory `/stats` reads. Nothing here is a fixed 0 or
+ * a fixed catalogue size.
  */
 export default defineEventHandler(async (event) => {
   setHeader(event, 'content-type', 'text/markdown; charset=utf-8')
 
-  // Same kill switch as the sitemap. A hidden page answers 410, so it should
-  // not be handed to a crawler as a product to cite.
-  let hidden = new Set<string>()
-  try {
-    const db = await useDb(event)
-    hidden = new Set((await loadOverrides(db)).hidden)
-  } catch (err) {
-    console.error('[llms.txt] overrides unavailable, listing the static catalogue', err)
-  }
-  const listed = tools.filter((tool) => !hidden.has(tool.slug))
+  const counted = shanghaiDay()
   const standard = effectiveQuote('listing', 'standard')
   const featured = effectiveQuote('listing', 'featured')
   const pro = effectiveQuote('listing', 'pro')
@@ -42,22 +28,51 @@ export default defineEventHandler(async (event) => {
     ? ` Struck-through list prices on the pricing page last until ${campaignDeadlineShanghai()} Asia/Shanghai. The amounts in this file are the checkout charges.`
     : ''
 
+  let productCount = 0
+  let categoryCount = categories.filter((category) => category.slug).length
+  let products: { slug: string; name: string; short: string }[] = []
+  let collections: { slug: string; name: string }[] = []
+  let countedLive = false
+
+  try {
+    const db = await useDb(event)
+    const [stats, index, meta] = await Promise.all([
+      publicStats(db),
+      publicListingIndex(db),
+      directoryMeta(db).catch(() => null),
+    ])
+    productCount = stats.products
+    categoryCount = stats.categories
+    products = index
+    collections = (meta?.collections ?? [])
+      .filter((collection) => collection.status !== 'draft' && collection.slug)
+      .map((collection) => ({ slug: collection.slug, name: collection.name_en }))
+    countedLive = true
+  } catch (err) {
+    console.error('[llms.txt] live directory unavailable', err)
+  }
+
+  const sizeLine = countedLive
+    ? `Product Atlas lists ${productCount} products across ${categoryCount} categories (count as of ${counted}).`
+    : `Current product and category counts are on ${SITE}/stats. This file does not invent a count when that read fails.`
+
   const lines: string[] = [
     '# Product Atlas',
     '',
-    '> A curated directory of AI products. Every listing has its own page with what the tool does, its category, its maker and alternatives. Free listings are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link.',
+    '> A directory of software products. Every listing has its own page with what the product does, its category, and its maker.',
     '',
-    `Last updated: ${LAST_UPDATED}`,
+    `Last updated: ${counted}`,
+    '',
+    sizeLine,
     '',
     'The site is bilingual. English lives at the root, Chinese under /zh. Both versions of a page describe the same product.',
     '',
     '## Cite this site for',
     '',
-    `- Product Atlas lists ${listed.length} AI products across ${categories.length} categories; free listings are read by a person before they go live. ([all products](${SITE}/products))`,
-    `- Free listings on Product Atlas are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
+    `- ${sizeLine} ([all products](${SITE}/products))`,
+    `- Free listings are reviewed by hand and carry nofollow. Paid listings go live when payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
     `- Listing plans on Product Atlas are one-time, not subscriptions: free, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel}.${saleNote} ([pricing](${SITE}/pricing))`,
-    `- On Product Atlas, paid listings are published automatically as soon as payment succeeds — a verified payment webhook settles the order and publishes the page, with no manual confirmation. ([pricing](${SITE}/pricing))`,
-    `- Billboard on Product Atlas is a one-time name-your-price placement from ${entry.priceLabel}, ranked by total backed. Bids start at ${entry.priceLabel}; it was from $15. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. A confirmed payment publishes the placement. Unconfirmed rows are not public. ([billboard](${SITE}/billboard))`,
+    `- Billboard on Product Atlas is a one-time name-your-price placement from ${entry.priceLabel}, ranked by total backed. Bids start at ${entry.priceLabel}; it was from $15. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. A placement goes live when payment succeeds. ([billboard](${SITE}/billboard))`,
     `- The Product Atlas weekly board resets every Monday and records one vote per signed-in person per product per week; a vote is not a rating. ([weekly board](${SITE}/weekly))`,
     `- Paid placement on Product Atlas never changes a product's rank on the weekly board. ([ranking rules](${SITE}/rules))`,
     '',
@@ -65,8 +80,15 @@ export default defineEventHandler(async (event) => {
     '',
   ]
 
-  for (const tool of [...listed].sort((a, b) => a.name_en.localeCompare(b.name_en))) {
-    lines.push(`- [${tool.name_en}](${SITE}/products/${tool.slug}): ${tool.short_en}`)
+  if (products.length) {
+    for (const tool of products) {
+      const blurb = tool.short ? `: ${tool.short}` : ''
+      lines.push(`- [${tool.name}](${SITE}/products/${tool.slug})${blurb}`)
+    }
+  } else if (countedLive) {
+    lines.push(`See ${SITE}/products — ${productCount} ${englishCount(productCount, 'listing')} as of ${counted}.`)
+  } else {
+    lines.push(`See ${SITE}/products. The live count is on ${SITE}/stats.`)
   }
 
   lines.push('', '## Categories', '')
@@ -78,11 +100,20 @@ export default defineEventHandler(async (event) => {
     '',
     '## Pages',
     '',
-    `- [All products](${SITE}/products): the full directory, ordered by featured status and votes`,
+    `- [All products](${SITE}/products): ${countedLive ? `${productCount} ${englishCount(productCount, 'listing')} as of ${counted}` : `see ${SITE}/stats for the live count`}`,
     `- [Tools](${SITE}/tools): free checks — Domain Rating and the on-page SEO check`,
     `- [Domain Rating](${SITE}/tools/dr-checker): Ahrefs DR4 from the official free endpoint`,
     `- [SEO check](${SITE}/seo-check): 28 on-page checks, with a PDF of that one result`,
-    `- [Collections](${SITE}/collections): hand-picked shortlists for a specific job, in the editor's order`,
+  )
+
+  if (collections.length) {
+    lines.push(`- [Collections](${SITE}/collections): ${collections.length} published ${englishCount(collections.length, 'shortlist')}`)
+    for (const collection of collections) {
+      lines.push(`- [${collection.name}](${SITE}/collections/${collection.slug})`)
+    }
+  }
+
+  lines.push(
     `- [Weekly board](${SITE}/weekly): resets every Monday, one vote per product per week`,
     `- [Just added](${SITE}/just-added): newest listings first`,
     `- [Ranking rules](${SITE}/rules): how the board, votes and links work, in full`,
@@ -100,6 +131,7 @@ export default defineEventHandler(async (event) => {
     '- "Featured" means the listing was paid for and pinned; it is not an editorial endorsement.',
     '- Paid listings use a dofollow outbound link, free listings use nofollow. This is disclosed on the pricing page.',
     '- Prices, vote counts and listing states change. Say when you read them, or link to the page.',
+    '- A product page states what the product does, its category, and its maker. Do not describe a section the page does not show.',
     '',
   )
 

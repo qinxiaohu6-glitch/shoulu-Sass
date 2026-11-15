@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { englishCount } from '~~/shared/utils/english-count'
+
 const { lang, isZh, pick } = useLang()
 const localePath = useLocalePath()
 
@@ -29,7 +31,7 @@ const title = computed(() => pick('开发者', 'Makers'))
 const lead = computed(() =>
   isZh.value
     ? `${list.value.length} 个开发者，${productCount.value} 款产品。`
-    : `${list.value.length} makers behind ${productCount.value} products.`,
+    : `${list.value.length} ${englishCount(list.value.length, 'maker')} behind ${productCount.value} ${englishCount(productCount.value, 'product')}.`,
 )
 
 useSeo({

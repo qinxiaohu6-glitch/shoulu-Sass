@@ -16,7 +16,9 @@
  *    is counted off the same merged list `/tools` renders, so a category can never
  *    advertise a number its own page would not show.
  */
-const { lang, pick } = useLang()
+import { englishCount } from '~~/shared/utils/english-count'
+
+const { lang, pick, isZh } = useLang()
 const localePath = useLocalePath()
 const t = useDirectoryCopy()
 
@@ -96,7 +98,7 @@ useSeo({
           <div class="flex items-center justify-between gap-2">
             <h2 class="truncate font-semibold">{{ card.name }}</h2>
             <span class="shrink-0 text-xs tabular-nums text-muted-foreground">
-              {{ t('directory.categories.tools_count', { count: card.count }) }}
+              {{ isZh ? `${card.count} 个工具` : `${card.count} ${englishCount(card.count, 'tool')}` }}
             </span>
           </div>
           <p v-if="card.description" class="mt-1 line-clamp-2 text-sm text-muted-foreground">

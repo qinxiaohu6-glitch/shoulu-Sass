@@ -125,7 +125,9 @@ test('anonymous submit is rejected before a row is created', () => {
   assert.match(src, /if \(!owner\) throw new SubmissionError\('submit_signin_required'\)/)
   const form = read('../../app/components/directory/SubmitForm.vue')
   assert.match(form, /\/sign-in/)
-  assert.match(form, /v-if="!user"/)
+  const signIn = form.indexOf('if (!user.value)')
+  const post = form.indexOf("'/api/submit'")
+  assert.ok(signIn > -1 && post > signIn, 'a guest is sent to sign-in before POST /api/submit')
 
   const errors = read('../../server/utils/http.ts')
   assert.match(errors, /submit_signin_required/)

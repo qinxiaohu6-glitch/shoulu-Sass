@@ -2,12 +2,13 @@
 /**
  * /billboard — pay what you want, from the bid floor.
  *
- * Guest claim exception: the claim modal and the invoice request do not
- * require a session. Submitting a directory listing at /submit still uses
- * the existing sign-in gate. A later payment for the same URL stacks on read.
- * When card checkout is off, the button stores an invoice and does not charge.
+ * Guest claim exception: the claim modal does not require a session.
+ * Submitting a directory listing at /submit signs in only when saving or paying.
+ * A later payment for the same URL stacks on read. When card checkout is off,
+ * the claim does not store an invoice and does not report success.
  */
 import { BILLBOARD_TOP_N } from '~~/shared/content/billboard'
+import { englishCount } from '~~/shared/utils/english-count'
 import { centsLabel } from '~~/shared/content/campaign'
 import {
   amountToTakeRank,
@@ -60,19 +61,15 @@ const rules = computed(() => [
   {
     n: '01',
     title: pick('自己出价', 'Name your price'),
-    body: paymentReady.value
-      ? pick(`从 ${floorLabel} 起，一次付清。`, `Anything from ${floorLabel}. One-time payment.`)
-      : pick(
-          `从 ${floorLabel} 起，一次付清。通道未开通时请索取发票。`,
-          `Anything from ${floorLabel}. One-time payment. Request an invoice while card checkout is off.`,
-        ),
+    body: pick(`从 ${floorLabel} 起，一次付清。`, `Anything from ${floorLabel}. One-time payment.`),
   },
   {
     n: '02',
-    title: paymentReady.value ? pick('付款即上线', 'Live the second you pay') : pick('确认后上线', 'Live after confirmation'),
-    body: paymentReady.value
-      ? pick('付款到账后立即出现在本页。进入前 10 名时同步出现在首页。无需排队审核。', 'Your spot appears on this page the moment payment clears. Top 10 also shows on the homepage. No review queue.')
-      : pick('发票确认后上线。进入前 10 名时同步出现在首页。', 'It goes live after the invoice is confirmed. Top 10 also shows on the homepage.'),
+    title: pick('付款即上线', 'Live the second you pay'),
+    body: pick(
+      '付款成功后出现在本页。进入前 10 名时同步出现在首页。无需排队审核。',
+      'Your spot appears on this page when payment succeeds. Top 10 also shows on the homepage. No review queue.',
+    ),
   },
   {
     n: '03',
@@ -108,9 +105,7 @@ const faq = computed(() => [
   },
   {
     q: pick('什么时候上线？', 'When does it go live?'),
-    a: paymentReady.value
-      ? pick('付款到账后立即上线，没有审核队列。', 'Live the moment payment clears. There is no review queue.')
-      : pick('索取发票后，要等发票确认才上线。确认之前不会公开。', 'After you request an invoice, it goes live once that invoice is confirmed. It is not public before then.'),
+    a: pick('付款成功后上线，没有审核队列。', 'It goes live when payment succeeds. There is no review queue.'),
   },
   {
     q: pick('要登录吗？', 'Do I need an account?'),
@@ -161,23 +156,22 @@ async function onSubmit(payload: { email: string; name: string; tagline: string;
       tagline: payload.tagline,
       amount_cents: payload.amountCents,
     }
-    if (paymentReady.value) {
-      const res = await $fetch<{ ok: boolean; url?: string; amount_cents: number; published: boolean }>(
-        '/api/billboard/checkout',
-        { method: 'POST', body },
+    if (!paymentReady.value) {
+      error.value = pick(
+        '在线支付还没开通，我们会用邮件告诉你付款方式。',
+        'Card payment is not switched on yet — we will email you how to pay.',
       )
-      if (!res?.ok || res.published || res.amount_cents !== payload.amountCents || !res.url) {
-        throw new Error('unexpected')
-      }
-      window.location.assign(res.url)
       return
     }
-    const res = await $fetch<{ ok: boolean; published: boolean }>('/api/billboard/invoice', {
-      method: 'POST',
-      body,
-    })
-    if (!res?.ok || res.published) throw new Error('unexpected')
-    done.value = true
+    const res = await $fetch<{ ok: boolean; url?: string; amount_cents: number; published: boolean }>(
+      '/api/billboard/checkout',
+      { method: 'POST', body },
+    )
+    if (!res?.ok || res.published || res.amount_cents !== payload.amountCents || !res.url) {
+      throw new Error('unexpected')
+    }
+    window.location.assign(res.url)
+    return
   } catch (err) {
     const info = (err as { data?: { message_zh?: string; message_en?: string } })?.data
     error.value =
@@ -224,12 +218,12 @@ useHead({
       <div>
         <p class="bb-page__from">{{ pick(`从 ${floorLabel} 起 · 一次付清`, `From ${floorLabel} · one-time`) }}</p>
         <h1>{{ pick('Billboard', 'The Billboard') }}</h1>
-        <p class="bb-page__tag">{{ pick('自己出价。占住这个位置。', 'Name your price. Own your spot.') }}</p>
+        <p class="bb-page__tag">{{ pick('自己出价。留住这个位置。', 'Name your price. Keep the spot.') }}</p>
         <p class="bb-page__desc">
           {{
             pick(
-              '按累计金额排名。前 10 名出现在首页。被人超过只掉名次。',
-              'Ranked by total backed. Top 10 on the homepage. If someone passes you, you only drop in rank.',
+              '按你已经支持的累计金额排名。前 10 名出现在首页。被人超过只掉名次。',
+              'Ranked by the total you have backed. Top 10 on the homepage. If someone passes you, you only drop in rank.',
             )
           }}
         </p>
@@ -237,12 +231,12 @@ useHead({
         <form id="claim" class="bb-claim" @submit.prevent="openClaim(null)">
           <div class="bb-claim__head">
             <h2>{{ pick('认领展示位', 'Claim your spot') }}</h2>
-            <span>{{ paymentReady ? pick('付款即上线', 'Live the second you pay') : pick('确认后上线', 'After the invoice is confirmed') }}</span>
+            <span>{{ pick('付款即上线', 'Live the second you pay') }}</span>
           </div>
           <label class="sr-only" for="bb-url">URL</label>
           <input id="bb-url" v-model="url" type="url" required placeholder="https://yourproduct.com" maxlength="500">
           <button class="btn btn--primary btn--block" type="submit">
-            {{ paymentReady ? pick('认领展示位', 'Claim your spot') : pick('索取发票', 'Request invoice') }}
+            {{ pick('认领展示位', 'Claim your spot') }}
             →
           </button>
           <ul class="bb-trust">
@@ -252,15 +246,10 @@ useHead({
           </ul>
           <p class="bb-claim__fine">
             {{
-              paymentReady
-                ? pick(
-                    `新出价从 ${floorLabel} 起，此前从 $15 起。`,
-                    `New bids start at ${floorLabel}; was from $15.`,
-                  )
-                : pick(
-                    `新出价从 ${floorLabel} 起，此前从 $15 起。发票确认后才上线。`,
-                    `New bids start at ${floorLabel}; was from $15. It goes live after the invoice is confirmed.`,
-                  )
+              pick(
+                `新出价从 ${floorLabel} 起，此前从 $15 起。付款成功后上线。`,
+                `New bids start at ${floorLabel}; was from $15. It goes live when payment succeeds.`,
+              )
             }}
           </p>
         </form>
@@ -270,7 +259,7 @@ useHead({
         <h2 id="bb-rank-title">{{ pick('实时排行', 'Live ranking') }}</h2>
         <p class="bb-rank__stats">
           {{ centsLabel(totalBacked) }} {{ pick('累计', 'backed') }}
-          · {{ ranked.length }} {{ pick('个位置', 'spots') }}
+          · {{ ranked.length }} {{ isZh ? '个位置' : englishCount(ranked.length, 'spot') }}
           · {{ pick('前 10 名同步首页', 'Top 10 on the homepage') }}
         </p>
         <div class="bb-filters" role="tablist">
@@ -365,14 +354,10 @@ useHead({
       <div>
         <h2>{{ pick(`首页前 10 名。从 ${floorLabel} 起。`, `Homepage Top 10. From ${floorLabel}.`) }}</h2>
         <p>
-          {{
-            paymentReady
-              ? pick('一次付清。付款即上线。位置长期保留。', 'One-time payment. Live the second you pay. The spot stays.')
-              : pick('一次付清。发票确认后上线。位置长期保留。', 'One-time payment. Live after the invoice is confirmed. The spot stays.')
-          }}
+          {{ pick('一次付清。付款即上线。位置长期保留。', 'One-time payment. Live the second you pay. The spot stays.') }}
         </p>
       </div>
-      <a href="#claim">{{ paymentReady ? pick('认领展示位', 'Claim your spot') : pick('索取发票', 'Request invoice') }} →</a>
+      <a href="#claim">{{ pick('认领展示位', 'Claim your spot') }} →</a>
     </section>
 
     <BillboardClaimDialog

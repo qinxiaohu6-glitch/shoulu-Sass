@@ -14,12 +14,33 @@ import { listPublishedTools } from './submissions'
 
 const DAY = 86400
 
+export type PublicListing = { slug: string; name: string; short: string }
+
+/**
+ * The same slug set `publicStats().products` counts: the static catalogue
+ * plus published submissions, minus hidden rows. Callers that print a
+ * product list must use this, not a hard-coded length.
+ */
+export async function publicListingIndex(db: Db): Promise<PublicListing[]> {
+  const [overrides, published] = await Promise.all([loadOverrides(db), listPublishedTools(db)])
+  const hidden = new Set(overrides.hidden)
+  const bySlug = new Map<string, PublicListing>()
+  for (const tool of tools) {
+    if (hidden.has(tool.slug)) continue
+    bySlug.set(tool.slug, { slug: tool.slug, name: tool.name_en, short: tool.short_en })
+  }
+  for (const tool of published) {
+    if (hidden.has(tool.slug)) continue
+    bySlug.set(tool.slug, { slug: tool.slug, name: tool.name_en, short: tool.short_en })
+  }
+  return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug))
+}
+
 export async function publicStats(db: Db, now = new Date()) {
   const unix = Math.floor(now.getTime() / 1000)
   const since = unix - 30 * DAY
-  const [overrides, published, live, pending, reviewed, samples, votes] = await Promise.all([
-    loadOverrides(db),
-    listPublishedTools(db),
+  const [index, live, pending, reviewed, samples, votes] = await Promise.all([
+    publicListingIndex(db),
     listLiveBillboard(db),
     db.prepare(`SELECT COUNT(*) AS n FROM submissions WHERE status = 'pending' AND plan = 'free'`).first<{ n: number }>(),
     db
@@ -33,15 +54,6 @@ export async function publicStats(db: Db, now = new Date()) {
       .all<{ created_at: number; reviewed_at: number }>(),
     db.prepare(`SELECT COUNT(*) AS n FROM votes WHERE week = ?`).bind(isoWeekId(now)).first<{ n: number }>(),
   ])
-
-  const hidden = new Set(overrides.hidden)
-  const slugs = new Set<string>()
-  for (const tool of tools) {
-    if (!hidden.has(tool.slug)) slugs.add(tool.slug)
-  }
-  for (const tool of published) {
-    if (!hidden.has(tool.slug)) slugs.add(tool.slug)
-  }
 
   const starts = upcomingMondays(6)
   const open = await weekAvailability(db, 'sidebar', 1, starts)
@@ -58,7 +70,7 @@ export async function publicStats(db: Db, now = new Date()) {
   })
 
   return {
-    products: slugs.size,
+    products: index.length,
     categories: categories.filter((category) => category.slug).length,
     free_pending: queue.free_pending,
     reviewed_last_30d: queue.reviewed_last_30d,

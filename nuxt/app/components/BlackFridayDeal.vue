@@ -113,7 +113,7 @@ const units = computed(() => {
           </p>
         </template>
         <a class="bf-deal__cta" href="#plans">
-          {{ pick('索取发票 · 查看优惠', 'Request invoice · See deals') }}
+          {{ pick('查看价格并付款', 'See prices and pay') }}
         </a>
         <p class="bf-deal__micro">{{ pick('无需优惠码', 'No code needed') }}</p>
       </div>
@@ -164,8 +164,8 @@ const units = computed(() => {
         <p class="bf-deal__fine">
           {{
             pick(
-              '发票确认后上线。不承诺搜索排名、流量或域名权重。',
-              'Invoice confirmed → goes live. No promise of search rank, traffic, or DR.',
+              '一次付费，付款成功后上线。不承诺搜索排名、流量或域名权重。',
+              'Pay once and it goes live when payment succeeds. No promise of search rank, traffic, or DR.',
             )
           }}
         </p>

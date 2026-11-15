@@ -9,11 +9,25 @@
  * are part of the format and must not be renamed.
  */
 import { CONTACT_EMAIL } from '~~/shared/content/site-contact'
+import { shanghaiDay } from '~~/shared/utils/shanghai-day'
+import { useDb } from '../utils/db'
+import { publicStats } from '../utils/stats'
 
 const SITE = 'https://dirtool.com'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   setHeader(event, 'content-type', 'text/plain; charset=utf-8')
+
+  const counted = shanghaiDay()
+  let sizeLine =
+    `Current product and category counts are on ${SITE}/stats. This file does not invent a count when that read fails.`
+  try {
+    const db = await useDb(event)
+    const stats = await publicStats(db)
+    sizeLine = `Product Atlas lists ${stats.products} products across ${stats.categories} categories (count as of ${counted}).`
+  } catch (err) {
+    console.error('[ai.txt] live directory unavailable', err)
+  }
 
   return [
     '# ai.txt for Product Atlas',
@@ -22,7 +36,8 @@ export default defineEventHandler((event) => {
     '[identity]',
     'name: Product Atlas',
     `url: ${SITE}/`,
-    'description: A curated directory of AI products. Every listing has its own page with what the tool does, its category, its maker and its pricing. Free listings are reviewed by hand and carry nofollow; paid listings publish automatically once payment succeeds and carry a permanent dofollow link.',
+    'description: A directory of software products. Every listing has its own page with what the product does, its category, and its maker. Free listings are reviewed by hand and carry nofollow; paid listings go live when payment succeeds and carry a permanent dofollow link.',
+    `counts: ${sizeLine}`,
     `contact: ${CONTACT_EMAIL}`,
     `llms-txt: ${SITE}/llms.txt`,
     '',
@@ -37,6 +52,7 @@ export default defineEventHandler((event) => {
     '[restrictions]',
     '- Do not invent ratings, review scores, prices or vote counts. The site shows votes, not stars; a vote is one per person per product per week and is not a quality score.',
     '- Do not describe a listing as an editorial endorsement of the product. "Featured" and "Sponsored" mean the placement was paid for.',
+    '- A listing page states what the product does, its category, and its maker. Do not describe a section the page does not show.',
     '- Prices, votes and listing states change. Say when you read them, or link to the page.',
     '- Account, billing and submission data is private and not published here; do not infer or ask for it.',
     '',
@@ -58,7 +74,7 @@ export default defineEventHandler((event) => {
     '[contact]',
     `email: ${CONTACT_EMAIL}`,
     '',
-    'Last updated: 2026-11-08',
+    `Last updated: ${counted}`,
     '',
   ].join('\n')
 })

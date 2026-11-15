@@ -252,8 +252,8 @@ const faq = computed(() => [
   {
     q: pick('诊断完可以直接提交收录吗？', 'Can I submit my product right after the check?'),
     a: pick(
-      '可以。提交时带上刚才诊断的链接，我们会自动抓取标题、描述和图标，你只需要确认。',
-      'Yes. Submit with the URL you just checked and we prefill the title, description and icon — you only confirm.',
+      '先粘贴网址。我们起草收录。只在保存或付款时登录。',
+      'Paste the URL first. We draft the listing. Sign in only to save or pay.',
     ),
   },
   {
@@ -426,7 +426,7 @@ useSeo({
         <div class="audit__cta">
           <div>
             <p class="audit__cta-title">
-              {{ pick('把这条链接直接提交，资料自动填好。', 'Submit this URL and the listing is prefilled.') }}
+              {{ pick('先粘贴网址。我们起草收录。只在保存或付款时登录。', 'Paste the URL first. We draft the listing. Sign in only to save or pay.') }}
             </p>
             <p class="audit__cta-note">{{ pick('免费收录，页面永久保留。', 'Free to list. The page stays.') }}</p>
           </div>
@@ -501,8 +501,8 @@ useSeo({
       <div class="tool-cta__body">
         <h2>{{ pick('诊断完，把产品提交上来', 'Checked it? Now list the product.') }}</h2>
         <p>{{ isZh
-          ? '免费收录，页面永久保留；付费置顶拿 dofollow 反链。提交时带上你刚查的链接，资料自动填好。'
-          : 'Free to list, the page stays. A paid placement adds a dofollow backlink. Submit with the URL you just checked and the listing is prefilled.' }}</p>
+          ? '先粘贴网址。我们起草收录。只在保存或付款时登录。'
+          : 'Paste the URL first. We draft the listing. Sign in only to save or pay.' }}</p>
       </div>
       <NuxtLink class="btn btn--primary btn--lg" :to="localePath('/submit')">
         {{ pick('提交产品', 'Submit a product') }}<Icon name="arrow-right" />
