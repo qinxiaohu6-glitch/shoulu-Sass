@@ -65,7 +65,7 @@ const rules = computed(() => [
   },
   {
     n: '02',
-    title: pick('付款即上线', 'Live the second you pay'),
+    title: pick('付款成功后上线', 'When payment succeeds'),
     body: pick(
       '付款成功后出现在本页。进入前 10 名时同步出现在首页。无需排队审核。',
       'Your spot appears on this page when payment succeeds. Top 10 also shows on the homepage. No review queue.',
@@ -158,8 +158,8 @@ async function onSubmit(payload: { email: string; name: string; tagline: string;
     }
     if (!paymentReady.value) {
       error.value = pick(
-        '在线支付还没开通，我们会用邮件告诉你付款方式。',
-        'Card payment is not switched on yet — we will email you how to pay.',
+        '暂时打不开付款页面，请稍后再试。',
+        'Could not open the payment page — try again in a moment.',
       )
       return
     }
@@ -231,7 +231,7 @@ useHead({
         <form id="claim" class="bb-claim" @submit.prevent="openClaim(null)">
           <div class="bb-claim__head">
             <h2>{{ pick('认领展示位', 'Claim your spot') }}</h2>
-            <span>{{ pick('付款即上线', 'Live the second you pay') }}</span>
+            <span>{{ pick('付款成功后上线', 'When payment succeeds') }}</span>
           </div>
           <label class="sr-only" for="bb-url">URL</label>
           <input id="bb-url" v-model="url" type="url" required placeholder="https://yourproduct.com" maxlength="500">
@@ -354,7 +354,7 @@ useHead({
       <div>
         <h2>{{ pick(`首页前 10 名。从 ${floorLabel} 起。`, `Homepage Top 10. From ${floorLabel}.`) }}</h2>
         <p>
-          {{ pick('一次付清。付款即上线。位置长期保留。', 'One-time payment. Live the second you pay. The spot stays.') }}
+          {{ pick('一次付清。付款成功后上线。位置长期保留。', 'One-time payment. It goes live when payment succeeds. The spot stays.') }}
         </p>
       </div>
       <a href="#claim">{{ pick('认领展示位', 'Claim your spot') }} →</a>

@@ -48,13 +48,13 @@ export const tiers: PriceTier[] = [
     unit: { en: 'forever', zh: '永远' },
     features: {
       en: [
-        'Manual review, usually 7–14 days',
+        'Reviewed by hand',
         'Permanent page',
         'Nofollow link',
         'Weekly board eligible',
       ],
       zh: [
-        '人工审核，通常 7–14 天',
+        '人工审核',
         '永久产品页',
         'nofollow 链接',
         '可参与每周榜',
@@ -74,8 +74,8 @@ export const tiers: PriceTier[] = [
     anchorCents: 1900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
-      en: ['Live on payment', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
-      zh: ['付款即上线', '永久 dofollow', '排在免费收录之前', '可参与每周榜'],
+      en: ['When payment succeeds', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
+      zh: ['付款成功后上线', '永久 dofollow', '排在免费收录之前', '可参与每周榜'],
     },
     cta: { en: 'Pay · Standard', zh: '去付款 · 标准' },
   },
@@ -231,16 +231,16 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
  */
 export const pricingBillboardBlurb: Record<string, Pair> = {
   entry: {
-    en: 'One-time payment. Live the second you pay — including homepage Top 10.',
-    zh: '一次付清。付款即上线；含首页 Top 10 展示。',
+    en: 'One-time payment. It goes live when payment succeeds — including homepage Top 10.',
+    zh: '一次付清。付款成功后上线；含首页 Top 10 展示。',
   },
   standard: {
-    en: 'One-time payment. Ranks above Entry. Live the second you pay.',
-    zh: '一次付清。排序高于入门档；付款即上线。',
+    en: 'One-time payment. Ranks above Entry. It goes live when payment succeeds.',
+    zh: '一次付清。排序高于入门档；付款成功后上线。',
   },
   prime: {
-    en: 'One-time payment. Top priority on the paid board. Live the second you pay.',
-    zh: '一次付清。付费板最高优先级；付款即上线。',
+    en: 'One-time payment. Top priority on the paid board. It goes live when payment succeeds.',
+    zh: '一次付清。付费板最高优先级；付款成功后上线。',
   },
 }
 

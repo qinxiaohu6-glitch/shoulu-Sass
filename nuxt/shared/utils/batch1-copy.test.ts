@@ -46,6 +46,31 @@ test('the stats median qualifier ships with the new FAQ', () => {
   assert.equal(stats.includes(MEDIAN_ZH), true)
 })
 
+test('an unconfigured Billboard claim does not promise an email or an invoice', () => {
+  const page = read('../../app/pages/billboard.vue')
+  const checkout = read('../../server/api/billboard/checkout.post.ts')
+  const sentence = 'Could not open the payment page — try again in a moment.'
+  const sentenceZh = '暂时打不开付款页面，请稍后再试。'
+  for (const text of [page, checkout]) {
+    assert.equal(text.includes(sentence), true)
+    assert.equal(text.includes(sentenceZh), true)
+    assert.equal(text.includes('we will email you how to pay'), false)
+    assert.equal(text.includes('邮件告诉你付款方式'), false)
+    assert.equal(text.includes('Request invoice'), false)
+    assert.equal(text.includes('索取发票'), false)
+  }
+  assert.equal(page.includes('Live the second you pay'), false)
+  assert.equal(page.includes('付款即上线'), false)
+  const pricing = read('../../shared/content/pricing.ts')
+  const pricingPage = read('../../app/pages/pricing.vue')
+  assert.equal(pricing.includes('Manual review, usually 7–14 days'), false)
+  assert.equal(pricing.includes('人工审核，通常 7–14 天'), false)
+  assert.equal(pricing.includes('Reviewed by hand'), true)
+  assert.equal(pricing.includes('Live on payment'), false)
+  assert.equal(pricingPage.includes('Live the second you pay'), false)
+  assert.equal(pricingPage.includes('付款即上线'), false)
+})
+
 test('the public primary path does not ask for an invoice', () => {
   const files = [
     '../../app/pages/index.vue',

@@ -172,8 +172,8 @@ const scenarios = computed(() => {
     {
       line: pick('我要首页 Billboard', 'I want the homepage Billboard'),
       answer: pick(
-        `Billboard 起价 ${entry.zh}。付款即上线。Top 10 同步首页。`,
-        `Billboard from ${entry.en}. Live the second you pay. Top 10 on the home page.`,
+        `Billboard 起价 ${entry.zh}。付款成功后上线。Top 10 同步首页。`,
+        `Billboard from ${entry.en}. It goes live when payment succeeds. Top 10 on the home page.`,
       ),
       cta: pick('认领展示位', 'Claim your spot'),
       to: billboardTo,
@@ -184,8 +184,8 @@ const scenarios = computed(() => {
 
 const adHead = computed(() =>
   pick(
-    '一次付清。付款即上线。Top 10 同步首页。右栏仍按周。',
-    'One-time payment. Live the second you pay. Top 10 on the home page. Sidebar stays weekly.',
+    '一次付清。付款成功后上线。Top 10 同步首页。右栏仍按周。',
+    'One-time payment. It goes live when payment succeeds. Top 10 on the home page. Sidebar stays weekly.',
   ),
 )
 
