@@ -9,9 +9,25 @@
  * a different origin and the point is that the card number never touches us.
  *
  * `ready` is fetched rather than assumed. While the merchant account is being
- * approved there is no provider, and a button that opens an error is worse
- * than the manual instructions it replaces.
+ * approved there is no provider. A failed pay does not toast an email or
+ * invoice promise from the API; the buyer only sees that the payment page
+ * did not open.
  */
+
+const PAY_CLOSED = {
+  zh: '暂时打不开付款页面，请稍后再试。',
+  en: 'Could not open the payment page — try again in a moment.',
+}
+
+/**
+ * The unconfigured checkout has no payment page and no email. Ignore whatever
+ * sentence the API attached to that reason, and show only the short line.
+ */
+function payErrorText(raw: string, reason: string | undefined, zh: boolean): string {
+  const closed = zh ? PAY_CLOSED.zh : PAY_CLOSED.en
+  if (reason === 'unconfigured') return closed
+  return raw || closed
+}
 
 export interface PaymentConfigView {
   ok: boolean
@@ -60,11 +76,10 @@ export async function usePayment() {
       }
       return false
     } catch (err) {
-      const message = (err as { data?: { message_zh?: string; message_en?: string } })?.data
+      const message = (err as { data?: { reason?: string; message_zh?: string; message_en?: string } })?.data
+      const raw = String((isZh.value ? message?.message_zh : message?.message_en) || '')
       toast.add({
-        title:
-          (isZh.value ? message?.message_zh : message?.message_en) ||
-          pick('暂时打不开付款页面，请稍后再试。', 'Could not open the payment page — try again in a moment.'),
+        title: payErrorText(raw, message?.reason, isZh.value),
         color: 'error',
       })
       return false

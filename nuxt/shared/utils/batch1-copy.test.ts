@@ -46,6 +46,25 @@ test('the stats median qualifier ships with the new FAQ', () => {
   assert.equal(stats.includes(MEDIAN_ZH), true)
 })
 
+test('listing checkout and the pay toast do not promise an email', () => {
+  const checkout = read('../../server/api/payments/checkout.post.ts')
+  const pay = read('../../app/composables/usePayment.ts')
+  const sentence = 'Could not open the payment page — try again in a moment.'
+  const sentenceZh = '暂时打不开付款页面，请稍后再试。'
+  assert.equal(checkout.includes(sentence), true)
+  assert.equal(checkout.includes(sentenceZh), true)
+  assert.equal(pay.includes(sentence), true)
+  assert.equal(pay.includes(sentenceZh), true)
+  assert.equal(pay.includes("reason === 'unconfigured'"), true)
+  for (const text of [checkout, pay]) {
+    assert.equal(text.includes('we will email you how to pay'), false, text.slice(0, 40))
+    assert.equal(text.includes('邮件告诉你付款方式'), false)
+    assert.equal(text.includes('Request invoice'), false)
+    assert.equal(text.includes('Invoice confirmed'), false)
+    assert.equal(text.includes('索取发票'), false)
+  }
+})
+
 test('an unconfigured Billboard claim does not promise an email or an invoice', () => {
   const page = read('../../app/pages/billboard.vue')
   const checkout = read('../../server/api/billboard/checkout.post.ts')
