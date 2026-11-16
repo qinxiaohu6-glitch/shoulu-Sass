@@ -3,7 +3,7 @@
  * `dr-checker` is that hub's Domain Rating page, so it can never be a product slug.
  */
 
-export const RESERVED_PRODUCT_SLUGS = new Set(['dr-checker'])
+export const RESERVED_PRODUCT_SLUGS = new Set(['dr-checker', 'saas-valuation-calculator'])
 
 export function isReservedProductSlug(slug: string): boolean {
   return RESERVED_PRODUCT_SLUGS.has(slug.trim().toLowerCase())

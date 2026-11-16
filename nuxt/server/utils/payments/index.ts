@@ -115,6 +115,14 @@ export function getPaymentProvider(event: H3Event): PaymentProvider | null {
  * through `String()` is what made a correctly configured deployment report
  * "No Creem product id for plan featured".
  */
+/**
+ * Parsed Waffo product map. `for_sale_listing` is buyable only when this map
+ * names that key. The default product id and a wildcard do not configure it.
+ */
+export function waffoProductIds(event: H3Event): Record<string, string> {
+  return parseProductIds(paymentConfig(event).waffoProductIds)
+}
+
 function parseProductIds(raw: unknown): Record<string, string> {
   if (!raw) return {}
   if (typeof raw === 'object' && !Array.isArray(raw)) {

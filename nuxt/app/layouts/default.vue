@@ -68,6 +68,7 @@ const navGroups = computed(() => [
       { label: pick('工具', 'Tools'), to: '/tools', icon: 'sparkles' },
       { label: pick('开发者', 'Makers'), to: '/makers', icon: 'user' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
+      { label: pick('待售', 'For sale'), to: '/for-sale', icon: 'wallet' },
       { label: 'Billboard', to: '/billboard', icon: 'megaphone' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check', icon: 'gauge' },
       { label: pick('周榜', 'Weekly'), to: '/weekly', icon: 'trophy' },

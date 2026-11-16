@@ -391,6 +391,8 @@ useHead({
           </div>
         </div>
 
+        <ForSaleModule :slug="slug" />
+
         <DirectoryScreenshotGallery :tool-name="tool.name" :screenshots="shots" />
 
         <DirectoryStickySectionNav :tabs="sectionTabs" />

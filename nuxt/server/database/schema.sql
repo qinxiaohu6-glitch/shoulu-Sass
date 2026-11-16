@@ -449,3 +449,48 @@ CREATE TABLE IF NOT EXISTS ticket_message (
 
 CREATE INDEX IF NOT EXISTS idx_ticket_message_ticket
   ON ticket_message (ticket_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- for-sale listings
+--
+-- One current row per product. Public reads require status = active AND
+-- paid_at AND reviewed_at. owner_email is for the contact notification only.
+-- The $9.90 fee lives on payment_order (plan = for_sale_listing), not here,
+-- and it is not a directory plan.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS for_sale_listing (
+  id            TEXT    PRIMARY KEY,
+  product_slug  TEXT    NOT NULL,
+  product_name  TEXT    NOT NULL DEFAULT '',
+  owner_sub     TEXT    NOT NULL,
+  owner_email   TEXT    NOT NULL DEFAULT '',
+  asking_cents  INTEGER NOT NULL DEFAULT 0,
+  revenue       TEXT    NOT NULL DEFAULT '',
+  profit        TEXT    NOT NULL DEFAULT '',
+  team          TEXT    NOT NULL DEFAULT '',
+  stack         TEXT    NOT NULL DEFAULT '',
+  -- draft | paid_pending_review | active | sold | withdrawn | rejected
+  status        TEXT    NOT NULL DEFAULT 'draft',
+  paid_at       INTEGER,
+  reviewed_at   INTEGER,
+  reviewer      TEXT    NOT NULL DEFAULT '',
+  review_note   TEXT    NOT NULL DEFAULT '',
+  created_at    INTEGER NOT NULL,
+  updated_at    INTEGER NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_for_sale_product ON for_sale_listing (product_slug);
+CREATE INDEX IF NOT EXISTS idx_for_sale_status ON for_sale_listing (status);
+CREATE INDEX IF NOT EXISTS idx_for_sale_owner ON for_sale_listing (owner_sub);
+
+CREATE TABLE IF NOT EXISTS for_sale_interest (
+  id          TEXT    PRIMARY KEY,
+  listing_id  TEXT    NOT NULL,
+  buyer_sub   TEXT    NOT NULL,
+  message     TEXT    NOT NULL,
+  created_at  INTEGER NOT NULL,
+  UNIQUE (listing_id, buyer_sub)
+);
+
+CREATE INDEX IF NOT EXISTS idx_for_sale_interest_listing ON for_sale_interest (listing_id);

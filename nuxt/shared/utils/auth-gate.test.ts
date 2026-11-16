@@ -19,6 +19,8 @@ const REDIRECT_ALLOW = new Set([
   'app/layouts/settings.vue',
   // The submit form, including the click that posts it.
   'app/components/directory/SubmitForm.vue',
+  // Listing a product for sale requires the signed-in owner. The public list does not.
+  'app/pages/for-sale/list.vue',
   // A vote click, not a page load.
   'app/components/VoteButton.vue',
   // OAuth came back without a session.

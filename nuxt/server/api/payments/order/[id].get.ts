@@ -11,9 +11,12 @@
  * on every request rather than caching.
  */
 
+import { FOR_SALE_KIND } from '~~/shared/content/for-sale'
 import { useDb } from '../../../utils/db'
 import { getSubmission } from '../../../utils/submissions'
 import { getAdBooking } from '../../../utils/ad-bookings'
+import { cycleOf, getForSale } from '../../../utils/for-sale'
+import { isPublicForSale } from '~~/shared/utils/for-sale-state'
 import { getOrder } from '../../../utils/payments/orders'
 
 export default defineEventHandler(async (event) => {
@@ -28,6 +31,32 @@ export default defineEventHandler(async (event) => {
 
   // An ad order has no submission; the return page shows its window instead.
   // Nothing sensitive is exposed here — no email, no session id, no creative.
+  // A for-sale order stores the listing id in submission_id. That id is not a
+  // directory submission, and payment alone does not make the sale public.
+  if (order.plan === FOR_SALE_KIND) {
+    const listing = order.submission_id ? await getForSale(db, order.submission_id) : null
+    const salePublic = listing ? isPublicForSale(cycleOf(listing)) : false
+    return {
+      ok: true,
+      order: {
+        id: order.id,
+        status: order.status,
+        plan: order.plan,
+        amount_cents: order.amount_cents,
+        currency: order.currency,
+        created_at: order.created_at,
+        paid_at: order.paid_at,
+        submission_id: '',
+        name: listing?.product_name || 'For-sale listing',
+        slug: listing?.product_slug ?? '',
+        live: false,
+        for_sale: true,
+        for_sale_public: salePublic,
+        ad: null,
+      },
+    }
+  }
+
   const booking = order.plan === 'ad' ? await getAdBooking(db, order.id) : null
   const submission = order.submission_id ? await getSubmission(db, order.submission_id) : null
 
@@ -58,6 +87,8 @@ export default defineEventHandler(async (event) => {
       live: booking
         ? booking.status === 'live'
         : Boolean(submission?.status === 'approved' && submission?.paid_at),
+      for_sale: false,
+      for_sale_public: false,
       ad: booking
         ? {
             slot: booking.slot,

@@ -482,6 +482,17 @@ useHead({
                 )
           }}
         </p>
+        <p class="mt-3 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+          {{
+            pick(
+              '已经收录的产品若要转让，不属于这四档方案。',
+              'Selling a product you already listed is not one of these plans.',
+            )
+          }}
+          <NuxtLink :to="localePath('/for-sale')" class="underline">
+            {{ pick('见待售', 'See products for sale') }}
+          </NuxtLink>
+        </p>
       </div>
     </section>
 
