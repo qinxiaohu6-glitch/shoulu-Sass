@@ -41,19 +41,17 @@ const pills = computed(() =>
       name: localizeTag(entry, lang.value).name,
       count: counts.value.get(entry.slug) ?? 0,
     }))
+    .filter((entry) => entry.count > 0)
     .sort((a, b) => b.count - a.count),
 )
 
-const title = computed(() => t('directory.tags.title'))
-const lead = computed(() => t('directory.tags.subtitle'))
+const title = computed(() => pick('标签', 'Tags'))
+const lead = computed(() =>
+  pick('按标签浏览收录。没有收录的标签不显示。', 'Browse listings by tag. Tags with no listings are hidden.'),
+)
 
 useSeo({
-  title: computed(() =>
-    t('directory.meta.tags', {
-      count: pills.value.length,
-      brand: t('directory.brand_name'),
-    }),
-  ),
+  title: computed(() => pick('标签 · Product Atlas', 'Tags · Product Atlas')),
   description: lead,
 })
 </script>

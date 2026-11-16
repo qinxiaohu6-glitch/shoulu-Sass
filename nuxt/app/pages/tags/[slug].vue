@@ -73,21 +73,21 @@ const countText = computed(() =>
   t('directory.tag_named_count', { count: total.value, name: tag.value.name }),
 )
 
-const metaTitle = computed(() =>
-  t('directory.tag.meta_title', {
-    count: total.value,
-    name: tag.value.name,
-    year: new Date().getFullYear(),
-  }),
-)
+const metaTitle = computed(() => `${tag.value.name} · Product Atlas`)
 const metaDescription = computed(() =>
   t('directory.tag.meta_desc', { count: total.value, name: tag.value.name }),
 )
 
+if (!list.value.length) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: isZh.value ? '没有这个标签' : 'No such tag',
+    fatal: true,
+  })
+}
+
 useSeo({
-  title: computed(() =>
-    t('directory.meta.with_brand', { title: metaTitle.value, brand: t('directory.brand_name') }),
-  ),
+  title: metaTitle,
   description: metaDescription,
 })
 

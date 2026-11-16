@@ -288,6 +288,16 @@ useHead({
           </p>
           <h1 class="mt-4 font-serif text-4xl font-normal tracking-tight text-balance sm:text-5xl">{{ title }}</h1>
           <p class="mx-auto mt-5 max-w-2xl text-muted-foreground">{{ lead }}</p>
+          <LiveDirectoryFacts />
+          <p class="mx-auto mt-4 max-w-2xl text-sm text-muted-foreground">
+            {{
+              pick(
+                '徽章是可选的。付费收录已经包含 dofollow 链接；不展示徽章也不会失去这条链接。',
+                'A listing badge is optional. Paid listings already include a dofollow link; you do not need to display the badge to keep it.',
+              )
+            }}
+            <a class="underline" href="/badge.svg" download="product-atlas-badge.svg">{{ pick('下载 SVG', 'Download SVG') }}</a>
+          </p>
           <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
             <NuxtLink
               class="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
@@ -400,8 +410,8 @@ useHead({
             <p class="mt-2 text-sm leading-relaxed text-muted-foreground">
               {{
                 pick(
-                  '一次付清。按累计金额排名。前 10 名同步首页。同一网站再付会累加。',
-                  'One-time. Ranked by total backed. Top 10 on the homepage. Another payment for the same website stacks.',
+                  '一次付清。按累计金额排名。前 10 名同步首页。如果想排得更靠前，为同一产品再付一次。金额会累加。',
+                  'One-time. Ranked by total backed. Top 10 on the homepage. If you want a higher rank, pay again for the same product. The amounts add up.',
                 )
               }}
             </p>

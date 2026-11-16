@@ -45,6 +45,11 @@ function goHome() {
       <button class="btn btn--primary" type="button" @click="goHome">
         {{ isZh ? '返回首页' : 'Back to home' }}
       </button>
+      <p class="mt-4" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap">
+        <a :href="isZh ? '/zh/products' : '/products'">{{ isZh ? '全部产品' : 'All products' }}</a>
+        <a :href="isZh ? '/zh/faq' : '/faq'">{{ isZh ? '常见问答' : 'Questions' }}</a>
+        <a :href="isZh ? '/zh/submit' : '/submit'">{{ isZh ? '提交' : 'Submit' }}</a>
+      </p>
     </div>
   </div>
 </template>

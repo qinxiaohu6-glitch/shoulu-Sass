@@ -14,6 +14,7 @@ import type {
 } from '~~/shared/types/catalog'
 import { rankedBoard } from './listing-desk'
 import { compareListingOrder, listingRank, listingWeight, pinWindowActive } from './listing-order'
+import { publicProductName } from './public-name'
 
 const catalog = raw as unknown as Catalog
 
@@ -79,13 +80,14 @@ export function detailFor(tool: Tool, locale: Locale): DetailBlock {
     pros: block?.pros ?? [],
     cons: block?.cons ?? [],
     faqs: block?.faqs ?? [],
+    ...(block?.pricing && (block.pricing.label || block.pricing.url) ? { pricing: block.pricing } : {}),
   }
 }
 
 export function localizeTool(tool: Tool, locale: Locale): LocalizedTool {
   return {
     ...tool,
-    name: field(tool as unknown as Record<string, unknown>, 'name', locale),
+    name: publicProductName(field(tool as unknown as Record<string, unknown>, 'name', locale)),
     short: field(tool as unknown as Record<string, unknown>, 'short', locale),
     long: field(tool as unknown as Record<string, unknown>, 'long', locale),
     makerName: tool.maker,

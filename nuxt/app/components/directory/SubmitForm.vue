@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { submissionTagError } from '~~/shared/utils/batch2'
 /**
  * Ported from `shipany-dir/src/components/directory/SubmitForm.tsx` and its
  * `SubmitFormParts.tsx`.
@@ -62,7 +63,7 @@ const DRAFT_KEY = 'atlas-submit-draft'
 const deadline = campaignDeadlineShanghai()
 const promoOn = computed(() => campaignActive())
 
-const { categories: liveCategories } = useDirectoryMeta()
+const { categories: liveCategories, tags: liveTags } = useDirectoryMeta()
 const payment = await usePayment()
 
 /**
@@ -101,6 +102,9 @@ const form = reactive({
   category: categoryFromQuery(route.query.category),
   intro: '',
   tags: [] as string[],
+  features: '',
+  pricingLabel: '',
+  pricingUrl: '',
   // Receipts still go to an address the submitter types. The Google account
   // is what owns the row; this field is where the mail is sent.
   email: '',
@@ -322,7 +326,19 @@ function mapError(code?: string): string {
     return t('dir.submit.error_email_required')
   if (code === 'logo_required') return t('dir.submit.error_logo_required')
   if (code === 'bad_logo') return t('dir.submit.error_bad_logo')
+  if (code === 'tags_required') return pick('至少选一个标签。', 'Pick at least one tag.')
+  if (code === 'video_tag_required')
+    return pick(
+      '视频分类必须包含「视频生成」「视频聊天」或「转录」之一。',
+      'Video listings must include Video generation, Video chat, or Transcripts.',
+    )
   return t('dir.submit.error_failed')
+}
+
+function toggleTag(name: string) {
+  const index = form.tags.indexOf(name)
+  if (index >= 0) form.tags.splice(index, 1)
+  else if (form.tags.length < 4) form.tags.push(name)
 }
 
 async function submit() {
@@ -336,6 +352,11 @@ async function submit() {
   }
   if (!form.category) {
     error.value = t('dir.submit.error_invalid_category')
+    return
+  }
+  const tagError = submissionTagError(form.category, form.tags)
+  if (tagError) {
+    error.value = mapError(tagError)
     return
   }
   // Every listing needs a reachable address: it is where the receipt, the
@@ -393,6 +414,9 @@ async function submit() {
         // logo + maker are what make the published detail page look like a
         // curated listing instead of an empty placeholder card.
         tags: form.tags,
+        features: form.features,
+        pricing_label: form.pricingLabel,
+        pricing_url: form.pricingUrl,
         logo: form.logo,
         maker: form.maker,
       },
@@ -442,6 +466,9 @@ function reset() {
   form.category = ''
   form.intro = ''
   form.tags = []
+  form.features = ''
+  form.pricingLabel = ''
+  form.pricingUrl = ''
   form.email = ''
   form.logo = ''
   form.maker = ''
@@ -483,6 +510,11 @@ function reset() {
           ? t('directory.submit_success_desc_fast', { name: form.name, days: 30 })
           : t('directory.submit_success_desc_free', { name: form.name })
       }}
+    </p>
+    <p class="text-sm">
+      <NuxtLink class="underline" :to="localePath('/how-it-works')">
+        {{ pick('提交之后会发生什么', 'How it works') }}
+      </NuxtLink>
     </p>
     <div class="mt-2 flex flex-wrap justify-center gap-2">
       <NuxtLink
@@ -579,6 +611,73 @@ function reset() {
                 </UiSelectItem>
               </UiSelectContent>
             </UiSelect>
+          </div>
+
+          <fieldset class="space-y-2">
+            <legend class="text-sm leading-none font-medium">
+              {{ pick('标签', 'Tags') }}
+              <span class="text-destructive" aria-hidden="true">*</span>
+            </legend>
+            <p v-if="form.category === 'video'" class="text-xs text-muted-foreground">
+              {{
+                pick(
+                  '视频分类必须包含「视频生成」「视频聊天」或「转录」之一。',
+                  'Video listings must include Video generation, Video chat, or Transcripts.',
+                )
+              }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <label
+                v-for="tag in liveTags"
+                :key="tag.slug"
+                class="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs"
+              >
+                <input
+                  type="checkbox"
+                  :checked="form.tags.includes(tag.name_en)"
+                  @change="toggleTag(tag.name_en)"
+                >
+                {{ localizeTag(tag, lang).name }}
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="space-y-2">
+            <label for="tool-features" class="text-sm leading-none font-medium">
+              {{ pick('功能要点（可选，一行一条）', 'Features (optional, one per line)') }}
+            </label>
+            <textarea
+              id="tool-features"
+              v-model="form.features"
+              rows="3"
+              class="w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label for="tool-price" class="text-sm leading-none font-medium">
+              {{ pick('公开价格（可选）', 'Public price (optional)') }}
+            </label>
+            <input
+              id="tool-price"
+              v-model="form.pricingLabel"
+              type="text"
+              maxlength="80"
+              class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm"
+            >
+          </div>
+
+          <div class="space-y-2">
+            <label for="tool-price-url" class="text-sm leading-none font-medium">
+              {{ pick('定价页网址（可选）', 'Pricing page URL (optional)') }}
+            </label>
+            <input
+              id="tool-price-url"
+              v-model="form.pricingUrl"
+              type="url"
+              placeholder="https://"
+              class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm"
+            >
           </div>
 
           <div class="space-y-2">

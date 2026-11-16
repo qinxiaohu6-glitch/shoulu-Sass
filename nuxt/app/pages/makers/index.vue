@@ -27,10 +27,10 @@ const productCount = computed(
     submitted.value.filter((tool) => !isHiddenTool(tool, overrides.value)).length,
 )
 
-const title = computed(() => pick('开发者', 'Makers'))
+const title = computed(() => pick('创客', 'Makers'))
 const lead = computed(() =>
   isZh.value
-    ? `${list.value.length} 个开发者，${productCount.value} 款产品。`
+    ? `${list.value.length} 个创客，${productCount.value} 款产品。`
     : `${list.value.length} ${englishCount(list.value.length, 'maker')} behind ${productCount.value} ${englishCount(productCount.value, 'product')}.`,
 )
 

@@ -42,7 +42,7 @@ function listedWhen(createdAt: string) {
   return isZh.value ? `${y} 年 ${m} 月 ${d} 日` : `${MONTHS[m - 1]} ${d}, ${y}`
 }
 
-const popularTags = computed(() => liveTags.value.slice(0, 15))
+const popularTags = computed(() => liveTags.value.filter((tag) => tag.count > 0).slice(0, 15))
 
 useSeo({
   title: computed(() => `${title.value} · Product Atlas`),

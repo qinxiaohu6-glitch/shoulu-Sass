@@ -77,13 +77,7 @@ const countText = computed(() => {
   return `${total.value} ${category.value.name} ${total.value === 1 ? 'tool' : 'tools'}`
 })
 
-const metaTitle = computed(() =>
-  t('directory.category.meta_title', {
-    count: total.value,
-    name: category.value.name,
-    year: new Date().getFullYear(),
-  }),
-)
+const metaTitle = computed(() => `${category.value.name} · Product Atlas`)
 const metaDescription = computed(
   () =>
     category.value.desc ||
@@ -91,9 +85,7 @@ const metaDescription = computed(
 )
 
 useSeo({
-  title: computed(() =>
-    t('directory.meta.with_brand', { title: metaTitle.value, brand: t('directory.brand_name') }),
-  ),
+  title: metaTitle,
   description: metaDescription,
 })
 

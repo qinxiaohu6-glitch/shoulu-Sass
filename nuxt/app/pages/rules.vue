@@ -96,12 +96,12 @@ const sections = computed<RuleSection[]>(() => [
     ),
     items: [
       pick(
-        '免费档：人工审核，通常 7–14 天，不保证；高峰可能更长。',
-        'Free: manual review, usually 7–14 days, not guaranteed. Busy periods take longer.',
+        '免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
+        'We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
       ),
       pick(
-        '标准 / 精选 / 专业：付款成功后由支付回调验签、自动完成订单并发布页面，不需要人工确认收款。',
-        'Standard, Featured and Pro: a signed payment webhook settles the order and publishes the page automatically once payment succeeds — nobody confirms the receipt by hand.',
+        '标准、精选、专业三档在付款成功后自动发布。',
+        'Standard, Featured, and Pro go live automatically when payment succeeds.',
       ),
       pick(
         '会被拒绝或上线后下架的：垃圾站、只为反链的提交、诈骗与恶意软件与钓鱼、成人内容、骚扰与仇恨、违法商品或服务、赌博、不是你的产品、打不开的站点、重复域名。',

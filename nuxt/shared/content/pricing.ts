@@ -118,9 +118,9 @@ export const tiers: PriceTier[] = [
         'Everything in Featured',
         'Category pin, 90 days',
         '4 copy edits / year',
-        'Priority replies when email is on',
+        'Questions go to the contact address in the footer.',
       ],
-      zh: ['包含精选档全部权益', '分类置顶 90 天', '全年 4 次文案修改', '邮件开通后优先回复'],
+      zh: ['包含精选档全部权益', '分类置顶 90 天', '全年 4 次文案修改', '问题发到页脚的联系地址。'],
     },
     cta: { en: 'Pay · Pro', zh: '去付款 · 专业' },
   },
@@ -291,8 +291,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'Can I get a refund?', zh: '可以退款吗？' },
     a: {
-      en: 'Full refund before go-live. After it is live, no refund — the backlink is already public.',
-      zh: '上线前可全额退款。上线后不退，因为反链已经公开。',
+      en: 'If we do not deliver the placement, or we charge you in error, we refund it. After the listing or placement is live, we do not refund a change of mind or weak results. Full terms are in the billing section.',
+      zh: '若我们没有交付展示位，或错误扣款，我们退款。收录或展示位上线后，不因改主意或效果不好退款。完整条款在计费章节。',
     },
   },
 ]

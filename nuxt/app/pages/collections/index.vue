@@ -46,16 +46,16 @@ const cards = computed(() =>
   }),
 )
 
-const title = computed(() => pick('AI 工具精选合集', 'Curated AI tool collections'))
+const title = computed(() => pick('合集', 'Collections'))
 const lead = computed(() =>
   pick(
-    '按场景整理的 AI 工具清单，每一款都附上入选理由。',
-    'Hand-picked lists of the best AI tools for a job, with notes on why each one made the cut.',
+    '本站写好的收录清单。有成员时才出现在这里。',
+    'Lists of listings written for this directory. A list appears here when it has members.',
   ),
 )
 
 useSeo({
-  title: computed(() => `${title.value} · Product Atlas`),
+  title: computed(() => pick('合集 · Product Atlas', 'Collections · Product Atlas')),
   description: lead,
 })
 

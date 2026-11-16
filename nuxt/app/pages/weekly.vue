@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { WEEKLY_EMPTY_COPY } from '~~/shared/content/weekly-empty'
+import { currentPeriodLabel } from '~~/shared/utils/batch2'
 import { rankedBoard } from '~~/shared/utils/listing-desk'
 
 const { lang, isZh, pick } = useLang()
@@ -72,8 +73,8 @@ function currentRange(locale: 'en' | 'zh'): string {
   return `${mon} ${monday.getDate()} – ${sun} ${sunday.getDate()}`
 }
 
-const currentId = computed(() => isoWeekId())
 const currentLabel = computed(() => currentRange(lang.value))
+const periodLabel = computed(() => currentPeriodLabel())
 
 const panels = computed<Panel[]>(() => {
   const list: Panel[] = []
@@ -147,7 +148,7 @@ useSeo({
       <h1 class="page-title">{{ title }}</h1>
       <p class="page-sub">{{ lead }}</p>
       <p class="stat-line" style="margin-top: 8px">
-        {{ pick('当前周期：', 'Current period：') }}{{ currentLabel }} · {{ currentId }}
+        {{ pick(`当前周期: ${currentLabel}`, `Current period: ${periodLabel}`) }}
       </p>
     </header>
 

@@ -13,8 +13,8 @@
       "count": 5,
       "name_en": "AI Assistants",
       "name_zh": "AI 助手",
-      "desc_en": "General-purpose assistants you can talk to.",
-      "desc_zh": "通用对话助手，什么问题都能接。"
+      "desc_en": "Assistants and other products currently listed in this category.",
+      "desc_zh": "当前列在这一分类里的助手和其他产品。"
     },
     {
       "slug": "coding",
@@ -31,8 +31,8 @@
       "count": 4,
       "name_en": "Design Tools",
       "name_zh": "设计工具",
-      "desc_en": "Image generation, UI and creative production.",
-      "desc_zh": "图像生成、界面与创意生产工具。"
+      "desc_en": "Images, design utilities, and visual production tools.",
+      "desc_zh": "图像、设计工具和视觉生产工具。"
     },
     {
       "slug": "video",
@@ -40,8 +40,8 @@
       "count": 4,
       "name_en": "Video",
       "name_zh": "视频",
-      "desc_en": "Generate, edit and translate video.",
-      "desc_zh": "视频生成、剪辑与翻译。"
+      "desc_en": "Video generation, editing, transcripts, and live video chat.",
+      "desc_zh": "视频生成、剪辑、转录和实时视频聊天。"
     },
     {
       "slug": "audio",
@@ -49,8 +49,8 @@
       "count": 3,
       "name_en": "Audio & Music",
       "name_zh": "音频与音乐",
-      "desc_en": "Text-to-speech, voice cloning and AI music.",
-      "desc_zh": "语音合成、声音克隆与音乐生成。"
+      "desc_en": "Audio tools, music utilities, and generated or edited sound.",
+      "desc_zh": "音频工具、音乐工具，以及生成或编辑过的声音。"
     },
     {
       "slug": "writing",
@@ -67,8 +67,8 @@
       "count": 3,
       "name_en": "Productivity",
       "name_zh": "效率工具",
-      "desc_en": "Slides, notes and meetings, done faster.",
-      "desc_zh": "幻灯片、笔记与会议，做得更快。"
+      "desc_en": "Everyday work tools, from documents and timers to utilities.",
+      "desc_zh": "日常工作工具，从文档和计时器到实用小工具。"
     },
     {
       "slug": "research",
@@ -76,8 +76,8 @@
       "count": 3,
       "name_en": "Research",
       "name_zh": "研究与搜索",
-      "desc_en": "Answer engines and research assistants.",
-      "desc_zh": "答案引擎与研究助手。"
+      "desc_en": "Data, lookup tools, and research products.",
+      "desc_zh": "数据、查询工具和研究产品。"
     }
   ],
   "tags": [
@@ -102,7 +102,7 @@
     {
       "slug": "video-generation",
       "count": 5,
-      "name_en": "Video Generation",
+      "name_en": "Video generation",
       "name_zh": "视频生成"
     },
     {
@@ -170,6 +170,48 @@
       "count": 1,
       "name_en": "Text to Speech",
       "name_zh": "语音合成"
+    },
+    {
+      "slug": "video-chat",
+      "count": 0,
+      "name_en": "Video chat",
+      "name_zh": "视频聊天"
+    },
+    {
+      "slug": "transcripts",
+      "count": 0,
+      "name_en": "Transcripts",
+      "name_zh": "转录"
+    },
+    {
+      "slug": "utilities",
+      "count": 0,
+      "name_en": "Utilities",
+      "name_zh": "实用工具"
+    },
+    {
+      "slug": "games",
+      "count": 0,
+      "name_en": "Games",
+      "name_zh": "游戏"
+    },
+    {
+      "slug": "data-lookup",
+      "count": 0,
+      "name_en": "Data lookup",
+      "name_zh": "数据查询"
+    },
+    {
+      "slug": "ecommerce",
+      "count": 0,
+      "name_en": "Ecommerce",
+      "name_zh": "电商"
+    },
+    {
+      "slug": "face-swap",
+      "count": 0,
+      "name_en": "Face swap",
+      "name_zh": "换脸"
     }
   ],
   "tools": [

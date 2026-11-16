@@ -75,8 +75,8 @@ const rules = computed(() => [
     n: '03',
     title: pick('再付一次，向上爬', 'Pay again, climb'),
     body: pick(
-      '同一网站的金额会累加。被人超过只掉名次，不会从榜上消失。',
-      'Amounts stack on the same website. If someone passes you, you only drop in rank.',
+      '如果想排得更靠前，为同一产品再付一次。金额会累加。被人超过只掉名次。',
+      'If you want a higher rank, pay again for the same product. The amounts add up. If someone passes you, you only drop in rank.',
     ),
   },
 ])
@@ -92,15 +92,15 @@ const faq = computed(() => [
   {
     q: pick('这是订阅吗？', 'Is the payment recurring?'),
     a: pick(
-      `不是。每一笔都是一次性的，新出价从 ${floorLabel} 起。之后再付是另一次一次性加价，会累加到同一网站上。`,
-      `No. Every payment is one-time, from ${floorLabel}. A later payment is another one-time top-up and stacks on the same website.`,
+      `不是。每一笔都是一次性的，新出价从 ${floorLabel} 起。如果想排得更靠前，为同一产品再付一次。金额会累加。`,
+      `No. Every payment is one-time, from ${floorLabel}. If you want a higher rank, pay again for the same product. The amounts add up.`,
     ),
   },
   {
     q: pick('被人超过会怎样？', 'Can someone knock me off?'),
     a: pick(
-      `你的位置还在，只是名次下降。给同一网站再付任意金额（至少 ${floorLabel}）即可爬回去。`,
-      `Your spot stays. You only drop in rank. Pay again for the same website — at least ${floorLabel} — and it stacks.`,
+      `你的位置还在，只是名次下降。如果想排得更靠前，为同一产品再付一次。金额会累加。`,
+      `Your spot stays. You only drop in rank. If you want a higher rank, pay again for the same product. The amounts add up.`,
     ),
   },
   {

@@ -95,7 +95,7 @@ const lead = computed(() => t('directory.tools.subtitle'))
 
 useSeo({
   title: computed(() =>
-    t('directory.meta.tools', { count: total.value, brand: t('directory.brand_name') }),
+    t('directory.meta.tools', { count: all.value.length, brand: t('directory.brand_name') }),
   ),
   description: lead,
 })

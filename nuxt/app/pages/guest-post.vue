@@ -68,9 +68,12 @@ function formatPrice(cents: number, currency: string): string {
 }
 
 useSeo({
-  title: computed(() => pick('客座文章 · Product Atlas', 'Guest Post · Product Atlas')),
+  title: computed(() => pick('书面评论 · Product Atlas', 'Written review · Product Atlas')),
   description: computed(() =>
-    pick('把你的专业见解分享给我们的读者。', 'Share your expertise with our readers.'),
+    pick(
+      '这一页没有自助标价，所以不打开结账。',
+      'This page has no self-serve price, so it does not open a checkout.',
+    ),
   ),
 })
 </script>
@@ -81,11 +84,8 @@ useSeo({
       <div class="mx-auto max-w-4xl">
         <div class="text-center">
           <h1 class="font-serif text-4xl font-normal tracking-tight sm:text-5xl">
-            {{ pick('客座文章', 'Guest Post') }}
+            {{ pick('书面评论', 'Written review') }}
           </h1>
-          <p class="mx-auto mt-5 max-w-2xl text-muted-foreground">
-            {{ pick('把你的专业见解分享给我们的读者。', 'Share your expertise with our readers.') }}
-          </p>
         </div>
 
         <div v-if="!info?.enabled" class="mx-auto mt-12 max-w-xl text-center text-sm leading-relaxed text-muted-foreground">
