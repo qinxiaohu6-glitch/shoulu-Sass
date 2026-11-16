@@ -8,9 +8,11 @@
  * re-scaled by a chart library.
  */
 const { lang, pick } = useLang()
+const boardData = await useBoardData()
 
 const stats = computed(() => {
-  const sorted = [...weeks].sort((a, b) => (a.id < b.id ? 1 : -1))
+  // Closed weeks, newest first. Catalogue seed weeks are not this chart.
+  const sorted = boardData.value.history ?? []
   const total = (w?: (typeof sorted)[number]) =>
     w ? w.ranking.reduce((sum, row) => sum + row.votes, 0) : 0
   const current = total(sorted[0])
@@ -25,8 +27,7 @@ const stats = computed(() => {
 })
 
 const spark = computed(() => {
-  const series = [...weeks]
-    .sort((a, b) => (a.id < b.id ? 1 : -1))
+  const series = [...(boardData.value.history ?? [])]
     .slice(0, 5)
     .reverse()
     .map((w) => w.ranking.reduce((sum, row) => sum + row.votes, 0))

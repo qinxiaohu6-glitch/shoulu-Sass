@@ -1,32 +1,47 @@
+import type { Ref } from 'vue'
 import type { Week } from '~~/shared/types/catalog'
+import { isIsoWeekId } from '~~/shared/utils/weekly-board'
 
 /**
- * The newest week closed by the Monday cron, or `null` while the archive is
- * empty.
+ * The live weekly board.
  *
- * Pages compare its id against the newest week in the build-time catalogue and
- * only prefer it when it is genuinely newer — that is what keeps a fresh
- * install, and every page before the first cron run, rendering exactly the
- * catalogue it shipped with.
+ * `week` is the requested ISO week (or the current one). `current` is always
+ * the open UTC week, ranked from the same votes as `/api/votes`. `history`
+ * is closed weeks in archive order, newest first. An archived week is not
+ * recomputed here.
  */
-export async function useBoard(): Promise<ComputedRef<Week | null>> {
-  // See the note in `overrides.server.ts`: a relative `$fetch` has no origin on
-  // Workers, and this composable's `catch` would turn that into a silent
-  // "no archive yet" forever.
-  const requestFetch = useRequestFetch()
+export type BoardPayload = {
+  ok: boolean
+  week: Week | null
+  source?: 'live' | 'archive' | 'backfill' | 'future'
+  current: Week | null
+  history: Week[]
+  archived: string[]
+}
 
-  const { data } = await useAsyncData<Week | null>(
-    'board-week',
+const EMPTY: BoardPayload = { ok: false, week: null, current: null, history: [], archived: [] }
+
+export async function useBoardData(): Promise<Ref<BoardPayload>> {
+  const route = useRoute()
+  const requestFetch = useRequestFetch()
+  const requested = computed(() => {
+    const raw = String(route.query.week ?? '').trim()
+    return isIsoWeekId(raw) ? raw : ''
+  })
+
+  const { data } = await useAsyncData<BoardPayload>(
+    'live-board',
     async () => {
       try {
-        const res = await requestFetch<{ ok: boolean; week?: Week | null }>('/api/board')
-        return res?.week ?? null
+        const query = requested.value ? `?week=${encodeURIComponent(requested.value)}` : ''
+        const res = await requestFetch<BoardPayload>(`/api/board${query}`)
+        return res ?? EMPTY
       } catch {
-        return null
+        return EMPTY
       }
     },
-    { default: () => null },
+    { default: () => EMPTY, watch: [requested] },
   )
 
-  return computed(() => data.value ?? null)
+  return computed(() => data.value ?? EMPTY)
 }

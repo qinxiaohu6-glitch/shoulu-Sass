@@ -7,12 +7,14 @@
  * cookie: `{ week }` defaults to the week that just closed, and passing an
  * explicit id re-runs an older one.
  *
- * Idempotent by construction — see `archiveWeek`.
+ * Idempotent by construction — see `archiveWeek`. A week that already has
+ * archive rows is not rewritten, so W45 stays as it was frozen.
  */
 
 import { isAdmin } from '../../utils/admin'
 import { archiveWeek, previousWeekId } from '../../utils/archive'
 import { useDb } from '../../utils/db'
+import { loadEligibleListedAt } from '../../utils/eligible-listings'
 
 const WEEK_RE = /^\d{4}-W\d{2}$/
 
@@ -38,6 +40,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = await useDb(event)
-  const result = await archiveWeek(db, week)
+  const eligible = await loadEligibleListedAt(db)
+  const result = await archiveWeek(db, week, eligible)
   return { ok: true, ...result }
 })
