@@ -1,22 +1,23 @@
 /**
  * /products/:slug.md — the same facts as the product page, in markdown.
  * Hidden and missing listings answer the same status the HTML page does.
+ *
+ * This is middleware, not `routes/products/[slug].md.ts`. On Nitro 2 that
+ * filename matches every `/products/:slug` and the HTML page never runs.
+ * A non-markdown path returns nothing so the Nuxt page can handle it.
  */
 import { productMarkdown } from '~~/shared/utils/product-markdown'
+import { productMarkdownSlug } from '~~/shared/utils/product-markdown-route'
 import { publicProductName } from '~~/shared/utils/public-name'
 import { localizeCategory, localizeTool, categories as catalogCategories } from '~~/shared/utils/catalog'
-import { useDb } from '../../utils/db'
-import { getDirectoryTool, listDirectoryCategories, listDirectoryTools } from '../../utils/directory'
-import { isHidden, loadOverrides } from '../../utils/overrides'
-import { getPublicBySlug, listPublishedTools, publicTool } from '../../utils/submissions'
+import { useDb } from '../utils/db'
+import { getDirectoryTool, listDirectoryCategories, listDirectoryTools } from '../utils/directory'
+import { isHidden, loadOverrides } from '../utils/overrides'
+import { getPublicBySlug, listPublishedTools, publicTool } from '../utils/submissions'
 
 export default defineEventHandler(async (event) => {
-  const raw = String(getRouterParam(event, 'slug') ?? '').trim()
-  const slug = raw.replace(/\.md$/i, '')
-  if (!slug) {
-    setResponseStatus(event, 404)
-    return 'Not found'
-  }
+  const slug = productMarkdownSlug(getRequestURL(event).pathname)
+  if (!slug) return
 
   const db = await useDb(event)
   if (await isHidden(db, slug)) {
