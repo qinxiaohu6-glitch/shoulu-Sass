@@ -164,7 +164,6 @@ const hasPricing = computed(() =>
 
 /* "Popular tools" in the rail — the same open week as the homepage board. */
 const boardData = await useBoardData()
-const submitted = await useSubmittedTools()
 const topPicks = computed(() => {
   const directory = mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value)
   const bySlug = new Map(directory.map((entry) => [entry.slug, entry]))
