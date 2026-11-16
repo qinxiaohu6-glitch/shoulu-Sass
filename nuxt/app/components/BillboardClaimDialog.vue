@@ -56,11 +56,7 @@ const host = computed(() => domainLabel(props.url))
 const favicon = computed(() => faviconForUrl(props.url))
 const price = computed(() => centsLabel(landing.value.chargeCents))
 
-const cta = computed(() =>
-  props.paymentReady
-    ? pick(`认领展示位 · ${price.value}`, `Claim your spot for ${price.value}`)
-    : pick(`索取发票 · ${price.value}`, `Request invoice · ${price.value}`),
-)
+const cta = computed(() => pick(`认领展示位 · ${price.value}`, `Claim your spot for ${price.value}`))
 
 const landingCopy = computed(() => {
   const dollars = landing.value.chargeCents / 100
@@ -74,9 +70,7 @@ const landingCopy = computed(() => {
 const checks = computed(() => [
   pick('首页展示前 10 名', 'Top 10 shown on the homepage'),
   pick('直接链到你的网站', 'Direct link to your website'),
-  props.paymentReady
-    ? pick('付款到账后即上线', 'Live the moment payment clears')
-    : pick('发票确认后上线', 'Live after the invoice is confirmed'),
+  pick('付款成功后上线', 'It goes live when payment succeeds'),
   pick('不过期，不续费', 'No expiry, no renewal'),
   pick('一次付清，随时加价爬升', 'Pay once, climb anytime'),
 ])
@@ -145,9 +139,7 @@ function onClose() {
         </ul>
         <p class="bb-modal__fine">
           {{
-            paymentReady
-              ? pick('一次付清。付款到账后上线。', 'One-time payment. Live the moment payment clears.')
-              : pick('一次付清。发票确认后上线。', 'One-time payment. Live after the invoice is confirmed.')
+            pick('一次付清。付款成功后上线。', 'One-time payment. It goes live when payment succeeds.')
           }}
         </p>
       </aside>
@@ -157,9 +149,7 @@ function onClose() {
             <h2>{{ pick('快到了', 'Almost there') }}</h2>
             <p>
               {{
-                paymentReady
-                  ? pick('无需注册账户。付款到账后即可上线。', 'No account needed. Live the moment payment clears.')
-                  : pick('无需注册账户。发票确认后上线。', 'No account needed. Live after the invoice is confirmed.')
+                pick('无需注册账户。付款成功后上线。', 'No account needed. It goes live when payment succeeds.')
               }}
             </p>
           </div>
@@ -211,15 +201,8 @@ function onClose() {
           {{ busy ? pick('处理中…', 'Working…') : cta }}
         </button>
         <p v-if="error" class="bb-modal__error">{{ error }}</p>
-        <p v-else-if="done" class="bb-modal__fine">
-          {{ pick('发票已记下。确认之前不会上线。', 'Invoice requested. Nothing goes live until the invoice is confirmed.') }}
-        </p>
         <p v-else class="bb-modal__fine">
-          {{
-            paymentReady
-              ? pick('一次付清。到账后上线。', 'One-time payment. Live the moment payment clears.')
-              : pick('一次付清。发票确认后上线。', 'One-time payment. Live after the invoice is confirmed.')
-          }}
+          {{ pick('一次付清。付款成功后上线。', 'One-time payment. It goes live when payment succeeds.') }}
         </p>
       </form>
     </div>

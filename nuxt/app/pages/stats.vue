@@ -3,7 +3,9 @@
  * /stats — the public number page. The figures are the /api/stats payload.
  * A failed read hides the grid instead of printing zeros.
  */
-const { pick } = useLang()
+import { englishCount } from '~~/shared/utils/english-count'
+
+const { pick, isZh } = useLang()
 const requestFetch = useRequestFetch()
 
 type Stats = {
@@ -31,18 +33,36 @@ const stats = computed(() => (data.value?.ok ? data.value : null))
 const cells = computed(() => {
   const row = stats.value
   if (!row) return []
-  const items: { label: string; value: string }[] = [
-    { label: pick('个产品', 'products'), value: String(row.products) },
-    { label: pick('个分类', 'categories'), value: String(row.categories) },
-    { label: pick('个免费提交在排队', 'free submissions in queue'), value: String(row.free_pending) },
-    { label: pick('个已确认 Billboard', 'confirmed Billboard spots'), value: String(row.billboard_confirmed) },
-    { label: pick('个右栏周次可订', 'sidebar weeks open'), value: String(row.bookable_weeks) },
-    { label: pick('张本周票', 'votes this week'), value: String(row.week_votes) },
+  const items: { label: string; value: string; note?: string }[] = [
+    { label: isZh.value ? '个产品' : englishCount(row.products, 'product'), value: String(row.products) },
+    {
+      label: isZh.value ? '个分类' : englishCount(row.categories, 'category', 'categories'),
+      value: String(row.categories),
+    },
+    {
+      label: isZh.value ? '个免费提交在排队' : `${englishCount(row.free_pending, 'free submission')} in queue`,
+      value: String(row.free_pending),
+    },
+    {
+      label: isZh.value
+        ? '个已确认 Billboard'
+        : `confirmed Billboard ${englishCount(row.billboard_confirmed, 'spot')}`,
+      value: String(row.billboard_confirmed),
+    },
+    {
+      label: isZh.value ? '个右栏周次可订' : `sidebar ${englishCount(row.bookable_weeks, 'week')} open`,
+      value: String(row.bookable_weeks),
+    },
+    {
+      label: isZh.value ? '张本周票' : `${englishCount(row.week_votes, 'vote')} this week`,
+      value: String(row.week_votes),
+    },
   ]
   if (row.median_review_days != null) {
     items.push({
       label: pick('天，最近审核中位', 'median review days'),
       value: String(row.median_review_days),
+      note: pick('仅针对已审完的免费收录。', 'For free listings that have already been reviewed.'),
     })
   }
   return items
@@ -89,6 +109,7 @@ useHead({
       <li v-for="cell in cells" :key="cell.label">
         <strong>{{ cell.value }}</strong>
         <span>{{ cell.label }}</span>
+        <small v-if="cell.note">{{ cell.note }}</small>
       </li>
     </ul>
     <p v-else class="mk-sub">{{ pick('数字暂时读不到。', 'The numbers are not available right now.') }}</p>
@@ -115,8 +136,13 @@ useHead({
   font-size: 28px;
   letter-spacing: -0.03em;
 }
-.stats-grid span {
+.stats-grid span,
+.stats-grid small {
   color: var(--muted-foreground);
   font-size: 13px;
+}
+.stats-grid small {
+  display: block;
+  margin-top: 6px;
 }
 </style>

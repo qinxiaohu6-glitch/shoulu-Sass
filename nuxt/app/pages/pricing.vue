@@ -19,13 +19,13 @@
  * `groups.length <= 1` too.
  *
  * Launch + Get seen. Directory-submission packages are not sold here.
- * Paid buttons say "Request invoice" until /api/payments/config reports ready.
+ * Paid buttons say Pay. Checkout runs when /api/payments/config reports ready;
+ * a missing provider does not fall back to an invoice request.
  */
 import type { PricingGroup, PricingPlan } from '~/utils/directory-ui'
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
 import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/billboard'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
-import { contactHref } from '~~/shared/content/site-contact'
 import {
   adPlans,
   comparison,
@@ -41,8 +41,6 @@ const localePath = useLocalePath()
 const overrides = useOverrides()
 const router = useRouter()
 const requestFetch = useRequestFetch()
-const { ready: paymentReady } = await usePayment()
-
 const t = (pair: { en: string; zh: string }) => (lang.value === 'zh' ? pair.zh : pair.en)
 const tl = (pair: { en: string[]; zh: string[] }) => (lang.value === 'zh' ? pair.zh : pair.en)
 
@@ -58,14 +56,7 @@ const lead = computed(() =>
 
 function listingCta(id: string, name: { en: string; zh: string }) {
   if (id === 'free') return pick('免费提交', 'Submit free')
-  if (paymentReady.value) return pick(`去付款 · ${name.zh}`, `Pay · ${name.en}`)
-  return pick(`索取发票 · ${name.zh}`, `Request invoice · ${name.en}`)
-}
-
-function invoiceMail(plan: string) {
-  const href = contactHref()
-  const subject = encodeURIComponent(`Invoice request · ${plan}`)
-  return href ? `${href}?subject=${subject}` : localePath('/pricing')
+  return pick(`去付款 · ${name.zh}`, `Pay · ${name.en}`)
 }
 
 const deadline = campaignDeadlineShanghai()
@@ -98,9 +89,9 @@ const groups = computed<PricingGroup[]>(() => [
 ])
 
 /**
- * A plan is bought by submitting a listing, not by a standalone checkout: the
- * invoice has to point at something in the queue. So the CTA opens the submit
- * form with the plan preselected.
+ * A plan is bought by submitting a listing, not by a standalone checkout.
+ * The CTA opens the submit form with the plan preselected. Payment runs
+ * after sign-in, from the submission the server priced.
  */
 function choosePlan(plan: PricingPlan) {
   router.push({ path: localePath('/submit'), query: { plan: plan.id } })
@@ -119,8 +110,8 @@ const steps = computed(() => [
     title: pick('上线', 'Launch'),
     price: `${band('listing', ['free', 'standard', 'featured', 'pro'])} · ${pick('一次性', 'one-time')}`,
     body: pick(
-      '获得永久产品页。付费一次，付款即上线，并得到 dofollow 链接。',
-      'Get a permanent page. Pay once to go live on payment, with a dofollow link.',
+      '获得永久产品页。一次付费，付款成功后上线，并得到 dofollow 链接。',
+      'Get a permanent page. Pay once to go live when payment succeeds, with a dofollow link.',
     ),
     cta: pick('看四档收录', 'See the four tiers'),
     to: '#plans',
@@ -156,13 +147,13 @@ const scenarios = computed(() => {
   const standard = salePhrase(skuQuote('listing', 'standard'))
   const featured = salePhrase(skuQuote('listing', 'featured'))
   const entry = salePhrase(skuQuote('billboard', 'floor'))
-  const billboardTo = paymentReady.value ? `${localePath('/billboard')}#claim` : invoiceMail('Billboard')
+  const billboardTo = `${localePath('/billboard')}#claim`
   return [
     {
       line: pick('我只需要一条 dofollow 链接', 'I just need a dofollow link'),
       answer: pick(
-        `标准档 — ${standard.zh}，一次付清。付款即上线。`,
-        `Standard — ${standard.en}, one-time. Live on payment.`,
+        `标准档 — ${standard.zh}，一次付清。付款成功后上线。`,
+        `Standard — ${standard.en}, one-time. It goes live when payment succeeds.`,
       ),
       cta: listingCta('standard', { en: 'Standard', zh: '标准' }),
       to: `${localePath('/submit')}?plan=standard`,
@@ -181,22 +172,20 @@ const scenarios = computed(() => {
     {
       line: pick('我要首页 Billboard', 'I want the homepage Billboard'),
       answer: pick(
-        `Billboard 起价 ${entry.zh}。付款即上线。Top 10 同步首页。`,
-        `Billboard from ${entry.en}. Live the second you pay. Top 10 on the home page.`,
+        `Billboard 起价 ${entry.zh}。付款成功后上线。Top 10 同步首页。`,
+        `Billboard from ${entry.en}. It goes live when payment succeeds. Top 10 on the home page.`,
       ),
-      cta: paymentReady.value
-        ? pick('认领展示位', 'Claim your spot')
-        : pick('索取发票 · Billboard', 'Request invoice · Billboard'),
+      cta: pick('认领展示位', 'Claim your spot'),
       to: billboardTo,
-      external: !paymentReady.value,
+      external: false,
     },
   ]
 })
 
 const adHead = computed(() =>
   pick(
-    '一次付清。付款即上线。Top 10 同步首页。右栏仍按周。',
-    'One-time payment. Live the second you pay. Top 10 on the home page. Sidebar stays weekly.',
+    '一次付清。付款成功后上线。Top 10 同步首页。右栏仍按周。',
+    'One-time payment. It goes live when payment succeeds. Top 10 on the home page. Sidebar stays weekly.',
   ),
 )
 
@@ -418,26 +407,14 @@ useHead({
             </p>
             <div class="mt-auto pt-6">
               <NuxtLink
-                v-if="paymentReady"
                 :to="`${localePath('/billboard')}#claim`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
               >
                 {{ pick(`认领展示位 · ${floorLabel} 起`, `Claim your spot · from ${floorLabel}`) }}
               </NuxtLink>
-              <a
-                v-else
-                :href="invoiceMail('Billboard')"
-                class="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-6 text-sm font-medium text-primary-foreground"
-              >
-                {{ pick(`索取发票 · ${floorLabel} 起`, `Request invoice · from ${floorLabel}`) }}
-              </a>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
-              {{
-                paymentReady
-                  ? pick('一次付清。付款即上线。', 'One-time payment. Live the second you pay.')
-                  : pick('一次付清。发票确认后上线。', 'One-time payment. Live after the invoice is confirmed.')
-              }}
+              {{ pick('一次付清。付款成功后上线。', 'One-time payment. It goes live when payment succeeds.') }}
             </p>
           </article>
           <article
@@ -483,11 +460,7 @@ useHead({
                 :to="`${localePath('/book-ad')}?slot=${plan.id}&weeks=1`"
                 class="inline-flex h-10 w-full items-center justify-center rounded-full border border-transparent bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary/80"
               >
-                {{
-                  paymentReady
-                    ? pick('预订这个位置', 'Book this spot')
-                    : pick('索取发票', 'Request invoice')
-                }}
+                {{ pick('预订这个位置', 'Book this spot') }}
               </NuxtLink>
             </div>
             <p class="mt-3 text-xs text-muted-foreground">
@@ -500,12 +473,12 @@ useHead({
           {{
             promoOn
               ? pick(
-                  `页面价格即为实付。发票确认后上线。黑五优惠截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
-                  `The price on the page is what you pay. Invoice confirmed, then it goes live. Black Friday pricing ends ${deadline} Asia/Shanghai. No promise of search rank.`,
+                  `页面价格即为实付。付款成功后上线。黑五优惠截止 ${deadline} Asia/Shanghai。不承诺搜索排名。`,
+                  `The price on the page is what you pay. It goes live when payment succeeds. Black Friday pricing ends ${deadline} Asia/Shanghai. No promise of search rank.`,
                 )
               : pick(
-                  '页面价格即为实付。发票确认后上线。不承诺搜索排名。',
-                  'The price on the page is what you pay. Invoice confirmed, then it goes live. No promise of search rank.',
+                  '页面价格即为实付。付款成功后上线。不承诺搜索排名。',
+                  'The price on the page is what you pay. It goes live when payment succeeds. No promise of search rank.',
                 )
           }}
         </p>

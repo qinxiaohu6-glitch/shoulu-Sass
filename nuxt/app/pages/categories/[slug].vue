@@ -72,9 +72,10 @@ function goPage(next: number) {
 const heading = computed(() =>
   t('directory.heading.category_tools', { name: category.value.name }),
 )
-const countText = computed(() =>
-  t('directory.category_named_count', { count: total.value, name: category.value.name }),
-)
+const countText = computed(() => {
+  if (lang.value === 'zh') return `${total.value} 款${category.value.name}工具`
+  return `${total.value} ${category.value.name} ${total.value === 1 ? 'tool' : 'tools'}`
+})
 
 const metaTitle = computed(() =>
   t('directory.category.meta_title', {

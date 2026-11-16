@@ -38,8 +38,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Entry', zh: '入门' },
     blurb: {
-      en: 'One-time payment. Live the second you pay — including homepage Top 10.',
-      zh: '一次付清。付款即上线；含首页 Top 10 展示。',
+      en: 'One-time payment. It goes live when payment succeeds — including homepage Top 10.',
+      zh: '一次付清。付款成功后上线；含首页 Top 10 展示。',
     },
   },
   {
@@ -50,8 +50,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Standard', zh: '标准' },
     blurb: {
-      en: 'One-time payment. Ranks above Entry. Live the second you pay.',
-      zh: '一次付清。排序高于入门档；付款即上线。',
+      en: 'One-time payment. Ranks above Entry. It goes live when payment succeeds.',
+      zh: '一次付清。排序高于入门档；付款成功后上线。',
     },
   },
   {
@@ -62,8 +62,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Prime', zh: '优先' },
     blurb: {
-      en: 'One-time payment. Top priority on the paid board. Live the second you pay.',
-      zh: '一次付清。付费板最高优先级；付款即上线。',
+      en: 'One-time payment. Top priority on the paid board. It goes live when payment succeeds.',
+      zh: '一次付清。付费板最高优先级；付款成功后上线。',
     },
   },
 ] as const

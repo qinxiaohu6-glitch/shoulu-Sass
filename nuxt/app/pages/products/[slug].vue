@@ -34,6 +34,7 @@
  */
 import type { SectionTabItem } from '~/utils/directory-ui'
 import type { Tool } from '~~/shared/types/catalog'
+import { listingDocumentTitle } from '~~/shared/utils/listing-title'
 
 const { lang, isZh, pick } = useLang()
 const localePath = useLocalePath()
@@ -204,10 +205,7 @@ const canonicalPath = computed(
 
 useSeo({
   title: computed(() =>
-    t('directory.meta.tool_detail', {
-      name: tool.value!.name,
-      brand: t('directory.brand_name'),
-    }),
+    listingDocumentTitle(tool.value!.name, tool.value!.short, t('directory.brand_name')),
   ),
   description: computed(() => tool.value!.short),
   type: 'article',

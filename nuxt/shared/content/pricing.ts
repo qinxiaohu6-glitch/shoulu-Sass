@@ -48,13 +48,13 @@ export const tiers: PriceTier[] = [
     unit: { en: 'forever', zh: '永远' },
     features: {
       en: [
-        'Manual review, usually 7–14 days',
+        'Reviewed by hand',
         'Permanent page',
         'Nofollow link',
         'Weekly board eligible',
       ],
       zh: [
-        '人工审核，通常 7–14 天',
+        '人工审核',
         '永久产品页',
         'nofollow 链接',
         '可参与每周榜',
@@ -74,10 +74,10 @@ export const tiers: PriceTier[] = [
     anchorCents: 1900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
-      en: ['Live on payment', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
-      zh: ['付款即上线', '永久 dofollow', '排在免费收录之前', '可参与每周榜'],
+      en: ['When payment succeeds', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
+      zh: ['付款成功后上线', '永久 dofollow', '排在免费收录之前', '可参与每周榜'],
     },
-    cta: { en: 'Request invoice · Standard', zh: '索取发票 · 标准' },
+    cta: { en: 'Pay · Standard', zh: '去付款 · 标准' },
   },
   {
     id: 'featured',
@@ -99,7 +99,7 @@ export const tiers: PriceTier[] = [
       ],
       zh: ['包含标准档全部权益', '目录与分类置顶 7 天', '首页卡片位', '之后回到标准档排序'],
     },
-    cta: { en: 'Request invoice · Featured', zh: '索取发票 · 精选' },
+    cta: { en: 'Pay · Featured', zh: '去付款 · 精选' },
     badge: { en: 'Most picked', zh: '最多人选' },
   },
   {
@@ -122,7 +122,7 @@ export const tiers: PriceTier[] = [
       ],
       zh: ['包含精选档全部权益', '分类置顶 90 天', '全年 4 次文案修改', '邮件开通后优先回复'],
     },
-    cta: { en: 'Request invoice · Pro', zh: '索取发票 · 专业' },
+    cta: { en: 'Pay · Pro', zh: '去付款 · 专业' },
   },
 ]
 
@@ -190,10 +190,10 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
   {
     label: { en: 'Go live', zh: '上线' },
     values: [
-      { en: 'Usually 7–14 days', zh: '通常 7–14 天' },
-      { en: 'On payment', zh: '付款即上线' },
-      { en: 'On payment', zh: '付款即上线' },
-      { en: 'On payment', zh: '付款即上线' },
+      { en: 'Reviewed by hand', zh: '人工审核' },
+      { en: 'When payment succeeds', zh: '付款成功后上线' },
+      { en: 'When payment succeeds', zh: '付款成功后上线' },
+      { en: 'When payment succeeds', zh: '付款成功后上线' },
     ],
   },
   {
@@ -231,16 +231,16 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
  */
 export const pricingBillboardBlurb: Record<string, Pair> = {
   entry: {
-    en: 'One-time payment. Live the second you pay — including homepage Top 10.',
-    zh: '一次付清。付款即上线；含首页 Top 10 展示。',
+    en: 'One-time payment. It goes live when payment succeeds — including homepage Top 10.',
+    zh: '一次付清。付款成功后上线；含首页 Top 10 展示。',
   },
   standard: {
-    en: 'One-time payment. Ranks above Entry. Live the second you pay.',
-    zh: '一次付清。排序高于入门档；付款即上线。',
+    en: 'One-time payment. Ranks above Entry. It goes live when payment succeeds.',
+    zh: '一次付清。排序高于入门档；付款成功后上线。',
   },
   prime: {
-    en: 'One-time payment. Top priority on the paid board. Live the second you pay.',
-    zh: '一次付清。付费板最高优先级；付款即上线。',
+    en: 'One-time payment. Top priority on the paid board. It goes live when payment succeeds.',
+    zh: '一次付清。付费板最高优先级；付款成功后上线。',
   },
 }
 
@@ -270,8 +270,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'How fast do I go live?', zh: '多久上线？' },
     a: {
-      en: 'Paid listings go live on payment, or when an invoice is confirmed. Free listings are usually reviewed in 7–14 days.',
-      zh: '付费收录在付款成功或发票确认后上线。免费收录通常 7–14 天完成审核。',
+      en: 'Paid listings go live when payment succeeds. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
+      zh: '付费档在付款成功后自动发布。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
     },
   },
   {
@@ -325,10 +325,10 @@ export const listingBenefits: { title: Pair; body: Pair }[] = [
     },
   },
   {
-    title: { en: 'Submitted in 30 seconds', zh: '30 秒完成提交' },
+    title: { en: 'Paste the URL first', zh: '先粘贴网址' },
     body: {
-      en: 'Paste your URL, we prefill the listing, you confirm. No blank form to fill from scratch.',
-      zh: '粘贴产品链接，我们自动填好资料，你只需确认。不用从空白表单开始。',
+      en: 'Paste the URL first. We draft the listing. Sign in only to save or pay.',
+      zh: '先粘贴网址。我们起草收录。只在保存或付款时登录。',
     },
   },
 ]

@@ -60,7 +60,7 @@ useSeo({
   description: computed(() =>
     isZh.value
       ? `${maker.value!.name} 在 Product Atlas 上收录的 ${maker.value!.tools.length} 个 AI 产品。`
-      : `${maker.value!.tools.length} AI products by ${maker.value!.name} on Product Atlas.`,
+      : `${maker.value!.tools.length} AI ${maker.value!.tools.length === 1 ? 'product' : 'products'} by ${maker.value!.name} on Product Atlas.`,
   ),
 })
 </script>

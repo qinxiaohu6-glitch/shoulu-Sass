@@ -29,10 +29,15 @@
  *
  * Payment: the source opens a provider picker after a paid submit. This build
  * configures one provider server-side, so `usePayment().pay(id)` goes straight to
- * it — and when no provider is configured yet, the receipt keeps the manual
- * instructions instead of showing a button that cannot work.
+ * it. A missing provider does not store an invoice or show a paid success.
+ *
+ * Guests can paste a URL and draft a listing. Nothing is written until they
+ * sign in and save or pay. The draft sits in sessionStorage across the
+ * Google redirect.
  */
+import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/campaign'
 import { tiers } from '~~/shared/content/pricing'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import type { SubmitFaqItem } from '~/utils/directory-ui'
 import { legalLogoUrl } from '~~/shared/utils/logo'
 
@@ -44,17 +49,18 @@ const t = useDirectoryCopy()
 const { user, ensure } = useSession()
 
 /**
- * Submitting is a signed-in action. The form is not rendered until Google
- * login has come back to this page, and POST /api/submit refuses a missing
- * session on its own.
+ * Reading the session does not bounce a guest. POST /api/submit still refuses
+ * a missing session. Sign-in happens on save or pay, after the draft exists
+ * only in the browser.
  */
 await ensure()
 const signInHref = computed(() =>
   localePath({ path: '/sign-in', query: { next: route.fullPath } }),
 )
-if (!user.value) {
-  await navigateTo(signInHref.value)
-}
+
+const DRAFT_KEY = 'atlas-submit-draft'
+const deadline = campaignDeadlineShanghai()
+const promoOn = computed(() => campaignActive())
 
 const { categories: liveCategories } = useDirectoryMeta()
 const payment = await usePayment()
@@ -105,8 +111,13 @@ const form = reactive({
   maker: '',
 })
 const submitting = ref(false)
-const enriching = ref(false)
+const drafting = ref(false)
+const drafted = ref(false)
+const draftUrl = ref('')
+const fetchNote = ref('')
 const error = ref('')
+const savedUnpaid = ref(false)
+const unpaidId = ref('')
 const done = ref<{ id: string; paid: boolean } | null>(null)
 const openFaq = ref<number | null>(null)
 /** A preview icon that 404s falls back to initials instead of a broken image. */
@@ -129,37 +140,104 @@ type Preview = {
   tags?: string[]
 }
 
+const unreadPage = computed(() =>
+  pick(
+    '没能读到那个页面。你仍可以自己填写名称、简介和图标。',
+    'We could not read that page. You can still add the name, description, and icon yourself.',
+  ),
+)
+
+function normalizeUrl(raw: string): string {
+  const value = raw.trim()
+  if (!value) return ''
+  return value.includes('://') ? value : `https://${value}`
+}
+
 /**
- * Paste a link, fill what is still empty.
- *
- * Only blank fields are written: someone who typed their own tagline and then
- * pasted the URL must not watch the page overwrite it. Everything the preview
- * returns lands in a visible field, so a wrong guess is one edit away.
+ * Read-only draft. POST /api/fetch-meta does not write a row. A failed read
+ * still opens the empty form so the visitor can type the fields.
  */
-async function enrich() {
-  const url = form.website.trim()
-  if (!url || enriching.value) return
-  enriching.value = true
+async function draftListing() {
+  const url = normalizeUrl(draftUrl.value)
+  if (!url) {
+    error.value = t('dir.submit.error_invalid_url')
+    return
+  }
+  drafting.value = true
+  error.value = ''
+  fetchNote.value = ''
+  form.website = url
   try {
-    const preview = await $fetch<Preview>('/api/tools/preview', {
+    const preview = await $fetch<Preview>('/api/fetch-meta', {
       method: 'POST',
       body: { url },
     })
-    if (!preview?.ok) return
-    if (!form.name && preview.name) form.name = preview.name
-    if (!form.tagline && preview.short) form.tagline = preview.short
-    if (!form.intro && preview.long) form.intro = preview.long
-    if (!form.category && preview.category) form.category = preview.category
-    if (preview.tags?.length) form.tags = preview.tags
-    if (preview.logo) form.logo = preview.logo
-    if (preview.maker) form.maker = preview.maker
+    if (!preview?.ok) {
+      fetchNote.value = unreadPage.value
+    } else {
+      if (preview.name) form.name = preview.name
+      if (preview.short) form.tagline = preview.short
+      if (preview.logo) form.logo = preview.logo
+    }
   } catch {
-    // A page that refuses to be read is not worth blocking the form over —
-    // the submitter can still type everything by hand.
+    fetchNote.value = unreadPage.value
   } finally {
-    enriching.value = false
+    drafting.value = false
+    drafted.value = true
   }
 }
+
+function stashDraft() {
+  if (!import.meta.client) return
+  sessionStorage.setItem(
+    DRAFT_KEY,
+    JSON.stringify({
+      name: form.name,
+      website: form.website,
+      tagline: form.tagline,
+      category: form.category,
+      intro: form.intro,
+      tags: form.tags,
+      email: form.email,
+      logo: form.logo,
+      maker: form.maker,
+      plan: plan.value,
+      fetchNote: fetchNote.value,
+    }),
+  )
+}
+
+function restoreDraft() {
+  if (!import.meta.client) return
+  const raw = sessionStorage.getItem(DRAFT_KEY)
+  if (!raw) return
+  try {
+    const data = JSON.parse(raw) as Record<string, unknown>
+    form.name = String(data.name || '')
+    form.website = String(data.website || '')
+    form.tagline = String(data.tagline || '')
+    form.category = String(data.category || '')
+    form.intro = String(data.intro || '')
+    form.tags = Array.isArray(data.tags) ? data.tags.map((tag) => String(tag)) : []
+    form.email = String(data.email || '')
+    form.logo = String(data.logo || '')
+    form.maker = String(data.maker || '')
+    const storedPlan = String(data.plan || '')
+    if (tiers.some((entry) => entry.id === storedPlan)) plan.value = storedPlan
+    fetchNote.value = String(data.fetchNote || '')
+    draftUrl.value = form.website
+    drafted.value = true
+  } catch {
+    sessionStorage.removeItem(DRAFT_KEY)
+  }
+}
+
+function clearDraft() {
+  if (!import.meta.client) return
+  sessionStorage.removeItem(DRAFT_KEY)
+}
+
+onMounted(restoreDraft)
 
 const categoryOptions = computed(() =>
   liveCategories.value
@@ -181,16 +259,28 @@ const selectedPlan = computed(() => plan.value)
  * button can never quote an amount the server will not charge.
  */
 const planOptions = computed(() =>
-  tiers.map((entry) => ({
-    id: entry.id,
-    name: isZh.value ? entry.name.zh : entry.name.en,
-    price: entry.price,
-    unit: isZh.value ? entry.unit.zh : entry.unit.en,
-    // Four bullets keep four cards readable; the full list is on `/pricing`.
-    features: (isZh.value ? entry.features.zh : entry.features.en).slice(0, 4),
-    badge: entry.badge ? (isZh.value ? entry.badge.zh : entry.badge.en) : '',
-    paid: entry.amountCents > 0,
-  })),
+  tiers.map((entry) => {
+    const quote = effectiveQuote('listing', entry.id)
+    const name = isZh.value ? entry.name.zh : entry.name.en
+    const label =
+      entry.amountCents === 0
+        ? pick('免费提交 · $0', 'List for free · $0')
+        : isZh.value
+          ? `付款 ${quote.priceLabel} · ${name}`
+          : `Pay ${quote.priceLabel} · ${name}`
+    return {
+      id: entry.id,
+      name,
+      label,
+      price: quote.priceLabel,
+      strike: quote.strikeLabel,
+      unit: isZh.value ? entry.unit.zh : entry.unit.en,
+      // Four bullets keep four cards readable; the full list is on `/pricing`.
+      features: (isZh.value ? entry.features.zh : entry.features.en).slice(0, 4),
+      badge: entry.badge ? (isZh.value ? entry.badge.zh : entry.badge.en) : '',
+      paid: entry.amountCents > 0,
+    }
+  }),
 )
 
 const requestedTier = computed(
@@ -236,15 +326,6 @@ function mapError(code?: string): string {
 }
 
 async function submit() {
-  if (!user.value) {
-    await navigateTo(signInHref.value)
-    return
-  }
-  // Paste-then-submit never blurs the URL field, so fill first, validate after.
-  // Category counts too: it is a required select, and a link-only submission
-  // has no other way to get one.
-  if (form.website && (!form.name || !form.tagline || !form.category)) await enrich()
-
   if (!form.name.trim() || !form.tagline.trim()) {
     error.value = t('dir.submit.error_missing_fields')
     return
@@ -274,9 +355,28 @@ async function submit() {
     error.value = t('dir.submit.error_bad_logo')
     return
   }
+  if (!user.value) {
+    stashDraft()
+    await navigateTo(signInHref.value)
+    return
+  }
   submitting.value = true
   error.value = ''
   try {
+    if (unpaidId.value && !isFreePlan.value) {
+      const opened = await payment.pay(unpaidId.value)
+      if (!opened) {
+        savedUnpaid.value = true
+        error.value = pick(
+          '暂时打不开付款页面，请稍后再试。',
+          'Could not open the payment page — try again in a moment.',
+        )
+        return
+      }
+      savedUnpaid.value = false
+      done.value = { id: unpaidId.value, paid: true }
+      return
+    }
     const res = await $fetch<{ ok: boolean; id?: string; next?: string }>('/api/submit', {
       method: 'POST',
       body: {
@@ -301,11 +401,24 @@ async function submit() {
     if (!res?.ok || !res.id) throw new Error('submit failed')
 
     const paid = res.next === 'paid'
-    done.value = { id: res.id, paid }
+    clearDraft()
 
     // A paid listing is only in the queue once the money lands, so send the
-    // submitter to checkout while the intent is fresh.
-    if (paid && payment.ready.value) await payment.pay(res.id)
+    // submitter to checkout while the intent is fresh. A missing checkout URL
+    // is not a completed order and is not an invoice request.
+    if (paid) {
+      const opened = await payment.pay(res.id)
+      if (!opened) {
+        unpaidId.value = res.id
+        savedUnpaid.value = true
+        error.value = pick(
+          '暂时打不开付款页面，请稍后再试。',
+          'Could not open the payment page — try again in a moment.',
+        )
+        return
+      }
+    }
+    done.value = { id: res.id, paid }
   } catch (err) {
     const data = (err as { data?: { message_zh?: string; message_en?: string; code?: string } })?.data
     error.value =
@@ -317,6 +430,12 @@ async function submit() {
 
 function reset() {
   done.value = null
+  drafted.value = false
+  draftUrl.value = ''
+  fetchNote.value = ''
+  savedUnpaid.value = false
+  unpaidId.value = ''
+  clearDraft()
   form.name = ''
   form.website = ''
   form.tagline = ''
@@ -330,20 +449,30 @@ function reset() {
 </script>
 
 <template>
-  <div v-if="!user" class="flex max-w-md flex-col items-start gap-3 py-6">
-    <h2 class="text-lg font-semibold">
-      {{ pick('提交产品需要先用 Google 登录', 'Sign in with Google to submit a product') }}
-    </h2>
-    <p class="text-sm text-muted-foreground">
-      {{ pick('登录后会回到这个页面。未登录不能填写或提交。', 'You will come back to this page. The form stays closed until you are signed in.') }}
-    </p>
-    <NuxtLink
-      :to="signInHref"
-      class="inline-flex h-9 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+  <form v-if="!drafted" class="max-w-xl space-y-3" @submit.prevent="draftListing">
+    <label for="draft-url" class="text-sm leading-none font-medium">
+      {{ pick('产品网址', 'Product URL') }}
+    </label>
+    <input
+      id="draft-url"
+      v-model="draftUrl"
+      type="url"
+      required
+      placeholder="https://"
+      class="h-10 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      {{ pick('使用 Google 登录', 'Sign in with Google') }}
-    </NuxtLink>
-  </div>
+    <p class="text-xs text-muted-foreground">
+      {{ pick('在你登录并保存之前，什么都不会写入。', 'Nothing is stored until you sign in and save.') }}
+    </p>
+    <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <button
+      type="submit"
+      :disabled="drafting"
+      class="inline-flex h-9 cursor-pointer items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+    >
+      {{ drafting ? pick('正在读取网页…', 'Reading the page…') : pick('起草收录', 'Draft listing') }}
+    </button>
+  </form>
 
   <div v-else-if="done" class="flex flex-col items-center gap-3 py-10 text-center">
     <Icon name="circle-check" :size="40" class="text-emerald-500" />
@@ -376,6 +505,7 @@ function reset() {
     <!-- `novalidate`: every rule is enforced in `submit()` so the message is
          ours (bilingual, next to the button) instead of the browser's bubble. -->
     <form novalidate @submit.prevent="submit">
+      <p v-if="fetchNote" class="mb-6 max-w-2xl text-sm text-muted-foreground">{{ fetchNote }}</p>
       <section class="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div class="space-y-5">
           <div class="space-y-2">
@@ -393,23 +523,16 @@ function reset() {
           </div>
 
           <div class="space-y-2">
-            <label
-              for="tool-website"
-              class="flex items-center justify-between gap-2 text-sm leading-none font-medium"
-            >
-              <span>{{ t('dir.submit.field_website') }}</span>
-              <span v-if="enriching" class="text-xs font-normal text-muted-foreground">
-                {{ pick('正在读取网页…', 'Reading the page…') }}
-              </span>
+            <label for="tool-website" class="text-sm leading-none font-medium">
+              {{ pick('产品网址', 'Product URL') }}
             </label>
             <input
               id="tool-website"
               v-model="form.website"
               type="url"
               required
-              :placeholder="t('dir.submit.field_website_ph')"
+              placeholder="https://"
               class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              @blur="enrich"
             >
           </div>
 
@@ -603,13 +726,14 @@ function reset() {
               <span class="flex flex-col gap-0.5">
                 <span class="flex items-center gap-1.5 text-sm font-semibold">
                   <Icon v-if="option.id === 'featured'" name="crown" :size="16" class="text-amber-500" />
-                  <span>{{ option.name }}</span>
+                  <span>{{ option.label }}</span>
                 </span>
                 <span v-if="option.badge" class="text-[11px] font-medium text-amber-600">
                   {{ option.badge }}
                 </span>
               </span>
               <span class="text-right">
+                <s v-if="option.strike" class="block text-xs text-muted-foreground">{{ pick(`此前 ${option.strike}`, `was ${option.strike}`) }}</s>
                 <span class="block text-sm font-semibold tabular-nums">{{ option.price }}</span>
                 <span class="block text-[11px] font-normal text-muted-foreground">{{ option.unit }}</span>
               </span>
@@ -622,9 +746,20 @@ function reset() {
             </ul>
           </button>
         </div>
+        <p v-if="promoOn" class="mt-3 text-xs text-muted-foreground">
+          {{ pick(`黑五优惠截止 ${deadline} Asia/Shanghai。`, `Black Friday pricing ends ${deadline} Asia/Shanghai.`) }}
+        </p>
       </section>
 
-      <p v-if="error" class="mt-4 text-sm text-destructive">{{ error }}</p>
+      <p class="mt-4 text-xs text-muted-foreground">
+        {{ pick('在你登录并保存之前，什么都不会写入。', 'Nothing is stored until you sign in and save.') }}
+      </p>
+      <p v-if="error" class="mt-4 text-sm text-destructive">
+        {{ error }}
+        <NuxtLink v-if="savedUnpaid" class="ml-2 underline" :to="localePath('/settings/submissions')">
+          {{ t('directory.submit_view_submissions') }}
+        </NuxtLink>
+      </p>
 
       <button
         type="submit"
@@ -634,9 +769,13 @@ function reset() {
         {{
           submitting
             ? t('common.pricing.processing')
-            : isFreePlan
-              ? t('dir.submit.btn_review')
-              : t('dir.submit.btn_pay', { price: selectedTier.price })
+            : !user
+              ? isFreePlan
+                ? pick('用 Google 登录以保存这份草稿', 'Sign in with Google to save this draft')
+                : pick('用 Google 登录后付款', 'Sign in with Google to pay')
+              : isFreePlan
+                ? t('dir.submit.btn_review')
+                : t('dir.submit.btn_pay', { price: selectedTier.price })
         }}
       </button>
     </form>
