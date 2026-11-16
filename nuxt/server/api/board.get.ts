@@ -1,27 +1,35 @@
 /**
- * GET /api/board — the newest week the cron has closed.
+ * GET /api/board?week=2026-W46 — one ISO week's ranked board.
  *
- * The build-time catalogue carries the weeks that existed when the site was
- * built. This is the part that keeps growing: once a week closes, the cron
- * writes it here and the board can show it without a redeploy.
- *
- * `null` is the ordinary answer on a fresh install, and the pages fall back to
- * the catalogue — which is why an empty archive renders byte-identically to the
- * pre-cron build.
+ * The default week is the current UTC ISO week. An open week is ranked live
+ * from `votes` (the same rows as `/api/votes`). A closed week returns its
+ * archive, or is built from `votes` and frozen when the archive is missing.
+ * `week.id` is always the requested week. A missing archive is never replaced
+ * with whatever week was frozen last.
  */
 
-import { latestArchive } from '../utils/archive'
+import { isoWeekId } from '~~/shared/utils/catalog'
+import { isIsoWeekId } from '~~/shared/utils/weekly-board'
+import { loadBoardPayload } from '../utils/board-week'
 import { useDb } from '../utils/db'
+import { loadEligibleListedAt } from '../utils/eligible-listings'
 
 export default defineEventHandler(async (event) => {
+  const raw = String(getQuery(event).week ?? '').trim()
+  const week = raw || isoWeekId()
+  if (!isIsoWeekId(week)) {
+    setResponseStatus(event, 400)
+    return { ok: false, reason: 'bad_week', week: null, current: null, history: [], archived: [] }
+  }
+
   try {
     const db = await useDb(event)
+    const eligible = await loadEligibleListedAt(db)
+    const payload = await loadBoardPayload(db, week, new Date(), eligible)
     setResponseHeader(event, 'cache-control', 'no-store')
-    return { ok: true, week: await latestArchive(db) }
+    return { ok: true, ...payload }
   } catch (err) {
-    // The board is one section of one page; a database hiccup must not take the
-    // page down with it.
     console.error('[board]', err)
-    return { ok: false, week: null }
+    return { ok: false, week: null, current: null, history: [], archived: [] }
   }
 })

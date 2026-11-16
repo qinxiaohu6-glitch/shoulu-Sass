@@ -140,7 +140,7 @@ const cards = computed(() => {
       <div>
         <h2 class="text-lg font-semibold">首页正在卖的价，和刚刚发布</h2>
         <p class="text-muted-foreground text-sm">
-          价格是结账实际收取的金额。划线是上线定价前的标价，截止后划线消失，实付不变。Billboard 地板价不做划线。周/月按上海时间切，和首页 Just launched 同一窗口。票数来自本周 votes 表（{{ pulse?.weekId || '…' }}）。这里只读。
+          价格是结账实际收取的金额。划线是上线定价前的标价，截止后划线消失，实付不变。Billboard 地板价不做划线。本周榜是 UTC ISO 周，和首页 This week 同一份榜。本月最新按上海自然月、上架时间倒序，不是票榜。票数来自 votes 表（{{ pulse?.weekId || '…' }}）。这里只读。
         </p>
       </div>
       <p v-if="pulseError" class="text-sm text-muted-foreground">首页数据暂时读不出来。</p>
@@ -156,17 +156,17 @@ const cards = computed(() => {
         </ul>
         <div class="grid gap-4 lg:grid-cols-2">
           <div>
-            <h3 class="mb-2 text-sm font-semibold">本周发布 · {{ pulse.week.count }}</h3>
+            <h3 class="mb-2 text-sm font-semibold">本周榜 · {{ pulse.week.count }}</h3>
             <ul class="space-y-1 text-sm">
               <li v-for="item in pulse.week.items" :key="`w-${item.slug}`" class="flex justify-between gap-3">
                 <span class="min-w-0 truncate">{{ item.name }} <span class="text-muted-foreground text-xs">{{ item.plan || item.slug }}</span></span>
                 <span class="shrink-0">{{ item.votes }} 票 · {{ item.shots }} 图</span>
               </li>
-              <li v-if="!pulse.week.items.length" class="text-muted-foreground">本周没有新发布。</li>
+              <li v-if="!pulse.week.items.length" class="text-muted-foreground">本周榜上还没有票。</li>
             </ul>
           </div>
           <div>
-            <h3 class="mb-2 text-sm font-semibold">本月发布 · {{ pulse.month.count }}</h3>
+            <h3 class="mb-2 text-sm font-semibold">本月最新 · {{ pulse.month.count }}</h3>
             <ul class="space-y-1 text-sm">
               <li v-for="item in pulse.month.items" :key="`m-${item.slug}`" class="flex justify-between gap-3">
                 <span class="min-w-0 truncate">{{ item.name }}</span>

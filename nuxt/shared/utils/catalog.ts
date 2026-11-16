@@ -12,9 +12,13 @@ import type {
   Tool,
   Week,
 } from '~~/shared/types/catalog'
+import { isoWeekId } from './iso-week.ts'
 import { rankedBoard } from './listing-desk'
 import { compareListingOrder, listingRank, listingWeight, pinWindowActive } from './listing-order'
 import { publicProductName } from './public-name'
+import { weekPresentation } from './weekly-board.ts'
+
+export { isoWeekId }
 
 const catalog = raw as unknown as Catalog
 
@@ -441,15 +445,6 @@ export function makerBySlug(
    weekly board — ISO week (Monday based), same format as votes.week_id()
 ------------------------------------------------------------------------- */
 
-export function isoWeekId(date = new Date()): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const day = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - day)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
-}
-
 export function weekById(id: string): Week | undefined {
   return weeks.find((week) => week.id === id)
 }
@@ -461,17 +456,9 @@ export function currentWeek(): Week | undefined {
 
 export function weekLabel(week: Week | undefined, locale: Locale): string {
   if (week) return locale === 'zh' ? week.label_zh : week.label_en
-  const now = new Date()
-  const monday = new Date(now)
-  const day = monday.getDay() || 7
-  monday.setDate(monday.getDate() - (day - 1))
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-  const fmt = (d: Date) =>
-    `${d.getMonth() + 1}/${d.getDate()}`
-  return locale === 'zh'
-    ? `${monday.getFullYear()} 年 ${fmt(monday)} – ${fmt(sunday)}`
-    : `${monday.toLocaleString('en-US', { month: 'short' })} ${monday.getDate()} – ${sunday.toLocaleString('en-US', { month: 'short' })} ${sunday.getDate()}, ${sunday.getFullYear()}`
+  const presentation = weekPresentation(isoWeekId())
+  if (!presentation) return ''
+  return locale === 'zh' ? presentation.label_zh : presentation.label_en
 }
 
 /**

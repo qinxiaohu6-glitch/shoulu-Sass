@@ -1,126 +1,135 @@
 <script setup lang="ts">
+import type { Week } from '~~/shared/types/catalog'
 import { WEEKLY_EMPTY_COPY } from '~~/shared/content/weekly-empty'
-import { currentPeriodLabel } from '~~/shared/utils/batch2'
-import { rankedBoard } from '~~/shared/utils/listing-desk'
+import { isIsoWeekId } from '~~/shared/utils/weekly-board'
 
-const { lang, isZh, pick } = useLang()
+const { lang, pick } = useLang()
 const localePath = useLocalePath()
+const route = useRoute()
+const router = useRouter()
 const { categories: liveCategories } = useDirectoryMeta()
 const overrides = useOverrides()
+const submitted = await useSubmittedTools()
+const boardData = await useBoardData()
 
 // The board slot is sold as "one row inside the leaderboard, after third
-// place". Nothing booked means no row at all.
+// place". Nothing booked means no row at all. It is marked Sponsored and
+// does not take a vote rank.
 const { board: boardAd } = await useAds()
 
-const archive = computed(() =>
-  [...weeks].sort((a, b) => (a.id < b.id ? 1 : -1)),
-)
-
-/**
- * Panels are the current period followed by the archived weeks, newest first.
- *
- * The newest archive (2026-W44) has no tab on the live page — the "current"
- * panel already carries those vote totals, because `votes_week` is the last
- * completed week. So the tab row starts at the second-newest archive, and the
- * change column for that one is computed against the archive after it.
- *
- * For the current period there is no archive row, so its ranking comes from
- * `votes_week`, the same numbers the homepage board shows. The live build
- * renders that panel as all-zero because its votes table has no rows for the
- * open week; showing zeros would contradict the homepage, so the real weekly
- * totals are used instead.
- */
+type Move = { kind: 'new' | 'up' | 'down' | 'flat'; delta: number }
 type Panel = {
   key: string
   label: string
   current: boolean
-  rows: {
-    rank: number
-    slug: string
-    votes: number
-    move: { kind: 'new' | 'up' | 'down' | 'flat'; delta: number }
-  }[]
+  rows: { rank: number; slug: string; votes: number; move: Move }[]
 }
 
-function rankOf(week: (typeof weeks)[number] | undefined) {
-  const map = new Map<string, number>()
-  if (!week) return map
-  // Same filter as the rows below, so "up / down" compares the ranks a visitor
-  // actually sees after hidden products have been removed.
-  for (const row of rankedBoard(week.ranking, overrides.value.hidden)) {
-    map.set(row.slug, row.rank)
-  }
-  return map
+const directory = computed(() =>
+  mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value),
+)
+
+function toolOf(slug: string) {
+  return directory.value.find((tool) => tool.slug === slug)
 }
 
-/**
- * The open week has no archive row, so its label is built here. The live page
- * prints it without the year ("Nov 2 – Nov 8") and appends the ISO week id in
- * the stat line only.
- */
-function currentRange(locale: 'en' | 'zh'): string {
-  const now = new Date()
-  const monday = new Date(now)
-  monday.setDate(monday.getDate() - ((monday.getDay() || 7) - 1))
-  const sunday = new Date(monday)
-  sunday.setDate(monday.getDate() + 6)
-
-  if (locale === 'zh') {
-    return `${monday.getMonth() + 1} 月 ${monday.getDate()} 日 – ${sunday.getMonth() + 1} 月 ${sunday.getDate()} 日`
-  }
-  const mon = monday.toLocaleString('en-US', { month: 'short' })
-  const sun = sunday.toLocaleString('en-US', { month: 'short' })
-  return `${mon} ${monday.getDate()} – ${sun} ${sunday.getDate()}`
+function logoSrc(slug: string): string {
+  const logo = toolOf(slug)?.logo ?? ''
+  if (!logo) return `/assets/img/icons/${slug}.png`
+  if (/^https?:\/\//i.test(logo)) return logo
+  return logo.startsWith('/') ? logo : `/${logo}`
 }
 
-const currentLabel = computed(() => currentRange(lang.value))
-const periodLabel = computed(() => currentPeriodLabel())
+function shortWeek(id: string): string {
+  return id.replace(/^\d{4}-/, '')
+}
 
-const panels = computed<Panel[]>(() => {
-  const list: Panel[] = []
-
-  const live = rankedBoard(
-    [...tools]
-      .map((t) => ({ slug: t.slug, votes: t.votes_week }))
-      .sort((a, b) => b.votes - a.votes),
-    overrides.value.hidden,
-  )
-  const liveRows = live.map((row) => ({
-    rank: row.rank,
-    slug: row.slug,
-    votes: row.votes,
-    move: { kind: 'flat' as const, delta: 0 },
-  }))
-
-  list.push({
-    key: 'current',
-    label: `${currentLabel.value} · ${pick('本周', 'current')}`,
-    current: true,
-    rows: liveRows,
+function rowsOf(week: Week, previous: Week | undefined) {
+  const prev = new Map<string, number>()
+  previous?.ranking.forEach((row, index) => {
+    prev.set(row.slug, row.rank ?? index + 1)
   })
-
-  archive.value.slice(1).forEach((week, i) => {
-    const prev = rankOf(archive.value[i + 2])
-    const rows = rankedBoard(week.ranking, overrides.value.hidden).map((row) => {
-      const rank = row.rank
+  return week.ranking
+    .filter((row) => row.votes > 0)
+    .map((row, index) => {
+      const rank = row.rank ?? index + 1
       const before = prev.get(row.slug)
-      const move = before === undefined
-        ? { kind: 'new' as const, delta: 0 }
+      const move: Move = before === undefined
+        ? { kind: 'new', delta: 0 }
         : before === rank
-          ? { kind: 'flat' as const, delta: 0 }
+          ? { kind: 'flat', delta: 0 }
           : before > rank
-            ? { kind: 'up' as const, delta: before - rank }
-            : { kind: 'down' as const, delta: rank - before }
+            ? { kind: 'up', delta: before - rank }
+            : { kind: 'down', delta: rank - before }
       return { rank, slug: row.slug, votes: row.votes, move }
     })
-    list.push({ key: week.id, label: weekLabel(week, lang.value), current: false, rows })
+}
+
+const panels = computed<Panel[]>(() => {
+  const payload = boardData.value
+  const current = payload.current
+  const history = payload.history ?? []
+  const list: Panel[] = []
+
+  if (current?.id) {
+    list.push({
+      key: current.id,
+      label: `${lang.value === 'zh' ? current.label_zh : current.label_en} · ${pick('本周', 'current')}`,
+      current: true,
+      rows: rowsOf(current, history[0]),
+    })
+  }
+
+  history.forEach((week, index) => {
+    list.push({
+      key: week.id,
+      label: lang.value === 'zh' ? week.label_zh : week.label_en,
+      current: false,
+      rows: rowsOf(week, history[index + 1]),
+    })
   })
+
+  const selected = payload.week
+  if (selected?.id && !list.some((item) => item.key === selected.id)) {
+    list.push({
+      key: selected.id,
+      label: lang.value === 'zh' ? selected.label_zh : selected.label_en,
+      current: false,
+      rows: rowsOf(selected, undefined),
+    })
+  }
 
   return list
 })
 
-const active = ref(0)
-const panel = computed(() => panels.value[active.value] ?? panels.value[0]!)
+const activeId = computed(() => {
+  const requested = String(route.query.week ?? '').trim()
+  if (isIsoWeekId(requested) && panels.value.some((item) => item.key === requested)) return requested
+  return boardData.value.current?.id || panels.value[0]?.key || ''
+})
+
+const panel = computed(() => panels.value.find((item) => item.key === activeId.value) ?? panels.value[0] ?? {
+  key: '',
+  label: '',
+  current: true,
+  rows: [] as Panel['rows'],
+})
+
+const periodLabel = computed(() => {
+  const week = boardData.value.current
+  if (!week) return ''
+  return lang.value === 'zh'
+    ? `${week.label_zh}（${week.id}）`
+    : `${week.label_en} (${shortWeek(week.id)})`
+})
+
+async function selectWeek(id: string) {
+  const currentId = boardData.value.current?.id
+  await router.replace({
+    path: route.path,
+    query: id && id !== currentId ? { week: id } : {},
+  })
+}
 
 const title = computed(() => pick('本周产品榜', 'Weekly product leaderboard'))
 const lead = computed(() =>
@@ -148,27 +157,26 @@ useSeo({
       <h1 class="page-title">{{ title }}</h1>
       <p class="page-sub">{{ lead }}</p>
       <p class="stat-line" style="margin-top: 8px">
-        {{ pick(`当前周期: ${currentLabel}`, `Current period: ${periodLabel}`) }}
+        {{ pick('当前周期: ', 'Current period: ') }}{{ periodLabel }}
       </p>
     </header>
 
     <nav class="tab-nav tab-nav--weeks" :aria-label="pick('周榜', 'Weekly')">
       <button
-        v-for="(item, i) in panels"
+        v-for="item in panels"
         :key="item.key"
         class="pill"
-        :class="{ 'is-active': i === active }"
+        :class="{ 'is-active': item.key === activeId }"
         type="button"
-        :aria-selected="i === active"
-        @click="active = i"
+        :aria-selected="item.key === activeId"
+        @click="selectWeek(item.key)"
       >
         {{ item.label }}
       </button>
     </nav>
 
     <div class="week-panel is-active">
-      <!-- No rows: the header alone reads as a broken table. Same placeholder
-           for the open week and for an archived week that is also empty. -->
+      <!-- Empty only when this week has no product with at least one vote. -->
       <div v-if="!panel.rows.length" class="board-empty">
         <p class="board-empty__title">{{ pick(WEEKLY_EMPTY_COPY.title.zh, WEEKLY_EMPTY_COPY.title.en) }}</p>
         <p class="board-empty__body">{{ pick(WEEKLY_EMPTY_COPY.body.zh, WEEKLY_EMPTY_COPY.body.en) }}</p>
@@ -194,7 +202,7 @@ useSeo({
                 <NuxtLink class="rank-tool" :to="localePath(`/products/${row.slug}`)">
                   <span class="tool-icon" style="width: 32px; height: 32px">
                     <img
-                      :src="`/${toolBySlug(row.slug, lang)?.logo ?? `assets/img/icons/${row.slug}.png`}`"
+                      :src="logoSrc(row.slug)"
                       alt=""
                       width="32"
                       height="32"
@@ -202,14 +210,14 @@ useSeo({
                     >
                   </span>
                   <span>
-                    <strong>{{ toolBySlug(row.slug, lang)?.name ?? row.slug }}</strong>
-                    <em>{{ toolBySlug(row.slug, lang)?.short }}</em>
+                    <strong>{{ toolOf(row.slug)?.name ?? row.slug }}</strong>
+                    <em>{{ toolOf(row.slug)?.short }}</em>
                   </span>
                 </NuxtLink>
               </td>
               <td class="rank-cat">
-                <span v-if="categoryBySlug(toolBySlug(row.slug, lang)?.category ?? '', liveCategories)" class="chip">
-                  {{ localizeCategory(categoryBySlug(toolBySlug(row.slug, lang)!.category, liveCategories)!, lang).name }}
+                <span v-if="categoryBySlug(toolOf(row.slug)?.category ?? '', liveCategories)" class="chip">
+                  {{ localizeCategory(categoryBySlug(toolOf(row.slug)!.category, liveCategories)!, lang).name }}
                 </span>
               </td>
               <td class="rank-move-cell">
@@ -226,7 +234,7 @@ useSeo({
               </td>
             </tr>
 
-            <!-- The board slot: one row, after third place, sold by the week. -->
+            <!-- Sponsored row: after third place, not a vote rank. -->
             <tr v-if="i === 2 && boardAd" class="rank-ad">
               <td colspan="5">
                 <a

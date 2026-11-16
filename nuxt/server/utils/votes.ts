@@ -11,15 +11,44 @@
  */
 
 import type { Db } from './db'
-// Reuse the catalogue's implementation rather than defining a second one:
-// two auto-imported `isoWeekId` symbols collide, and Nuxt silently picks one.
-import { isoWeekId } from '~~/shared/utils/catalog'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/
 const WEEK_RE = /^\d{4}-W\d{2}$/
 
 export const isValidWeek = (w: string) => WEEK_RE.test(w)
 export const isValidSlug = (s: string) => SLUG_RE.test(s)
+
+export type VoteDenied = {
+  ok: false
+  status: 401
+  reason: 'signin_required'
+  message_zh: string
+  message_en: string
+}
+
+/**
+ * Anonymous votes are refused. Callers must return this before `castVote`,
+ * which would otherwise ignore an empty voter and look like a dropped click.
+ */
+export function denyAnonymousVote(voter: string | null | undefined): VoteDenied | null {
+  if (voter) return null
+  return {
+    ok: false,
+    status: 401,
+    reason: 'signin_required',
+    message_zh: '登录后才能投票。',
+    message_en: 'Sign in to vote.',
+  }
+}
+
+/** Sum of vote rows for one ISO week. `/api/stats.week_votes` uses this. */
+export async function countWeekVotes(db: Db, week: string): Promise<number> {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS n FROM votes WHERE week = ?')
+    .bind(week)
+    .first<{ n: number }>()
+  return Number(row?.n ?? 0)
+}
 
 /** slug → number of votes this week. */
 export async function voteCounts(db: Db, week: string): Promise<Record<string, number>> {

@@ -162,19 +162,18 @@ const hasPricing = computed(() =>
   Boolean(tool.value!.detail.pricing?.label || tool.value!.detail.pricing?.url),
 )
 
-/* "Popular tools" in the rail — the same five the homepage board shows. */
-const topPicks = computed(() =>
-  boardRows(
-    weeks.length ? [...weeks].sort((a, b) => (a.id < b.id ? 1 : -1))[0] : undefined,
-    lang.value,
-    6,
-    overrides.value,
-  )
-    .map((row) => row.tool)
+/* "Popular tools" in the rail — the same open week as the homepage board. */
+const boardData = await useBoardData()
+const topPicks = computed(() => {
+  const directory = mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value)
+  const bySlug = new Map(directory.map((entry) => [entry.slug, entry]))
+  return (boardData.value.current?.ranking ?? [])
+    .filter((row) => row.votes > 0)
+    .map((row) => bySlug.get(row.slug))
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
     .filter((entry) => entry.slug !== tool.value!.slug)
-    .slice(0, 5),
-)
+    .slice(0, 5)
+})
 
 /**
  * The curated catalogue stores bare filenames under `/assets/img/screenshots`.

@@ -120,6 +120,8 @@ export interface Collection {
 export interface WeekRank {
   slug: string
   votes: number
+  /** Contest rank. Archived weeks keep the stored number. */
+  rank?: number
 }
 
 export interface Week {

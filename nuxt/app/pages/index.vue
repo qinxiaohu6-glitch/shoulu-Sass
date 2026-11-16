@@ -11,7 +11,6 @@ import {
   remainingHms,
   shanghaiMonthRange,
   shanghaiParts,
-  shanghaiWeekRange,
 } from '~~/shared/utils/directory-window'
 
 const { lang, isZh, pick } = useLang()
@@ -21,22 +20,7 @@ const submitted = await useSubmittedTools()
 const overrides = useOverrides()
 const { categories: liveCategories } = useDirectoryMeta()
 const { homeGrid, ranked: billboardRanked } = await useBillboard()
-const requestFetch = useRequestFetch()
-const { data: weekVotes } = await useAsyncData(
-  'home-week-votes',
-  async () => {
-    try {
-      return await requestFetch<{ ok: boolean; counts?: Record<string, number> }>('/api/votes')
-    } catch {
-      return { ok: false, counts: {} as Record<string, number> }
-    }
-  },
-  { default: () => ({ ok: false, counts: {} as Record<string, number> }) },
-)
-
-function votesOf(tool: { slug: string; votes_week: number }): number {
-  return Math.max(Number(tool.votes_week) || 0, Number(weekVotes.value?.counts?.[tool.slug]) || 0)
-}
+const boardData = await useBoardData()
 
 const all = computed(() =>
   mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value),
@@ -83,14 +67,61 @@ onMounted(() => {
 const directory = computed(() =>
   [...all.value].sort((a, b) => (parseInstant(b.created_at) ?? 0) - (parseInstant(a.created_at) ?? 0)),
 )
-const weekItems = computed(() =>
-  filterByWindow(directory.value, shanghaiWeekRange(new Date(tick.value)), (row) => row.created_at),
-)
 const monthItems = computed(() =>
   filterByWindow(directory.value, shanghaiMonthRange(new Date(tick.value)), (row) => row.created_at),
 )
+
+type FeedRow = {
+  slug: string
+  name: string
+  short: string
+  logo: string
+  category: string
+  url?: string
+  plan?: string
+  is_featured?: boolean
+  is_paid?: boolean
+  votes: number
+  rank: number
+  badges: string[]
+}
+
+function decorate(
+  tool: { slug: string; name: string; short: string; logo: string; category: string; url?: string; plan?: string; is_featured?: boolean; is_paid?: boolean } | undefined,
+  slug: string,
+  votes: number,
+  rank: number,
+): FeedRow {
+  return {
+    slug,
+    name: tool?.name ?? slug,
+    short: tool?.short ?? '',
+    logo: tool?.logo ?? '',
+    category: tool?.category ?? '',
+    url: tool?.url,
+    plan: tool?.plan,
+    is_featured: tool?.is_featured,
+    is_paid: tool?.is_paid,
+    votes,
+    rank,
+    badges: tool ? launchBadges(tool) : [],
+  }
+}
+
+const weekFeed = computed(() => {
+  const bySlug = new Map(all.value.map((tool) => [tool.slug, tool]))
+  return (boardData.value.current?.ranking ?? [])
+    .filter((row) => row.votes > 0)
+    .map((row, index) => decorate(bySlug.get(row.slug), row.slug, row.votes, row.rank ?? index + 1))
+})
+
+const monthFeed = computed(() => {
+  const votes = new Map((boardData.value.current?.ranking ?? []).map((row) => [row.slug, row.votes]))
+  return monthItems.value.map((tool) => decorate(tool, tool.slug, votes.get(tool.slug) ?? 0, 0))
+})
+
 const windowFilter = ref<'week' | 'month'>('week')
-const feed = computed(() => (windowFilter.value === 'week' ? weekItems.value : monthItems.value))
+const feed = computed(() => (windowFilter.value === 'week' ? weekFeed.value : monthFeed.value))
 
 const nextAt = computed(() => nextLaunchInstant(all.value, tick.value))
 const clock = computed(() => (nextAt.value ? remainingHms(nextAt.value, tick.value) : null))
@@ -322,35 +353,40 @@ useHead({
         <p class="home-dir__month">{{ monthLabel }}</p>
         <div class="home-dir__filters" role="tablist">
           <button type="button" :class="{ 'is-on': windowFilter === 'week' }" @click="windowFilter = 'week'">
-            {{ pick('本星期', 'This week') }} <em>{{ weekItems.length }}</em>
+            {{ pick('本星期', 'This week') }} <em>{{ weekFeed.length }}</em>
           </button>
           <button type="button" :class="{ 'is-on': windowFilter === 'month' }" @click="windowFilter = 'month'">
-            {{ pick('本月', 'This month') }} <em>{{ monthItems.length }}</em>
+            {{ pick('本月 · 最新', 'This month · Newest') }} <em>{{ monthFeed.length }}</em>
           </button>
         </div>
         <ol class="home-feed">
-          <li v-for="(tool, index) in feed" :key="tool.slug" class="launch-row">
-            <NuxtLink class="launch-row__link" :to="localePath(`/products/${tool.slug}`)">
-              <span class="launch-row__rank">{{ index + 1 }}</span>
+          <li
+            v-for="row in feed"
+            :key="row.slug"
+            class="launch-row"
+            :class="{ 'launch-row--newest': windowFilter === 'month' }"
+          >
+            <NuxtLink class="launch-row__link" :to="localePath(`/products/${row.slug}`)">
+              <span v-if="windowFilter === 'week'" class="launch-row__rank">{{ row.rank }}</span>
               <span class="launch-row__logo">
-                <ToolLogo :logo="tool.logo" :name="tool.name" :size="40" decorative />
+                <ToolLogo :logo="row.logo" :name="row.name" :size="40" decorative />
               </span>
               <span class="launch-row__body">
                 <strong>
-                  {{ tool.name }}
-                  <em v-for="badge in launchBadges(tool)" :key="badge" class="launch-row__badge">{{ badge }}</em>
+                  {{ row.name }}
+                  <em v-for="badge in row.badges" :key="badge" class="launch-row__badge">{{ badge }}</em>
                 </strong>
-                <span>{{ tool.short }}</span>
-                <span v-if="categoryName(tool.category)" class="launch-row__cat">{{ categoryName(tool.category) }}</span>
+                <span>{{ row.short }}</span>
+                <span v-if="categoryName(row.category)" class="launch-row__cat">{{ categoryName(row.category) }}</span>
               </span>
             </NuxtLink>
-            <VoteButton stack :slug="tool.slug" :votes="votesOf(tool)" />
+            <VoteButton stack :slug="row.slug" :votes="row.votes" />
           </li>
         </ol>
         <p v-if="!feed.length" class="home-feed__empty">
           {{
             windowFilter === 'week'
-              ? pick('本周还没有新发布。', 'No launches this week.')
+              ? pick('本周榜上还没有票。', 'No votes on the board this week.')
               : pick('本月还没有新发布。', 'No launches this month.')
           }}
           <NuxtLink :to="localePath('/submit')">{{ pick('提交产品', 'Submit a product') }}</NuxtLink>
@@ -409,3 +445,9 @@ useHead({
     </section>
   </div>
 </template>
+
+<style scoped>
+.launch-row--newest .launch-row__link {
+  grid-template-columns: 44px minmax(0, 1fr);
+}
+</style>

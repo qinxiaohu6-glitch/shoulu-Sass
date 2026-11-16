@@ -17,6 +17,7 @@
 
 import { previousWeekId, archiveWeek } from '../utils/archive'
 import { useDb } from '../utils/db'
+import { loadEligibleListedAt } from '../utils/eligible-listings'
 
 type ScheduledPayload = { env?: unknown }
 
@@ -32,7 +33,8 @@ export default defineNitroPlugin((nitro) => {
     try {
       const db = await useDb({ context: { cloudflare: { env } } })
       const week = previousWeekId()
-      const result = await archiveWeek(db, week)
+      const eligible = await loadEligibleListedAt(db)
+      const result = await archiveWeek(db, week, eligible)
       console.log(`[cron] archived ${result.week}: ${result.rows} listings`)
     } catch (err) {
       console.error('[cron] archive failed', err)

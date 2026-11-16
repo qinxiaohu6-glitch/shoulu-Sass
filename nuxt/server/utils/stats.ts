@@ -11,6 +11,7 @@ import { listLiveBillboard } from './billboard'
 import type { Db } from './db'
 import { loadOverrides } from './overrides'
 import { listPublishedTools } from './submissions'
+import { countWeekVotes } from './votes'
 
 const DAY = 86400
 
@@ -52,7 +53,7 @@ export async function publicStats(db: Db, now = new Date()) {
         `SELECT created_at, reviewed_at FROM submissions WHERE reviewed_at IS NOT NULL AND created_at IS NOT NULL`,
       )
       .all<{ created_at: number; reviewed_at: number }>(),
-    db.prepare(`SELECT COUNT(*) AS n FROM votes WHERE week = ?`).bind(isoWeekId(now)).first<{ n: number }>(),
+    countWeekVotes(db, isoWeekId(now)),
   ])
 
   const starts = upcomingMondays(6)
@@ -77,7 +78,7 @@ export async function publicStats(db: Db, now = new Date()) {
     median_review_days: queue.median_review_days,
     billboard_confirmed: live.length,
     bookable_weeks: bookableWeeks,
-    week_votes: Number(votes?.n ?? 0),
+    week_votes: Number(votes ?? 0),
     paid_publish: queue.paid_publish,
   }
 }

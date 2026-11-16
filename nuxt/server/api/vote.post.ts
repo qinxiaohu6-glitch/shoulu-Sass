@@ -7,7 +7,7 @@
  */
 
 import { useDb } from '../utils/db'
-import { castVote, isValidWeek, isValidSlug } from '../utils/votes'
+import { castVote, denyAnonymousVote, isValidWeek, isValidSlug } from '../utils/votes'
 import { isoWeekId } from '~~/shared/utils/catalog'
 import { voterKey } from '../utils/session'
 
@@ -20,12 +20,13 @@ export default defineEventHandler(async (event) => {
 
   const voter = await voterKey(event)
   if (!voter) {
-    setResponseStatus(event, 401)
+    const denied = denyAnonymousVote(voter)!
+    setResponseStatus(event, denied.status)
     return {
       ok: false,
-      reason: 'signin_required',
-      message_zh: '登录后才能投票。',
-      message_en: 'Sign in to vote.',
+      reason: denied.reason,
+      message_zh: denied.message_zh,
+      message_en: denied.message_en,
     }
   }
 
