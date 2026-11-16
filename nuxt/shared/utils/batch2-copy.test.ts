@@ -107,7 +107,9 @@ test('product sections enter the title only when they have content', () => {
   assert.equal(markdown.includes(FEATURES_EMPTY), true)
   assert.equal(markdown.includes('## Related'), false)
   assert.equal(markdown.includes(CHECKED_BLOCK), true)
-  assert.equal(read('../../server/routes/products/[slug].md.ts').includes('productMarkdown'), true)
+  const markdownRoute = read('../../server/middleware/03-product-markdown.ts')
+  assert.equal(markdownRoute.includes('productMarkdown'), true)
+  assert.equal(markdownRoute.includes('productMarkdownSlug'), true)
 })
 
 test('how it works uses the approved review sentence and does not sell an invoice', () => {
