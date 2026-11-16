@@ -116,6 +116,8 @@ export default defineEventHandler(async (event) => {
   lines.push(
     `- [Weekly board](${SITE}/weekly): resets every Monday, one vote per product per week`,
     `- [Just added](${SITE}/just-added): newest listings first`,
+    `- [Community](${SITE}/community): maker profiles. This page has no public feed.`,
+    `- [Makers](${SITE}/community/makers): profiles of the people and teams behind listings`,
     `- [Ranking rules](${SITE}/rules): how the board, votes and links work, in full`,
     `- [Questions](${SITE}/faq): how listing, votes, links, pricing and ad slots work, in short answers`,
     `- [Billboard](${SITE}/billboard): one-time name-your-price from ${entry.priceLabel}, same Top 10 as the homepage`,
