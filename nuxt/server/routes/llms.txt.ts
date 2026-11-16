@@ -101,7 +101,9 @@ export default defineEventHandler(async (event) => {
     '## Pages',
     '',
     `- [All products](${SITE}/products): ${countedLive ? `${productCount} ${englishCount(productCount, 'listing')} as of ${counted}` : `see ${SITE}/stats for the live count`}`,
-    `- [Tools](${SITE}/tools): free checks — Domain Rating and the on-page SEO check`,
+    `- [Tools](${SITE}/tools): Domain Rating, an on-page SEO check, and a browser-only valuation calculator`,
+    `- [SaaS valuation calculator](${SITE}/tools/saas-valuation-calculator): a low, mid, and high range that runs in the browser. Nothing is uploaded.`,
+    `- [Products for sale](${SITE}/for-sale): a separate planned one-time $9.90 listing fee, no commission, no escrow. Payable once that product is configured. Public only after payment and review.`,
     `- [Domain Rating](${SITE}/tools/dr-checker): Ahrefs DR4 from the official free endpoint`,
     `- [SEO check](${SITE}/seo-check): 28 on-page checks, with a PDF of that one result`,
   )

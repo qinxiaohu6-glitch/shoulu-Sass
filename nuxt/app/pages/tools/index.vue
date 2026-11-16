@@ -10,8 +10,8 @@ useSeo({
   title: computed(() => pick('工具 · Product Atlas', 'Tools · Product Atlas')),
   description: computed(() =>
     pick(
-      '免费工具：Ahrefs DR4 查询，以及 28 项页内 SEO 诊断。没有假分数。',
-      'Free tools: an Ahrefs DR4 lookup and a 28-point on-page SEO check. No invented scores.',
+      '免费工具：Ahrefs DR4 查询、28 项页内 SEO 诊断，以及在浏览器里算的估值区间。',
+      'Free tools: an Ahrefs DR4 lookup, a 28-point on-page SEO check, and a valuation range that runs in your browser.',
     ),
   ),
 })
@@ -25,8 +25,8 @@ useSeo({
       <p class="page-sub">
         {{
           pick(
-            '这里只放已经接通真实接口的检查。查不到就说查不到。',
-            'Only checks that call a real API. If we cannot get a number, we say so.',
+            'DR 和 SEO 诊断会调用真实接口。估值计算在你的浏览器里完成。',
+            'DR and the SEO check call a real API. The valuation calculator runs in your browser.',
           )
         }}
       </p>
@@ -59,6 +59,19 @@ useSeo({
         </p>
         <span>{{ pick('打开 SEO 诊断', 'Open SEO check') }} →</span>
       </NuxtLink>
+      <NuxtLink class="hub-card" :to="localePath('/tools/saas-valuation-calculator')">
+        <p class="hub-card__kicker">VALUATION</p>
+        <h2>{{ pick('SaaS 估值计算器', 'SaaS valuation calculator') }}</h2>
+        <p>
+          {{
+            pick(
+              '用你填的数字给出低、中、高区间。计算在浏览器里完成。',
+              'A low, mid, and high range from figures you enter. It runs in your browser.',
+            )
+          }}
+        </p>
+        <span>{{ pick('打开计算器 →', 'Open the calculator →') }}</span>
+      </NuxtLink>
     </div>
 
     <p class="hub-note">
@@ -82,7 +95,7 @@ useSeo({
 }
 .hub-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 8px;
 }
@@ -106,7 +119,7 @@ useSeo({
   color: var(--muted-foreground);
 }
 .hub-note { margin-top: 18px; color: var(--muted-foreground); font-size: 13px; }
-@media (max-width: 720px) {
+@media (max-width: 960px) {
   .hub-grid { grid-template-columns: 1fr; }
 }
 </style>

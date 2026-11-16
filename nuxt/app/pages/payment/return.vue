@@ -37,6 +37,8 @@ type OrderView = {
     name: string
     slug: string
     live: boolean
+    for_sale?: boolean
+    for_sale_public?: boolean
     /** Present only for a weekly ad booking; null for a listing payment. */
     ad: {
       slot: string
@@ -129,6 +131,17 @@ const heading = computed(() => {
 })
 
 const lead = computed(() => {
+  if (status.value === 'paid' && order.value?.for_sale) {
+    return order.value.for_sale_public
+      ? pick(
+          '付款已收到，待售已公开。平台不托管、不抽佣，也不保证成交。',
+          'Payment received. The for-sale listing is public. Product Atlas does not hold funds, take a commission, or guarantee a sale.',
+        )
+      : pick(
+          '付款已收到。这条待售还没有公开，审核通过后才会出现在列表里。费用不退。',
+          'Payment received. This for-sale listing is not public yet. It goes on the list only after it passes review. The fee is not refundable.',
+        )
+  }
   if (status.value === 'paid' && ad.value) {
     if (ad.value.status === 'conflict') {
       return pick(
@@ -155,6 +168,12 @@ const lead = computed(() => {
     return pick(
       '支付平台还在把结果发回来。这一页会自动刷新，不用手动重试。',
       'The provider is still sending the result back. This page refreshes itself — no need to retry.',
+    )
+  }
+  if ((status.value === 'cancelled' || cancelled.value) && order.value?.for_sale) {
+    return pick(
+      '没有扣款。可以回到待售表单再试。我们不会另发邮件说明付款方式。',
+      'Nothing was charged. Go back to the for-sale form to try again. We do not email another way to pay.',
     )
   }
   if (status.value === 'cancelled' || cancelled.value) {
@@ -244,6 +263,13 @@ useHead({
         :to="rebookLink"
       >
         {{ pick('续租下一周', 'Book the next week') }}
+      </NuxtLink>
+      <NuxtLink
+        v-if="order?.for_sale"
+        class="btn btn--primary"
+        :to="localePath('/for-sale')"
+      >
+        {{ pick('返回待售', 'Back to for sale') }}
       </NuxtLink>
       <NuxtLink
         v-if="order?.slug && order.live"

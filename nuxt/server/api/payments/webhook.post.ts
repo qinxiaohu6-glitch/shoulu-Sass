@@ -18,10 +18,13 @@
  * tampered session, and neither should put a page live.
  */
 
+import { forSaleAmountCents } from '~~/shared/content/for-sale'
 import { confirmPayment, getSubmission } from '../../utils/submissions'
 import { activateAdBooking, setAdBookingStatus, stopAdBooking } from '../../utils/ad-bookings'
 import { activateBillboardPlacement, deactivateBillboardPlacement } from '../../utils/billboard-fulfilment'
+import { FOR_SALE_KIND, getForSale, markForSalePaid, refundForSaleListing } from '../../utils/for-sale'
 import { useDb } from '../../utils/db'
+import { sendMail } from '../../utils/mail'
 import { getPaymentProvider } from '../../utils/payments'
 import { findOrderByRef, getOrder, setOrderStatus, settleOrder } from '../../utils/payments/orders'
 
@@ -79,6 +82,10 @@ export default defineEventHandler(async (event) => {
     if (order.plan === 'billboard' && parsed.status === 'refunded') {
       await deactivateBillboardPlacement(db, order.id)
     }
+    // A refunded listing fee must leave the for-sale row off the public list.
+    if (order.plan === FOR_SALE_KIND && parsed.status === 'refunded') {
+      await refundForSaleListing(db, order.submission_id)
+    }
     return { ok: true, status: parsed.status }
   }
 
@@ -109,6 +116,16 @@ export default defineEventHandler(async (event) => {
     return { ok: true, ignored: 'amount_mismatch' }
   }
 
+  // The for-sale order row itself must be 990 cents. A lower stored amount
+  // must not mark the listing paid, even if the webhook matches that amount.
+  if (order.plan === FOR_SALE_KIND && order.amount_cents !== forSaleAmountCents()) {
+    await setOrderStatus(db, order.id, 'failed', {
+      raw,
+      note: `for-sale charge must be ${forSaleAmountCents()} cents`,
+    })
+    return { ok: true, ignored: 'for_sale_price' }
+  }
+
   const { order: settled, alreadySettled } = await settleOrder(
     db,
     order.id,
@@ -124,6 +141,33 @@ export default defineEventHandler(async (event) => {
   if (alreadySettled) {
     // Normal: the provider retried, or two events for one session arrived.
     return { ok: true, duplicate: true, status: settled.status }
+  }
+
+  if (settled.plan === FOR_SALE_KIND) {
+    // Paid is not public. Directory confirmPayment must not run for this plan.
+    const result = await markForSalePaid(db, settled.submission_id)
+    if (!result.ok) {
+      const note =
+        result.reason === 'missing'
+          ? 'PAID, FOR-SALE LISTING MISSING: do not publish a directory page'
+          : 'PAID, FOR-SALE ALREADY IN THIS CYCLE: refund the extra charge by hand; do not publish early'
+      await setOrderStatus(db, settled.id, 'paid', { note })
+      console.error('[payments] for-sale fulfilment skipped', settled.id, result.reason)
+      return { ok: true, status: 'paid', order: settled.id, fulfilment: result.reason, public: false }
+    }
+    const listing = await getForSale(db, settled.submission_id)
+    if (listing?.owner_email) {
+      sendMail(event, {
+        to: listing.owner_email,
+        subject: `Payment received for ${listing.product_name || 'your for-sale listing'}`,
+        text:
+          `We received $9.90 for the for-sale listing fee on ${listing.product_name || 'your product'}.\n\n` +
+          `The listing is not public yet. It goes on the public list only after it passes review. ` +
+          `The fee is not refundable. Product Atlas does not take a commission or hold the funds.\n\n` +
+          `— Product Atlas\n`,
+      })
+    }
+    return { ok: true, status: 'paid', order: settled.id, for_sale: result.status, public: false }
   }
 
   if (settled.plan === 'billboard') {
