@@ -66,7 +66,8 @@ const navGroups = computed(() => [
       { label: pick('产品', 'Products'), to: '/products', icon: 'layout-grid' },
       { label: pick('分类', 'Categories'), to: '/categories', icon: 'shapes' },
       { label: pick('工具', 'Tools'), to: '/tools', icon: 'sparkles' },
-      { label: pick('创客', 'Makers'), to: '/makers', icon: 'user' },
+      { label: pick('社区', 'Community'), to: '/community', icon: 'users' },
+      { label: pick('创客', 'Makers'), to: '/community/makers', icon: 'user' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
       { label: 'Billboard', to: '/billboard', icon: 'megaphone' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check', icon: 'gauge' },
@@ -96,6 +97,8 @@ function isActive(to: string) {
     ? (route.path.replace(/^\/zh(?=\/|$)/, '') || '/')
     : route.path
   if (to === '/') return path === '/'
+  // /community is the landing. Maker profiles live under it and have their own item.
+  if (to === '/community') return path === '/community'
   return path === to || path.startsWith(`${to}/`)
 }
 
@@ -140,7 +143,8 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('产品', 'Products'), to: '/products' },
       { label: pick('分类', 'Categories'), to: '/categories' },
       { label: pick('工具', 'Tools'), to: '/tools' },
-      { label: pick('创客', 'Makers'), to: '/makers' },
+      { label: pick('社区', 'Community'), to: '/community' },
+      { label: pick('创客', 'Makers'), to: '/community/makers' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check' },
       { label: pick('标签', 'Tags'), to: '/tags' },
       { label: pick('周榜', 'Weekly'), to: '/weekly' },
@@ -353,6 +357,7 @@ watch(() => route.fullPath, () => {
           <nav class="topbar__nav" :aria-label="pick('主导航', 'Primary')">
             <NuxtLink class="topbar__link" :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/products')">{{ pick('产品', 'Products') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/community')">{{ pick('社区', 'Community') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/tools')">{{ pick('工具', 'Tools') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink>
             <NuxtLink class="topbar__link topbar__link--billboard" :to="localePath('/billboard')">Billboard</NuxtLink>

@@ -19,17 +19,28 @@
  *    for database posts.
  */
 import { getLocalPosts, loadLocalMeta, formatPostDate } from '~~/shared/content/blog'
+import { articleOutline, blogTemplate } from '~~/shared/content/blog-template'
 
 const { lang, pick } = useLang()
 const localePath = useLocalePath()
 const route = useRoute()
 
 const slug = computed(() => String(route.params.slug ?? ''))
-const meta = computed(() => loadLocalMeta(slug.value, lang.value))
+const outline = computed(() => articleOutline(slug.value))
+const outlineTemplate = computed(() =>
+  outline.value ? blogTemplate(outline.value.template) : undefined,
+)
+const meta = computed(() => (outline.value ? null : loadLocalMeta(slug.value, lang.value)))
 
-if (!meta.value) {
+if (!outline.value && !meta.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found' })
 }
+
+useHead({
+  meta: computed(() =>
+    outline.value ? [{ name: 'robots', content: 'noindex,follow' }] : [],
+  ),
+})
 
 const post = computed(() => {
   const m = meta.value
@@ -69,17 +80,51 @@ const siteHost = (() => {
 })()
 
 useSeo({
-  title: computed(() =>
-    post.value ? `${post.value.title} | Product Atlas` : 'Product Atlas',
-  ),
-  description: computed(() => post.value?.description ?? ''),
+  title: computed(() => {
+    if (outline.value) return `${outline.value.title} · outline · Product Atlas`
+    return post.value ? `${post.value.title} | Product Atlas` : 'Product Atlas'
+  }),
+  description: computed(() => {
+    if (outline.value) return pick(outline.value.direction_zh, outline.value.direction_en)
+    return post.value?.description ?? ''
+  }),
   type: 'article',
   image: post.value?.image,
 })
 </script>
 
 <template>
-  <div v-if="post" class="src-page mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+  <div v-if="outline" class="src-page mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+    <article class="max-w-3xl">
+      <NuxtLink
+        :to="localePath('/blog')"
+        class="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <Icon name="arrow-left" :size="16" />
+        {{ pick('返回博客', 'Back to blog') }}
+      </NuxtLink>
+      <p class="mt-8 text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">
+        {{ pick('大纲 · 长文未发布', 'Outline · long article not published') }}
+      </p>
+      <h1 class="mt-3 text-3xl font-semibold tracking-tight">{{ outline.title }}</h1>
+      <p v-if="outlineTemplate" class="mt-3 text-sm text-muted-foreground">
+        {{ pick('模板', 'Template') }}: {{ pick(outlineTemplate.label_zh, outlineTemplate.label_en) }}.
+        {{ pick(outlineTemplate.purpose_zh, outlineTemplate.purpose_en) }}
+      </p>
+      <p class="mt-4 text-muted-foreground">{{ pick(outline.direction_zh, outline.direction_en) }}</p>
+      <ol class="mt-8 space-y-5">
+        <li v-for="(section, index) in outline.sections" :key="section.heading_en">
+          <h2 class="text-base font-semibold">{{ index + 1 }}. {{ pick(section.heading_zh, section.heading_en) }}</h2>
+          <p class="mt-1 text-sm text-muted-foreground">
+            <span class="font-medium text-foreground">{{ pick('方向', 'Direction') }}:</span>
+            {{ pick(section.direction_zh, section.direction_en) }}
+          </p>
+        </li>
+      </ol>
+    </article>
+  </div>
+
+  <div v-else-if="post" class="src-page mx-auto w-full max-w-[1320px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
     <div class="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
       <article class="min-w-0">
         <NuxtLink

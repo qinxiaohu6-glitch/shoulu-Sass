@@ -368,7 +368,16 @@ useHead({
                 <Icon name="user" :size="16" />
                 <span class="sr-only">{{ t('directory.detail.maker') }}</span>
               </dt>
-              <dd class="truncate text-sm font-medium">{{ tool.makerName }}</dd>
+              <dd class="truncate text-sm font-medium">
+                <NuxtLink
+                  v-if="tool.makerSlug"
+                  :to="localePath(`/community/makers/${tool.makerSlug}`)"
+                  class="transition-colors hover:text-primary"
+                >
+                  {{ tool.makerName }}
+                </NuxtLink>
+                <template v-else>{{ tool.makerName }}</template>
+              </dd>
             </div>
 
             <div class="flex min-w-0 items-center gap-1.5" :title="t('directory.detail.listed_on')">

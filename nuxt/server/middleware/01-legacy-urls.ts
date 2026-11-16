@@ -22,6 +22,7 @@
  * one thing a crawler will complain about.
  */
 
+import { makerLegacyRedirect } from '~~/shared/utils/community'
 import { productRedirect } from '~~/shared/utils/product-routes'
 
 const HTML_SUFFIX = /\.html$/i
@@ -55,7 +56,8 @@ function legacyTarget(pathname: string): string | null {
     return bare.startsWith('/zh') ? '/zh' : '/'
   }
 
-  return productRedirect(bare) ?? (bare || '/')
+  // Maker profiles moved under /community. One hop, not /makers then again.
+  return makerLegacyRedirect(bare) ?? productRedirect(bare) ?? (bare || '/')
 }
 
 export default defineEventHandler((event) => {

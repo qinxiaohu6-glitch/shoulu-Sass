@@ -59,7 +59,8 @@ async function entries(event: H3Event): Promise<Entry[]> {
     { path: '/weekly', priority: '0.8' },
     { path: '/just-added', priority: '0.7' },
     { path: '/tags', priority: '0.6' },
-    { path: '/makers', priority: '0.6' },
+    { path: '/community', priority: '0.6' },
+    { path: '/community/makers', priority: '0.6' },
     { path: '/pricing', priority: '0.8' },
     { path: '/billboard', priority: '0.8' },
     { path: '/advertise', priority: '0.6' },
@@ -93,14 +94,11 @@ async function entries(event: H3Event): Promise<Entry[]> {
   // Makers are derived from tools, so the slug set depends on locale-insensitive
   // fields only — 'en' here just picks the display name, not the slug.
   for (const maker of allMakers('en', [], overrides)) {
-    list.push({ path: `/makers/${maker.slug}`, lastmod: today, priority: '0.5' })
+    list.push({ path: `/community/makers/${maker.slug}`, lastmod: today, priority: '0.5' })
   }
 
-  // Blog posts are deliberately absent: the two posts that ship with this
-  // build are demo content, and the nav entry is hidden. The `/blog` routes
-  // still exist so publishing can be switched on without a redeploy, but until
-  // there is real writing to index, advertising it would only ask Google to
-  // crawl placeholder text.
+  // Blog posts stay out of the sitemap. The first article is an outline, not
+  // a published body, and the old demo posts are gone.
 
   // The weekly archive has no per-week route yet, so only the current board is
   // listed; `weeks` is still touched here so a future /weekly/<id> route is a
@@ -122,7 +120,7 @@ async function entries(event: H3Event): Promise<Entry[]> {
   const extra = published.filter((tool) => visible(tool.slug)).map((tool) => localizeTool(tool, 'en'))
   for (const maker of allMakers('en', extra, overrides)) {
     if (known.has(maker.slug)) continue
-    list.push({ path: `/makers/${maker.slug}`, lastmod: today, priority: '0.5' })
+    list.push({ path: `/community/makers/${maker.slug}`, lastmod: today, priority: '0.5' })
   }
 
   return list
