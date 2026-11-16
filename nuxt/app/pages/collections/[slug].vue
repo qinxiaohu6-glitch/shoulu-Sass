@@ -99,21 +99,15 @@ function onSort(value: string) {
 
 const countLabel = computed(() =>
   isZh.value
-    ? `${sorted.value.length} 款精选工具`
-    : `${sorted.value.length} curated tool${sorted.value.length === 1 ? '' : 's'}`,
+    ? `${sorted.value.length} 条收录`
+    : `${sorted.value.length} ${sorted.value.length === 1 ? 'listing' : 'listings'}`,
 )
 
 useSeo({
-  title: computed(() =>
-    isZh.value
-      ? `${collection.value.name} · ${sorted.value.length} 款精选 AI 工具 · Product Atlas`
-      : `${collection.value.name} · ${sorted.value.length} curated AI tools · Product Atlas`,
-  ),
+  title: computed(() => `${collection.value.name} · Product Atlas`),
   description: computed(() =>
     collection.value.desc ||
-    (isZh.value
-      ? `${collection.value.name}：精选 ${sorted.value.length} 款值得一试的 AI 工具合集。`
-      : `${collection.value.name}: a curated list of ${sorted.value.length} AI tools worth trying.`),
+    (isZh.value ? `${collection.value.name}这一合集里的收录。` : `Listings in ${collection.value.name}.`),
   ),
 })
 

@@ -77,6 +77,15 @@ async function getLocal(): Promise<{ db: any; ready: boolean }> {
 
   const schema = readFileSync(join(process.cwd(), 'server/database/schema.sql'), 'utf8')
   db.exec(schema)
+  try {
+    const taxonomy = readFileSync(
+      join(process.cwd(), 'server/database/migrations/2026-11-16-taxonomy.sql'),
+      'utf8',
+    )
+    db.exec(taxonomy)
+  } catch {
+    // The taxonomy file is optional for a checkout that has not received it.
+  }
   // Local file only. Production D1 is not altered here — run the migration
   // in server/database/migrations before a deploy that selects these columns.
   for (const sql of [

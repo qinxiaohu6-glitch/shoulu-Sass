@@ -54,26 +54,26 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('Product Atlas 是什么？', 'What is Product Atlas?'),
         a: pick(
-          '一个人工审核的 AI 产品目录。每个收录都有自己的页面，写清它做什么、属于哪个分类、谁做的；付费收录带一条永久 dofollow 反链，免费收录是 nofollow。',
-          'A hand-reviewed directory of AI products. Every listing gets its own page with what the tool does, its category and its maker. Paid listings carry a permanent dofollow link; free listings are nofollow.',
+          '一个软件产品目录。每个收录页写产品做什么、分类和创客。付费收录带永久 dofollow 链接；免费收录是 nofollow，并由人工审核。',
+          'A directory of software products. Each listing has a page with what the product does, its category, and its maker. Paid listings carry a permanent dofollow link; free listings are nofollow and are reviewed by a person.',
         ),
         link: { label: pick('看全部收录', 'Browse the directory'), to: '/products' },
       },
       {
         q: pick('可以免费收录吗？', 'Can I list for free?'),
         a: pick(
-          '可以，$0，永久保留，也照常参与每周榜单。区别只有两个：链接是 nofollow，审核通常要 7–14 天。',
-          'Yes — $0, the page stays up, and it competes on the weekly board like any other. Two differences: the link is nofollow, and review usually takes 7–14 days.',
+          '可以，$0，页面会留下来，也照常参与每周榜单。链接是 nofollow。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
+          'Yes — $0, the page stays up, and it competes on the weekly board like any other. The link is nofollow. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
         ),
         link: { label: pick('查看定价', 'See pricing'), to: '/pricing' },
       },
       {
         q: pick('审核要多久？', 'How long does review take?'),
         a: pick(
-          '免费档人工审核，通常 7–14 天，不保证，高峰可能更长。标准、精选、专业三档在付款成功后由支付回调自动验签、自动收录发布，不需要人工确认收款。',
-          'Free is reviewed by hand, usually in 7–14 days, not guaranteed, and longer when busy. Standard, Featured and Pro are published automatically by a verified payment webhook as soon as the payment succeeds, with no manual confirmation.',
+          '标准、精选、专业三档在付款成功后自动发布。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
+          'Standard, Featured, and Pro go live automatically when payment succeeds. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
         ),
-        link: { label: pick('审核与拒收规则', 'Review and rejection rules'), to: '/rules' },
+        link: { label: pick('提交之后会发生什么', 'How it works'), to: '/how-it-works' },
       },
       {
         q: pick('提交时需要一个能收信的邮箱吗？', 'Do I need a working email to submit?'),
@@ -188,8 +188,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。同一网站再付会累加，被人超过只掉名次。此前从 $15 起。右栏 ${sidebar.price}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
-          `Billboard is one-time, name your price from ${floorLabel}. Another payment for the same website stacks, and being outbid only drops your rank. Was from $15. The sidebar is ${sidebar.price} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
+          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。如果想排得更靠前，为同一产品再付一次。金额会累加。被人超过只掉名次。此前从 $15 起。右栏 ${sidebar.price}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
+          `Billboard is one-time, name your price from ${floorLabel}. If you want a higher rank, pay again for the same product. The amounts add up. Being outbid only drops your rank. Was from $15. The sidebar is ${sidebar.price} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
         ),
         link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },
@@ -203,8 +203,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('能退款吗？', 'Can I get a refund?'),
         a: pick(
-          '退款条件、审核时限与到账时间写在《服务条款》的计费章节。因违反可接受使用政策被下架的付费收录不予退款。',
-          'The refund conditions, review deadlines and payout times are in the billing section of our terms. A paid listing removed for breaking the Acceptable Use Policy is not refunded.',
+          '若我们没有交付展示位，或错误扣款，我们退款。收录或展示位上线后，不因改主意或效果不好退款。完整条款在计费章节。',
+          'If we do not deliver the placement, or we charge you in error, we refund it. After the listing or placement is live, we do not refund a change of mind or weak results. Full terms are in the billing section.',
         ),
         link: { label: pick('计费与退款条款', 'Billing and refunds'), to: '/terms-of-service' },
       },

@@ -99,12 +99,12 @@ function categoryName(slug: string): string | null {
 useSeo({
   // `directory.meta.feed`: "New AI tools — latest additions | {brand}".
   title: computed(() =>
-    pick('最新 AI 工具 — 每日新收录 | Product Atlas', 'New AI tools — latest additions | Product Atlas'),
+    pick('新收录 · Product Atlas', 'New listings · Product Atlas'),
   ),
   description: computed(() =>
     pick(
-      '按天展示新收录的 AI 工具，包括社区用户提交的工具。',
-      'Newly listed AI tools, day by day — including tools submitted by the community.',
+      '按天展示新收录的产品，包括社区提交的产品。',
+      'Newly listed products, day by day, including products submitted by the community.',
     ),
   ),
 })
@@ -128,12 +128,12 @@ useSeo({
 
     <!-- Header -->
     <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
-      {{ pick('最新 AI 工具', 'Latest AI tools') }}
+      {{ pick('新收录', 'New listings') }}
     </h1>
     <p class="mb-6 mt-1.5 max-w-2xl text-sm text-muted-foreground">
       {{ pick(
-        '按天展示新收录的 AI 工具，包括社区用户提交的工具。',
-        'Newly listed AI tools, day by day — including tools submitted by the community.',
+        '按天展示新收录的产品，包括社区提交的产品。',
+        'Newly listed products, day by day, including products submitted by the community.',
       ) }}
     </p>
 

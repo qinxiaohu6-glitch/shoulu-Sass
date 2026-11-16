@@ -34,6 +34,7 @@
  */
 import type { SectionTabItem } from '~/utils/directory-ui'
 import type { Tool } from '~~/shared/types/catalog'
+import { CHECKED_BLOCK, FEATURES_EMPTY, PRICING_EMPTY, RELATED_HEADING } from '~~/shared/utils/batch2'
 import { listingDocumentTitle } from '~~/shared/utils/listing-title'
 
 const { lang, isZh, pick } = useLang()
@@ -43,6 +44,7 @@ const t = useDirectoryCopy()
 
 const slug = computed(() => String(route.params.slug || ''))
 const overrides = useOverrides()
+const submitted = await useSubmittedTools()
 const { categories: liveCategories, collections } = useDirectoryMeta()
 
 /**
@@ -144,11 +146,20 @@ const tagLinks = computed(() =>
   tool.value!.tags.map((name) => ({ slug: slugify(name), name: tagLabel(name, lang.value) })),
 )
 
-/** The source's `related`: the rest of the category, in directory order. */
+/** Same-category listings that are live. Hidden when this product is the only one. */
 const related = computed(() =>
-  orderedTools(lang.value, overrides.value)
+  mergeDirectory(
+    orderedTools(lang.value, overrides.value),
+    submitted.value,
+    overrides.value,
+  )
     .filter((entry) => entry.slug !== tool.value!.slug && entry.category === tool.value!.category)
-    .slice(0, 3),
+    .slice(0, 6),
+)
+
+const hasFeatures = computed(() => tool.value!.detail.features.length > 0)
+const hasPricing = computed(() =>
+  Boolean(tool.value!.detail.pricing?.label || tool.value!.detail.pricing?.url),
 )
 
 /* "Popular tools" in the rail — the same five the homepage board shows. */
@@ -187,8 +198,9 @@ const sectionTabs = computed<SectionTabItem[]>(() => {
   if (tool.value!.long) tabs.push({ id: 'what-is', label: t('directory.detail.tab_overview') })
   if (detail.how_to_use.length)
     tabs.push({ id: 'how-to-use', label: t('directory.detail.tab_how_to_use') })
-  if (detail.features.length)
-    tabs.push({ id: 'features', label: t('directory.detail.tab_features') })
+  tabs.push({ id: 'features', label: t('directory.detail.tab_features') })
+  tabs.push({ id: 'pricing', label: pick('定价', 'Pricing') })
+  if (related.value.length) tabs.push({ id: 'related', label: pick('同类', 'Related') })
   if (detail.use_cases.length)
     tabs.push({ id: 'use-cases', label: t('directory.detail.tab_use_cases') })
   if (detail.pros.length || detail.cons.length)
@@ -205,7 +217,11 @@ const canonicalPath = computed(
 
 useSeo({
   title: computed(() =>
-    listingDocumentTitle(tool.value!.name, tool.value!.short, t('directory.brand_name')),
+    listingDocumentTitle(tool.value!.name, tool.value!.short, t('directory.brand_name'), {
+      features: hasFeatures.value,
+      pricing: hasPricing.value,
+      related: related.value.length > 0,
+    }),
   ),
   description: computed(() => tool.value!.short),
   type: 'article',
@@ -326,6 +342,9 @@ useHead({
             <Icon name="arrow-up-right" :size="14" />
           </a>
         </div>
+        <p class="mb-6">
+          <a class="text-sm underline" :href="`/products/${slug}.md`">Markdown</a>
+        </p>
 
         <div class="mb-8 space-y-4">
           <dl class="flex flex-wrap gap-x-6 gap-y-2">
@@ -406,15 +425,46 @@ useHead({
           :cons="tool.detail.cons"
           :faqs="tool.detail.faqs"
         />
+
+        <section v-if="!hasFeatures" id="features" class="doc-section">
+          <h2>{{ pick('功能', 'Features') }}</h2>
+          <p>{{ pick('这条收录没有功能部分。', FEATURES_EMPTY) }}</p>
+        </section>
+
+        <section id="pricing" class="doc-section">
+          <h2>{{ pick('定价', 'Pricing') }}</h2>
+          <p v-if="hasPricing">
+            <span v-if="tool.detail.pricing?.label">{{ tool.detail.pricing.label }}</span>
+            <a
+              v-if="tool.detail.pricing?.url"
+              :href="tool.detail.pricing.url"
+              rel="nofollow noopener"
+              target="_blank"
+            >{{ tool.detail.pricing.url }}</a>
+          </p>
+          <p v-else>{{ pick('这条收录没有定价部分。', PRICING_EMPTY) }}</p>
+        </section>
+
+        <section id="checked" class="doc-section">
+          <h2>{{ pick('本页核对了什么', 'What this page checked') }}</h2>
+          <p>
+            {{
+              pick(
+                '本页核对了提交者提供的公开名称、简短说明、分类、创客和链接。没有核对收入、排名、流量或 DR。这不是编辑背书。',
+                CHECKED_BLOCK,
+              )
+            }}
+          </p>
+        </section>
       </div>
 
       <DirectoryToolDetailSidebar :top-picks="topPicks" />
     </div>
 
-    <section v-if="related.length" class="mt-12">
+    <section v-if="related.length" id="related" class="mt-12">
       <div class="flex items-baseline justify-between gap-4 pb-3">
         <h2 class="text-lg font-semibold tracking-tight">
-          {{ t('directory.detail.more_in', { category: category?.name || t('directory.tools') }) }}
+          {{ pick('这一分类里的其他收录', RELATED_HEADING) }}
         </h2>
         <NuxtLink
           v-if="category"

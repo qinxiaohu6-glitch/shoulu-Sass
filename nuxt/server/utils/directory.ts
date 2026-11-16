@@ -20,6 +20,7 @@ import {
   tags as catalogTags,
   tools as catalogTools,
 } from '~~/shared/utils/catalog'
+import { publicCategoryDescription } from '~~/shared/utils/batch2'
 import { catalogFallback } from '~~/shared/utils/listing-desk'
 import type { Db } from './db'
 
@@ -80,6 +81,7 @@ function parseDetail(value: string | null | undefined): DetailBlock | null {
   try {
     const parsed = JSON.parse(value) as Partial<DetailBlock>
     if (!parsed || typeof parsed !== 'object') return null
+    const pricing = readPricing(parsed.pricing)
     return {
       how_to_use: Array.isArray(parsed.how_to_use) ? parsed.how_to_use : [],
       features: Array.isArray(parsed.features) ? parsed.features : [],
@@ -87,10 +89,21 @@ function parseDetail(value: string | null | undefined): DetailBlock | null {
       pros: Array.isArray(parsed.pros) ? parsed.pros : [],
       cons: Array.isArray(parsed.cons) ? parsed.cons : [],
       faqs: Array.isArray(parsed.faqs) ? parsed.faqs : [],
+      ...(pricing ? { pricing } : {}),
     }
   } catch {
     return null
   }
+}
+
+function readPricing(value: unknown): { label: string; url: string } | undefined {
+  if (!value || typeof value !== 'object') return undefined
+  const entry = value as Record<string, unknown>
+  const label = String(entry.label ?? '').trim().slice(0, 80)
+  let url = String(entry.url ?? '').trim().slice(0, 300)
+  if (url && !/^https:\/\//i.test(url)) url = ''
+  if (!label && !url) return undefined
+  return { label, url }
 }
 
 function hasDetail(detail: DetailBlock | null): boolean {
@@ -101,7 +114,9 @@ function hasDetail(detail: DetailBlock | null): boolean {
       detail.use_cases.length ||
       detail.pros.length ||
       detail.cons.length ||
-      detail.faqs.length,
+      detail.faqs.length ||
+      detail.pricing?.label ||
+      detail.pricing?.url,
   )
 }
 
@@ -459,6 +474,7 @@ function buildCategory(
   const byLocale = new Map(translations.map((tr) => [tr.locale, tr]))
   const pick = (locale: Locale, field: 'name' | 'description'): string => {
     const own = byLocale.get(locale)?.[field]?.trim()
+    if (field === 'description' && own) return publicCategoryDescription(head.slug, locale, own)
     if (own) return own
     if (!fallback) return ''
     if (field === 'name') return locale === 'zh' ? fallback.name_zh : fallback.name_en

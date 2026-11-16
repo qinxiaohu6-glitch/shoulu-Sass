@@ -16,9 +16,11 @@
  */
 
 import catalogJson from '~~/shared/content/catalog.json'
+import { submissionTagError } from '~~/shared/utils/batch2'
 import { categories, categoryBySlug, isoWeekId, slugify as slugifyText } from '~~/shared/utils/catalog'
-import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { legalLogoUrl } from '~~/shared/utils/logo'
+import { isReservedProductSlug } from '~~/shared/utils/product-routes'
+import { publicProductName } from '~~/shared/utils/public-name'
 import type { DetailBlock, Tool } from '~~/shared/types/catalog'
 import type { Db } from './db'
 
@@ -216,6 +218,9 @@ export type CleanSubmission = {
   maker: string
   plan: string
   slot: string
+  features: { title: string; desc: string }[]
+  pricingLabel: string
+  pricingUrl: string
 }
 
 export function validate(payload: unknown): CleanSubmission {
@@ -228,7 +233,7 @@ export function validate(payload: unknown): CleanSubmission {
   const [url, domain] = cleanUrl(body.url || body.website)
   if (cat.taken.has(domain)) throw new SubmissionError('already_listed', 'url', domain)
 
-  const name = cleanText(body.name, 'name', NAME_MIN, NAME_MAX)
+  const name = publicProductName(cleanText(body.name, 'name', NAME_MIN, NAME_MAX))
   const short = cleanText(body.short, 'short', SHORT_MIN, SHORT_MAX)
   const long = cleanText(body.long, 'long', LONG_MIN, LONG_MAX, false)
 
@@ -251,6 +256,8 @@ export function validate(payload: unknown): CleanSubmission {
     if (cat.tags.has(tag) && !tags.includes(tag)) tags.push(tag)
     if (tags.length >= MAX_TAGS) break
   }
+  const tagError = submissionTagError(category, tags)
+  if (tagError) throw new SubmissionError(tagError, 'tags')
 
   const email = String(body.email ?? '').trim()
   if (email && !EMAIL_RE.test(email)) throw new SubmissionError('bad_email', 'email')
@@ -287,7 +294,52 @@ export function validate(payload: unknown): CleanSubmission {
 
   const maker = cleanText(body.maker, 'maker', 0, 60, false)
 
-  return { url, domain, name, short, long, category, tags, email, logo, maker, plan, slot }
+  const features = cleanFeatures(body.features)
+  const pricingLabel = cleanText(body.pricing_label ?? body.pricingLabel, 'pricing_label', 0, 80, false)
+  let pricingUrl = String(body.pricing_url ?? body.pricingUrl ?? '').trim()
+  if (pricingUrl && !/^https:\/\//i.test(pricingUrl)) pricingUrl = ''
+  pricingUrl = pricingUrl.slice(0, 300)
+
+  return {
+    url,
+    domain,
+    name,
+    short,
+    long,
+    category,
+    tags,
+    email,
+    logo,
+    maker,
+    plan,
+    slot,
+    features,
+    pricingLabel,
+    pricingUrl,
+  }
+}
+
+function cleanFeatures(value: unknown): { title: string; desc: string }[] {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(/\n+/)
+      : []
+  const out: { title: string; desc: string }[] = []
+  for (const item of raw) {
+    if (out.length >= 8) break
+    if (typeof item === 'string') {
+      const title = item.replace(/\s+/g, ' ').trim().slice(0, 80)
+      if (title && !/https?:\/\//i.test(title)) out.push({ title, desc: '' })
+      continue
+    }
+    if (!item || typeof item !== 'object') continue
+    const entry = item as Record<string, unknown>
+    const title = String(entry.title ?? '').replace(/\s+/g, ' ').trim().slice(0, 80)
+    const desc = String(entry.desc ?? '').replace(/\s+/g, ' ').trim().slice(0, 200)
+    if (title || desc) out.push({ title, desc })
+  }
+  return out
 }
 
 /* -------------------------------------------------------------------------
@@ -438,6 +490,21 @@ export async function createSubmission(
         )
         .run()
 
+      if (body.features.length || body.pricingLabel || body.pricingUrl) {
+        const detail = JSON.stringify({
+          how_to_use: [],
+          features: body.features,
+          use_cases: [],
+          pros: [],
+          cons: [],
+          faqs: [],
+          ...(body.pricingLabel || body.pricingUrl
+            ? { pricing: { label: body.pricingLabel, url: body.pricingUrl } }
+            : {}),
+        })
+        await db.prepare('UPDATE submissions SET detail_en = ? WHERE id = ?').bind(detail, id).run()
+      }
+
       const row = await db.prepare('SELECT * FROM submissions WHERE id = ?').bind(id).first<SubmissionRow>()
       if (!row) throw new SubmissionError('internal_error')
       return row
@@ -562,6 +629,11 @@ function parseDetail(raw: unknown): DetailBlock {
             .filter((item) => item.title || item.desc)
             .slice(0, 20)
         : []
+    const pricingRaw = value.pricing
+    const pricingEntry = pricingRaw && typeof pricingRaw === 'object' ? (pricingRaw as Record<string, unknown>) : null
+    const pricingLabel = String(pricingEntry?.label ?? '').trim().slice(0, 80)
+    let pricingUrl = String(pricingEntry?.url ?? '').trim().slice(0, 300)
+    if (pricingUrl && !/^https:\/\//i.test(pricingUrl)) pricingUrl = ''
     return {
       how_to_use: lines(value.how_to_use),
       features: pairs(value.features),
@@ -577,6 +649,7 @@ function parseDetail(raw: unknown): DetailBlock {
             .filter((item) => item.q || item.a)
             .slice(0, 20)
         : [],
+      ...(pricingLabel || pricingUrl ? { pricing: { label: pricingLabel, url: pricingUrl } } : {}),
     }
   } catch {
     return { ...EMPTY_DETAIL }
@@ -600,7 +673,8 @@ function hasDetail(block: DetailBlock): boolean {
     block.use_cases.length > 0 ||
     block.pros.length > 0 ||
     block.cons.length > 0 ||
-    block.faqs.length > 0
+    block.faqs.length > 0 ||
+    Boolean(block.pricing?.label || block.pricing?.url)
   )
 }
 

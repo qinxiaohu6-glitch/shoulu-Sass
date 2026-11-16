@@ -35,10 +35,10 @@ const points = computed(() => [
     ),
   },
   {
-    title: pick('付款成功后自动发布', 'Published when payment succeeds'),
+    title: pick('付款成功后自动上线', 'When payment succeeds'),
     body: pick(
-      '验签后的支付回调完成订单并发布页面，不用人工确认收款。',
-      'A verified payment webhook settles the order and publishes the page.',
+      '付款成功后，付费目录收录或 Billboard 展示位会自动上线。',
+      'When payment succeeds, a paid directory listing or a Billboard slot goes live automatically.',
     ),
   },
 ])

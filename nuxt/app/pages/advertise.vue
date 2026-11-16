@@ -89,7 +89,7 @@ useSeo({
   <div class="container adv">
     <section class="mk-hero mk-hero--compact">
       <p class="mk-eyebrow">{{ pick('买完长什么样', 'What you are buying') }}</p>
-      <h1 class="mk-h1">{{ pick('四个位置，各自能结账。', 'Four placements, each with a way to pay.') }}</h1>
+      <h1 class="mk-h1">{{ pick('四种露出方式。有标价的写出价格；书面评论由编辑报价。', 'Four ways to show up. Listed prices where we have them; a written review is quoted by an editor.') }}</h1>
       <p class="mk-sub">
         {{ pick('预览是画出来的，不是真实客户。一次付款，安全结账。不承诺排名、流量或权重。', 'The previews are drawn, not a real customer. One-time payment, secure checkout. No promise of rankings, traffic, or authority.') }}
       </p>

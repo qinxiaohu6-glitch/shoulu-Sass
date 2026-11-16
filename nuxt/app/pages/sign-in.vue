@@ -84,7 +84,7 @@ useSeo({
     welcome
     :title="pick('欢迎回来', 'Welcome back')"
     :description="pick('用 Google 登录。这一页没有密码，也不需要银行卡。', 'Sign in with Google. No password on this page, and no card.')"
-    :hero="pick('给你的产品一个会留下来的页面。', 'A page for your product that stays up.')"
+    :hero="pick('登录', 'Sign in')"
     :lead="pick('用 Google 免费建账号。目录页会留下来。付费位置一次付清，付款成功后系统自动发布。', 'Create a free account with Google. The listing page stays up. Paid placement is one payment, and it goes live when that payment succeeds.')"
   >
     <div

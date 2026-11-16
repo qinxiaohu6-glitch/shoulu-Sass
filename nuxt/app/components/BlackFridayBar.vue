@@ -33,9 +33,10 @@ onBeforeUnmount(() => {
   <NuxtLink v-if="active" class="bf-bar" :to="href">
     <span class="bf-bar__pill">{{ pick('黑五', 'BLACK FRIDAY') }}</span>
     <span class="bf-bar__copy">
-      {{ pick('精选', 'Featured') }}
-      <s v-if="featured.strikeLabel">{{ featured.strikeLabel }}</s>
+      {{ pick('黑五', 'Black Friday') }}
+      · {{ pick('精选', 'Featured') }}
       {{ featured.priceLabel }}
+      <template v-if="featured.strikeLabel">({{ pick('原价', 'was') }} {{ featured.strikeLabel }})</template>
       · {{ pick(`Billboard 从 ${floorLabel} 起`, `Billboard from ${floorLabel}`) }}
       · {{ pick(`剩余 ${left.d}天 ${left.h}小时`, `ends in ${left.d}d ${left.h}h`) }}
     </span>

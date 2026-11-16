@@ -16,6 +16,7 @@
  */
 
 import catalogJson from '~~/shared/content/catalog.json'
+import { publicProductName } from '~~/shared/utils/public-name'
 import { cleanUrl, SubmissionError } from '../../utils/submissions'
 
 const FETCH_TIMEOUT_MS = 6000
@@ -178,7 +179,7 @@ function brandOf(title: string): string {
   const stripped = tidy(title.replace(/^(?:welcome to|home\s*[|:\-–—]\s*)/i, ''))
   const parts = stripped.split(/\s+[|\-–—·]\s+/)
   const head = tidy(parts[0] ?? '')
-  return head.length >= 2 ? head : stripped || title
+  return publicProductName(head.length >= 2 ? head : stripped || title)
 }
 
 function blockedHost(hostname: string): boolean {

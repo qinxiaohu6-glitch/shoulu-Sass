@@ -91,15 +91,15 @@ const bookFaq = computed(() => [
   {
     q: pick('付款后多久上线？', 'How soon does it go live?'),
     a: pick(
-      '付款成功后支付回调自动验签并完成订单，系统立即把广告排进你选的周次，不需要人工确认，也不用提交产品。收据发到你填的邮箱。',
-      'A verified payment webhook settles the order and schedules the ad in the week you picked as soon as payment succeeds. No manual confirmation and no product submission. The receipt goes to the email you entered.',
+      '付款成功后，广告会排进你选的那一周。不需要另一次确认，也不用提交产品。收据发到你填的邮箱。',
+      'The ad is scheduled for the week you picked when payment succeeds. There is no separate confirmation step and no product submission. The receipt goes to the email you entered.',
     ),
   },
   {
     q: pick('同一周会被卖两次吗？', 'Can the same week be sold twice?'),
     a: pick(
-      '不会。下单时先做一次冲突检测并预留 30 分钟，付款成功时系统再核对一次；极少数并发情况下，后付款的订单会被标记冲突，由站长退款或改期。',
-      'No. Booking runs a conflict check and holds the week for 30 minutes; the webhook repeats the check when payment succeeds. In the rare case of a simultaneous payment, the later order is flagged as a conflict and refunded or rescheduled by the operator.',
+      '不会。下单时先做一次冲突检测并预留 30 分钟，付款成功时再核对一次；极少数并发情况下，后付款的订单会被标记冲突，由站长退款或改期。',
+      'No. Booking runs a conflict check and holds the week for 30 minutes; the check runs again when payment succeeds. In the rare case of a simultaneous payment, the later order is flagged as a conflict and refunded or rescheduled by the operator.',
     ),
   },
   {
@@ -195,8 +195,8 @@ useSeo({
   title: computed(() => pick('预订周广告位 · Product Atlas', 'Book a weekly ad slot · Product Atlas')),
   description: computed(() =>
     pick(
-      '右栏按周预订。Billboard 不在这里卖，榜单周租已停。',
-      'Book the sidebar by the week. Billboard is not sold here, and the weekly board rental has stopped.',
+      '按周预订右栏。Billboard 在自己的页面上。',
+      'Book the sidebar by the week. Billboard is on its own page.',
     ),
   ),
 })
@@ -211,7 +211,7 @@ useHead({
     <section v-if="boardRetired" class="max-w-xl rounded-2xl border border-dashed border-border p-8">
       <p class="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">BILLBOARD</p>
       <h1 class="mt-3 font-serif text-3xl tracking-tight">
-        {{ pick('榜单周租已停售', 'The weekly board rental has stopped') }}
+        {{ pick('Billboard 在自己的页面上', 'Billboard is on its own page') }}
       </h1>
       <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
         {{

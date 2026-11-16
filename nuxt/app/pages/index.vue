@@ -135,7 +135,7 @@ const faq = computed(() => {
     ? [
         {
           q: '提交要花钱吗？',
-          a: `免费收录 0 元。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改、站长开启邮件后 24h 内回复。都是单次付费，不是订阅。Billboard 从 ${floorLabel} 起自己出价，此前从 $15 起。`,
+          a: `免费收录 0 元。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改。问题发到页脚的联系地址。都是单次付费，不是订阅。Billboard 从 ${floorLabel} 起自己出价，此前从 $15 起。`,
         },
         {
           q: '多久能上线？',
@@ -153,7 +153,7 @@ const faq = computed(() => {
     : [
         {
           q: 'How much does it cost?',
-          a: `A free listing costs nothing. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy. It carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin, four copy edits a year, and a reply within 24 hours after the site owner turns email on. All one-time payments, never a subscription. Billboard is name-your-price from ${floorLabel}; was from $15.`,
+          a: `A free listing costs nothing. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy. It carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin and four copy edits a year. Questions go to the contact address in the footer. All one-time payments, never a subscription. Billboard is name-your-price from ${floorLabel}; was from $15.`,
         },
         {
           q: 'How fast does my listing go live?',
@@ -257,6 +257,7 @@ useHead({
               {{ proof }}
             </li>
           </ul>
+          <LiveDirectoryFacts />
         </section>
 
         <aside class="home-feat home-feat--right" :aria-label="pick('精选', 'Featured')">

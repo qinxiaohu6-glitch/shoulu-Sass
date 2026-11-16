@@ -17,7 +17,7 @@ const maker = computed(() =>
 if (!maker.value) {
   throw createError({
     statusCode: 404,
-    statusMessage: isZh.value ? '没有这个开发者' : 'No such maker',
+    statusMessage: isZh.value ? '没有这个创客' : 'No such maker',
     fatal: true,
   })
 }
@@ -55,7 +55,7 @@ useSeo({
   title: computed(() =>
     isZh.value
       ? `${maker.value!.name} 的 AI 产品 · Product Atlas`
-      : `${maker.value!.name} — AI products · Product Atlas`,
+      : `${maker.value!.name} · Product Atlas`,
   ),
   description: computed(() =>
     isZh.value
@@ -70,7 +70,7 @@ useSeo({
     <nav class="breadcrumb" aria-label="breadcrumb">
       <NuxtLink :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
       <Icon name="chevron-right" />
-      <NuxtLink :to="localePath('/makers')">{{ pick('开发者', 'Makers') }}</NuxtLink>
+      <NuxtLink :to="localePath('/makers')">{{ pick('创客', 'Makers') }}</NuxtLink>
       <Icon name="chevron-right" />
       <span>{{ maker!.name }}</span>
     </nav>
@@ -137,7 +137,7 @@ useSeo({
     <section v-if="siblings.length" style="margin-top: 40px">
       <div class="section-head">
         <div class="section-head__title">
-          <h2>{{ pick('同分类的开发者', 'Makers in the same categories') }}</h2>
+          <h2>{{ pick('同分类的创客', 'Makers in the same categories') }}</h2>
           <p>{{ pick('做相近方向的团队。', 'Teams working on adjacent problems.') }}</p>
         </div>
       </div>

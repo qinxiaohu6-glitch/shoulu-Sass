@@ -55,7 +55,7 @@ useSeo({
     welcome
     :title="pick('免费建账号', 'Create a free account')"
     :description="pick('已经有账号？用同一个 Google 登录即可。', 'Already have one? The same Google sign-in opens it.')"
-    :hero="pick('给你的产品一个会留下来的页面。', 'A page for your product that stays up.')"
+    :hero="pick('免费建账号', 'Create a free account')"
     :lead="pick('用 Google 免费建账号。目录页会留下来。付费位置一次付清，付款成功后系统自动发布。', 'Create a free account with Google. The listing page stays up. Paid placement is one payment, and it goes live when that payment succeeds.')"
   >
     <div

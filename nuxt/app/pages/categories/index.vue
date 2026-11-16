@@ -16,6 +16,7 @@
  *    is counted off the same merged list `/tools` renders, so a category can never
  *    advertise a number its own page would not show.
  */
+import { categoriesIntro } from '~~/shared/utils/batch2'
 import { englishCount } from '~~/shared/utils/english-count'
 
 const { lang, pick, isZh } = useLang()
@@ -52,16 +53,17 @@ const cards = computed(() =>
     }),
 )
 
-const title = computed(() => t('directory.categories.title'))
-const lead = computed(() => t('directory.categories.subtitle'))
+const title = computed(() => pick('分类', 'Categories'))
+const lead = computed(() =>
+  isZh.value
+    ? cards.value.length === 8
+      ? '每条收录都属于这八个分类之一。'
+      : `每条收录都属于这 ${cards.value.length} 个分类之一。`
+    : categoriesIntro(cards.value.length),
+)
 
 useSeo({
-  title: computed(() =>
-    t('directory.meta.categories', {
-      count: cards.value.length,
-      brand: t('directory.brand_name'),
-    }),
-  ),
+  title: computed(() => pick('分类 · Product Atlas', 'Categories · Product Atlas')),
   description: lead,
 })
 </script>

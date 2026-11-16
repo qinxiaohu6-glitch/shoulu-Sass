@@ -22,6 +22,11 @@ export interface DetailFaq {
   a: string
 }
 
+export interface ListingPricing {
+  label: string
+  url: string
+}
+
 export interface DetailBlock {
   how_to_use: string[]
   features: DetailItem[]
@@ -29,6 +34,8 @@ export interface DetailBlock {
   pros: string[]
   cons: string[]
   faqs: DetailFaq[]
+  /** Optional public price or pricing-page URL. Absent means the page says so. */
+  pricing?: ListingPricing
 }
 
 export type PartialDetail = Partial<DetailBlock>

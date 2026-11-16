@@ -66,7 +66,7 @@ const navGroups = computed(() => [
       { label: pick('产品', 'Products'), to: '/products', icon: 'layout-grid' },
       { label: pick('分类', 'Categories'), to: '/categories', icon: 'shapes' },
       { label: pick('工具', 'Tools'), to: '/tools', icon: 'sparkles' },
-      { label: pick('开发者', 'Makers'), to: '/makers', icon: 'user' },
+      { label: pick('创客', 'Makers'), to: '/makers', icon: 'user' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
       { label: 'Billboard', to: '/billboard', icon: 'megaphone' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check', icon: 'gauge' },
@@ -140,7 +140,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('产品', 'Products'), to: '/products' },
       { label: pick('分类', 'Categories'), to: '/categories' },
       { label: pick('工具', 'Tools'), to: '/tools' },
-      { label: pick('开发者', 'Makers'), to: '/makers' },
+      { label: pick('创客', 'Makers'), to: '/makers' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check' },
       { label: pick('标签', 'Tags'), to: '/tags' },
       { label: pick('周榜', 'Weekly'), to: '/weekly' },
@@ -164,7 +164,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('服务条款', 'Terms of Service'), to: '/terms-of-service' },
       { label: pick('可接受使用政策', 'Acceptable Use Policy'), to: '/terms-of-service', hash: 'acceptable-use' },
       { label: pick('举报与申诉', 'Report & appeal'), to: '/terms-of-service', hash: 'reporting' },
-      { label: pick('非生成平台声明', 'Not a generation platform'), to: '/terms-of-service', hash: 'no-generative-features' },
+      { label: pick('本站不生成内容', 'This site does not generate content'), to: '/terms-of-service', hash: 'no-generative-features' },
     ],
   },
   {
@@ -449,7 +449,8 @@ watch(() => route.fullPath, () => {
 
       <footer class="footer">
         <div class="footer__inner">
-          <p class="footer__tagline">{{ pick('发布你的产品，反链永久保留。', 'Launch your product. Keep the backlink.') }}</p>
+          <p class="footer__tagline">{{ pick('提交你的产品。付费收录保留 dofollow 反链。', 'List your product. Paid listings keep a dofollow backlink.') }}</p>
+          <AskAssistants />
           <!-- Site-wide disambiguation. Waffo's site check reads category labels
                such as "Image Generation" / "Text to Speech" / "Video Generation"
                as if they were features of this site. Stating the nature of the
