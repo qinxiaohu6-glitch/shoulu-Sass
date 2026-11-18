@@ -19,6 +19,21 @@ if (lang.value === 'zh') {
 
 const canonical = 'https://dirtool.com/spotlights/guidelines'
 
+useHead({
+  title: 'Product Spotlight template and review standards · Product Atlas',
+  meta: [
+    {
+      name: 'description',
+      content:
+        'The template for a Product Spotlight: eight sections, 800 to 1,500 words, and the pass/fail list a draft is reviewed against.',
+    },
+    { property: 'og:title', content: 'Product Spotlight template and review standards' },
+    { property: 'og:type', content: 'article' },
+    { property: 'og:url', content: canonical },
+  ],
+  link: [{ rel: 'canonical', href: canonical }],
+})
+
 const sections = [
   {
     n: '1',
