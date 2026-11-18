@@ -2,6 +2,7 @@
 import type { Week } from '~~/shared/types/catalog'
 import { WEEKLY_EMPTY_COPY } from '~~/shared/content/weekly-empty'
 import { isIsoWeekId, weekFromQuery } from '~~/shared/utils/weekly-board'
+import { breadcrumbSchema, itemListSchema } from '~~/shared/utils/schema'
 
 const { lang, pick } = useLang()
 const localePath = useLocalePath()
@@ -143,6 +144,40 @@ useSeo({
   title: computed(() => `${title.value} · Product Atlas`),
   description: lead,
 })
+
+type SchemaScript = { type: 'application/ld+json'; innerHTML: string }
+
+const schemaScripts = computed<SchemaScript[]>(() => {
+  const list: SchemaScript[] = []
+  // An empty week has no list to describe; a zero-item ItemList is noise.
+  if (panel.value.rows.length) {
+    list.push({
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(
+        itemListSchema(
+          `${title.value} · ${panel.value.label}`,
+          panel.value.rows.map((row) => ({
+            name: toolOf(row.slug)?.name ?? row.slug,
+            path: `/products/${row.slug}`,
+            position: row.rank,
+          })),
+        ),
+      ),
+    })
+  }
+  list.push({
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify(
+      breadcrumbSchema([
+        { name: pick('发现', 'Discover'), path: '/' },
+        { name: title.value, path: '/weekly' },
+      ]),
+    ),
+  })
+  return list
+})
+
+useHead({ script: schemaScripts })
 </script>
 
 <template>

@@ -39,6 +39,7 @@ import { submissionTagError } from '~~/shared/utils/batch2'
 import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/campaign'
 import { tiers } from '~~/shared/content/pricing'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+import { publicProductName } from '~~/shared/utils/public-name'
 import type { SubmitFaqItem } from '~/utils/directory-ui'
 import { legalLogoUrl } from '~~/shared/utils/logo'
 
@@ -180,7 +181,10 @@ async function draftListing() {
     if (!preview?.ok) {
       fetchNote.value = unreadPage.value
     } else {
-      if (preview.name) form.name = preview.name
+      // A page title is not a product name. Strip the tagline before it lands
+      // in the field, so the stored row is clean and the submitter can still
+      // edit whatever survives.
+      if (preview.name) form.name = publicProductName(preview.name)
       if (preview.short) form.tagline = preview.short
       if (preview.logo) form.logo = preview.logo
     }

@@ -4,6 +4,7 @@
  */
 
 import { billboardTier, isBillboardTier, type BillboardTierId } from '../content/billboard.ts'
+import { publicProductName } from './public-name.ts'
 import { screenshotSrc } from './screenshot.ts'
 
 export type BillboardStatus = 'requested' | 'pending' | 'live' | 'removed'
@@ -65,7 +66,7 @@ export function stackBillboard<T extends BillboardRow>(rows: readonly T[]): T[] 
     stacked.push({
       ...latest,
       id: earliest.id,
-      name: latest.name || earliest.name,
+      name: publicProductName(latest.name || earliest.name),
       tagline: latest.tagline || earliest.tagline,
       logo: withLogo?.logo ?? '',
       screenshot: withShot?.screenshot ?? '',

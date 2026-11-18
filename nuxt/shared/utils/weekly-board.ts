@@ -13,9 +13,9 @@
  * Ranks are consecutive (1, 2, 3…). Callers assign the number from the index.
  */
 
-import { isoWeekId, previousIsoWeekId } from './iso-week.ts'
+import { isoWeekId, isoWeekStart, previousIsoWeekId } from './iso-week.ts'
 
-export { isoWeekId, previousIsoWeekId }
+export { isoWeekId, isoWeekStart, previousIsoWeekId }
 
 const WEEK_RE = /^\d{4}-W\d{2}$/
 const DAY_MS = 86_400_000
@@ -41,19 +41,6 @@ export function weekFromQuery(query: Record<string, unknown>): string {
     if (n >= 1 && n <= 53) return `${year}-W${String(n).padStart(2, '0')}`
   }
   return ''
-}
-
-/** Monday 00:00 UTC of an ISO week id, e.g. 2026-W46 → 2026-11-09. */
-export function isoWeekStart(weekId: string): Date | null {
-  if (!isIsoWeekId(weekId)) return null
-  const [yearPart, weekPart] = weekId.split('-W')
-  const year = Number(yearPart)
-  const week = Number(weekPart)
-  const jan4 = new Date(Date.UTC(year, 0, 4))
-  const weekday = jan4.getUTCDay() || 7
-  const monday = new Date(jan4)
-  monday.setUTCDate(jan4.getUTCDate() - (weekday - 1) + (week - 1) * 7)
-  return monday
 }
 
 function isoDate(date: Date): string {

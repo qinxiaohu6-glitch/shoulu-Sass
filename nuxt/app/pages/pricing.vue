@@ -35,6 +35,20 @@ const lead = computed(() =>
     'One-time payments. Ads are booked per week. Nothing renews.',
   ),
 )
+/**
+ * The visible subheadline is one short sentence, which is far too thin for a
+ * search result. The competitor lists every price in its description and gets
+ * a longer, more clickable snippet for it; this does the same, and the numbers
+ * still come from `effectiveQuote` so a campaign price cannot go stale here.
+ */
+const metaDescription = computed(() => {
+  const price = (id: string) => effectiveQuote('listing', id).priceLabel
+  const week = effectiveQuote('sidebar', '1').priceLabel
+  return pick(
+    `免费发布，或一次付费上线：加速 ${price('boost')}、标准 ${price('standard')}、精选 ${price('featured')}、专业 ${price('pro')}。广告位每周 ${week} 起。无订阅，不自动续费。`,
+    `Launch free, or pay once to go live: Boost ${price('boost')}, Standard ${price('standard')}, Featured ${price('featured')}, Pro ${price('pro')}. Ads from ${week} a week. No subscription, nothing renews.`,
+  )
+})
 const promises = computed(() => [
   pick('无订阅', 'No subscription'),
   pick('安全结账', 'Secure checkout'),
@@ -317,7 +331,7 @@ useSeo({
   title: computed(() =>
     pick('定价：免费发布或付费加速 · Product Atlas', 'Pricing: launch free or boost your launch · Product Atlas'),
   ),
-  description: lead,
+  description: metaDescription,
 })
 
 useHead({

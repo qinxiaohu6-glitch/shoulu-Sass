@@ -1,7 +1,6 @@
 /**
  * POST /api/fetch-meta — prefill the submit draft from a product URL.
- *
- * This is the one endpoint that makes an outbound request on a stranger's
+ * * This is the one endpoint that makes an outbound request on a stranger's
  * behalf, so it is treated as an SSRF surface rather than a convenience:
  *
  *  * only http(s), only a public-looking hostname — `http://127.0.0.1/`,
@@ -15,6 +14,8 @@
  * Workers the egress path cannot reach private address space at all, which is
  * where this runs in production; the checks here are the belt to that braces.
  */
+
+import { publicProductName } from '~~/shared/utils/public-name'
 
 /** Hosts that must never be fetched, whatever the URL says. */
 const PRIVATE_HOST = /^(localhost|.*\.local|.*\.internal|.*\.localdomain)$/i
@@ -134,9 +135,13 @@ export default defineEventHandler(async (event) => {
     }
 
     const titleTag = html.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i)?.[1] ?? ''
-    const name = collapse(
-      metaContent(html, 'og:title') || metaContent(html, 'twitter:title') || decodeEntities(titleTag),
-    ).slice(0, 60)
+    // `og:title` and `<title>` are page titles — "Foo — the calendar that…".
+    // Keep the product name only; the tagline belongs in the description.
+    const name = publicProductName(
+      collapse(
+        metaContent(html, 'og:title') || metaContent(html, 'twitter:title') || decodeEntities(titleTag),
+      ),
+    )
 
     const short = collapse(
       metaContent(html, 'og:description') ||

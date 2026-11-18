@@ -10,6 +10,7 @@ import {
   nextLaunchInstant,
   remainingHms,
 } from '~~/shared/utils/directory-window'
+import { faqPageSchema, itemListSchema } from '~~/shared/utils/schema'
 
 const { lang, isZh, pick } = useLang()
 const localePath = useLocalePath()
@@ -358,24 +359,41 @@ useSeo({
   ),
 })
 
-useHead({
-  script: [
+/** Rows the page is actually showing, minus the dev-only preview fixtures. */
+const boardEntries = computed(() =>
+  groups.value
+    .flatMap((group) => group.rows)
+    .filter((row) => !row.slug.startsWith('__preview_'))
+    .map((row) => ({ name: row.name, path: `/products/${row.slug}` })),
+)
+
+type SchemaScript = { type: 'application/ld+json'; innerHTML: string }
+
+const schemaScripts = computed<SchemaScript[]>(() => {
+  const list: SchemaScript[] = [
     {
       type: 'application/ld+json',
-      innerHTML: computed(() =>
-        JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faq.value.map((item) => ({
-            '@type': 'Question',
-            name: item.q,
-            acceptedAnswer: { '@type': 'Answer', text: item.a },
-          })),
-        }),
+      innerHTML: JSON.stringify(
+        faqPageSchema(faq.value.map((item) => ({ question: item.q, answer: item.a }))),
       ),
     },
-  ],
+  ]
+  // An empty ItemList says nothing and is not worth shipping.
+  if (boardEntries.value.length) {
+    list.push({
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(
+        itemListSchema(
+          isZh.value ? '本周产品发布' : "This week's product launches",
+          boardEntries.value,
+        ),
+      ),
+    })
+  }
+  return list
 })
+
+useHead({ script: schemaScripts })
 </script>
 
 <template>

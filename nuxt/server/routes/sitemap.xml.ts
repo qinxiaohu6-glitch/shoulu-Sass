@@ -5,6 +5,7 @@ import { useDb } from '../utils/db'
 import { loadOverrides } from '../utils/overrides'
 import { listPublishedTools } from '../utils/submissions'
 import { isReservedProductSlug } from '~~/shared/utils/product-routes'
+import { LAUNCH_PLATFORMS } from '~~/shared/content/launch-platforms'
 
 const SITE = 'https://dirtool.com'
 
@@ -52,6 +53,13 @@ async function entries(event: H3Event): Promise<Entry[]> {
     { path: '/just-added', priority: '0.7' },
     { path: '/pricing', priority: '0.8' },
     { path: '/alternatives', priority: '0.7' },
+    // One page per compared platform. Generated from the same array the hub
+    // and the sub-pages read, so a new platform cannot ship without a URL.
+    ...LAUNCH_PLATFORMS.map((platform) => ({
+      path: `/alternatives/${platform.slug}`,
+      lastmod: today,
+      priority: '0.6',
+    })),
     { path: '/billboard', priority: '0.8' },
     { path: '/sponsor', priority: '0.7' },
     { path: '/advertise', priority: '0.6' },

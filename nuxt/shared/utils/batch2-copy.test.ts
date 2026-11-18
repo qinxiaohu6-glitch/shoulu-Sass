@@ -36,7 +36,7 @@ import {
 } from './batch2.ts'
 import { listingDocumentTitle } from './listing-title.ts'
 import { productMarkdown } from './product-markdown.ts'
-import { publicProductName } from './public-name.ts'
+import { PRODUCT_NAME_MAX, publicProductName } from './public-name.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -246,4 +246,39 @@ test('a role suffix is not shown as the product name and the slug helper is sepa
   assert.equal(publicProductName('ChatGPT'), 'ChatGPT')
   const catalog = read('../../shared/utils/catalog.ts')
   assert.equal(catalog.includes('publicProductName'), true)
+})
+
+test('a long submitted title keeps only the product name', () => {
+  // Separators with a real sentence after them.
+  assert.equal(
+    publicProductName('ClockZone — the team calendar that finally respects time zones'),
+    'ClockZone',
+  )
+  assert.equal(publicProductName('RouteMux | Ship faster, break less'), 'RouteMux')
+  assert.equal(publicProductName('Ledgerly - bookkeeping for solo founders'), 'Ledgerly')
+  assert.equal(publicProductName('Notely · notes that link themselves'), 'Notely')
+  assert.equal(
+    publicProductName('Promptly: an AI assistant for product teams'),
+    'Promptly',
+  )
+  // The name is not always the first segment: a long tagline can come first.
+  assert.equal(
+    publicProductName('Free Anonymous Video Chat with Strangers | OmeWisp'),
+    'OmeWisp',
+  )
+  assert.equal(
+    publicProductName('MielaChat - Meet Verified Latinas on Live Map | Private 1v1'),
+    'MielaChat',
+  )
+  // A short tail is part of the name, not a tagline.
+  assert.equal(publicProductName('Notion – AI'), 'Notion – AI')
+  assert.equal(publicProductName('Claude 3.5: Sonnet'), 'Claude 3.5: Sonnet')
+  // A bare hyphen inside a word is not a separator.
+  assert.equal(publicProductName('E-mail Studio'), 'E-mail Studio')
+  // Whatever survives the cut is still capped.
+  const long = publicProductName('Supercalifragilisticexpialidocious Analytics Platform')
+  assert.equal(long.length, PRODUCT_NAME_MAX)
+  assert.equal(long.endsWith('…'), true)
+  // Empty stays empty rather than becoming an ellipsis.
+  assert.equal(publicProductName('   '), '')
 })

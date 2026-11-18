@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
-import { isoWeekId, previousIsoWeekId } from './iso-week.ts'
+import { isoWeekId, previousIsoWeekId, recentIsoWeeks } from './iso-week.ts'
 import { compareIsoWeek, rankOpenWeek, weekFromQuery, weekPresentation } from './weekly-board.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -205,4 +205,32 @@ test('weekFromQuery accepts ISO and competitor year/week query forms', () => {
   assert.equal(weekFromQuery({ year: '20x6', week: '46' }), '')
   assert.equal(weekFromQuery({ week: 'latest' }), '')
   assert.equal(weekFromQuery({}), '')
+})
+
+test('recentIsoWeeks returns the open week last and one-week exclusive ranges', () => {
+  const weeks = recentIsoWeeks(new Date('2026-11-18T09:00:00.000Z'), 6)
+  assert.deepEqual(
+    weeks.map((week) => week.id),
+    ['2026-W42', '2026-W43', '2026-W44', '2026-W45', '2026-W46', '2026-W47'],
+  )
+  for (const week of weeks) {
+    assert.equal(week.end - week.start, 7 * 86_400_000)
+    assert.ok(new Date(week.start).toISOString().endsWith('T00:00:00.000Z'))
+    assert.equal(new Date(week.start).getUTCDay(), 1)
+  }
+  // A timestamp on the boundary belongs to the later week only.
+  const w46 = weeks.find((week) => week.id === '2026-W46')!
+  const w47 = weeks.find((week) => week.id === '2026-W47')!
+  assert.equal(w46.end, w47.start)
+})
+
+test('the board strip headline counts listings, not votes', () => {
+  const strip = read('../../app/components/WeeklyPulse.vue')
+  assert.match(strip, /本周新收录/)
+  assert.match(strip, /launch_weeks/)
+  assert.equal(strip.includes('weekVotes'), false)
+  assert.equal(strip.includes('本周票数'), false)
+  const stats = read('../../server/utils/stats.ts')
+  assert.match(stats, /loadEligibleListedAt/)
+  assert.match(stats, /launch_weeks: launchWeeks/)
 })

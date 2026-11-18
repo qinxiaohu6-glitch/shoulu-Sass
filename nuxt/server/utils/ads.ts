@@ -22,6 +22,7 @@
  * payload with a budget).
  */
 
+import { publicProductName } from '~~/shared/utils/public-name'
 import type { Db } from './db'
 
 export const AD_SLOTS = ['board', 'sidebar'] as const
@@ -86,7 +87,8 @@ export function publicAd(row: AdRow) {
   return {
     id: row.id,
     slot: row.slot,
-    name: row.name,
+    // Same rule as a product name: an ad buyer's page title is not a name.
+    name: publicProductName(row.name),
     headline: row.headline,
     url: row.url,
     logo: row.logo,

@@ -10,72 +10,34 @@
  * traffic, votes or search rank on any platform.
  */
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+import { breadcrumbSchema, faqPageSchema } from '~~/shared/utils/schema'
+import { LAUNCH_PLATFORMS } from '~~/shared/content/launch-platforms'
 
 const { pick, isZh } = useLang()
 const localePath = useLocalePath()
 const boostLabel = computed(() => effectiveQuote('listing', 'boost').priceLabel)
 
-type Platform = {
+type Row = {
+  /** Empty for this site's own row; the segment under /alternatives/ otherwise. */
+  slug: string
   name: string
-  url?: string
   rhythm: { zh: string; en: string }
   best: { zh: string; en: string }
 }
 
-const platforms: Platform[] = [
+/**
+ * This site's own row, then the shared platform list. The hub and the eight
+ * `/alternatives/<slug>` pages read the same array, so a row cannot say one
+ * thing here and another on its own page.
+ */
+const platforms: Row[] = [
   {
+    slug: '',
     name: 'Product Atlas',
     rhythm: { zh: '每周 · UTC 周一到周日', en: 'Weekly, Monday to Sunday (UTC)' },
     best: { zh: '独立开发者、个人创始人和小团队发布 SaaS、AI 工具与副业项目', en: 'Indie makers, solo founders and small teams shipping SaaS, AI tools and side projects' },
   },
-  {
-    name: 'Product Hunt',
-    url: 'https://www.producthunt.com/',
-    rhythm: { zh: '每天 · 24 小时榜', en: 'Daily, 24-hour leaderboard' },
-    best: { zh: '准备充分、首日就有受众的大型发布', en: 'Big, well-prepared launches with an audience ready on day one' },
-  },
-  {
-    name: 'BetaList',
-    url: 'https://betalist.com/',
-    rhythm: { zh: '精选早期创业项目', en: 'Curated listings of early-stage startups' },
-    best: { zh: '收集 beta 注册用户的发布前项目', en: 'Pre-launch startups collecting beta signups' },
-  },
-  {
-    name: 'DevHunt',
-    url: 'https://devhunt.org/',
-    rhythm: { zh: '每周发布', en: 'Weekly launches' },
-    best: { zh: '开发者工具与开源项目', en: 'Developer tools and open source projects' },
-  },
-  {
-    name: 'Uneed',
-    url: 'https://www.uneed.best/',
-    rhythm: { zh: '每天发布，需排队', en: 'Daily launches with a waiting line' },
-    best: { zh: '想要每日发布并进入工具目录的开发者', en: 'Makers who want a daily launch and a tools directory listing' },
-  },
-  {
-    name: 'Peerlist Launchpad',
-    url: 'https://peerlist.io/launchpad',
-    rhythm: { zh: '面向 Peerlist 成员的每周发布', en: 'Weekly launches for Peerlist members' },
-    best: { zh: '已经把 Peerlist 当作品集的开发者', en: 'Builders who already use Peerlist as their profile' },
-  },
-  {
-    name: 'Fazier',
-    url: 'https://fazier.com/',
-    rhythm: { zh: '每天发布', en: 'Daily launches' },
-    best: { zh: '想再找一个每日发布渠道的独立开发者', en: 'Indie makers looking for another daily launch spot' },
-  },
-  {
-    name: 'Microlaunch',
-    url: 'https://microlaunch.net/',
-    rhythm: { zh: '更长的发布周期', en: 'Longer launch periods' },
-    best: { zh: '想要更长时间收集反馈的开发者', en: 'Makers who want feedback over a longer window' },
-  },
-  {
-    name: 'Show HN (Hacker News)',
-    url: 'https://news.ycombinator.com/',
-    rhythm: { zh: '持续发帖，几小时内升降', en: 'Continuous, posts rise and fall within hours' },
-    best: { zh: '经得起直接、尖锐讨论的技术产品', en: 'Technical products that can survive a sharp, honest crowd' },
-  },
+  ...LAUNCH_PLATFORMS,
 ]
 
 const planSteps = computed(() => [
@@ -145,6 +107,40 @@ useSeo({
     ),
   ),
 })
+
+/**
+ * The answers below the fold are inside a closed accordion, so a crawler that
+ * only reads the rendered DOM never sees them. The JSON-LD is generated from
+ * the same array the accordion renders — the text cannot drift apart.
+ */
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: computed(() =>
+        JSON.stringify(
+          faqPageSchema(
+            faq.value.map((item) => ({
+              question: isZh.value ? item.q.zh : item.q.en,
+              answer: isZh.value ? item.a.zh : item.a.en,
+            })),
+          ),
+        ),
+      ),
+    },
+    {
+      type: 'application/ld+json',
+      innerHTML: computed(() =>
+        JSON.stringify(
+          breadcrumbSchema([
+            { name: pick('发现', 'Discover'), path: '/' },
+            { name: pick('发布平台对比', 'Launch platforms'), path: '/alternatives' },
+          ]),
+        ),
+      ),
+    },
+  ],
+})
 </script>
 
 <template>
@@ -190,8 +186,8 @@ useSeo({
           <tbody>
             <tr v-for="(p, i) in platforms" :key="p.name" :class="{ 'is-ours': i === 0 }">
               <th scope="row">
-                <NuxtLink v-if="i === 0" :to="localePath('/')">{{ p.name }}</NuxtLink>
-                <a v-else :href="p.url ?? '#'" target="_blank" rel="noopener">{{ p.name }}</a>
+                <NuxtLink v-if="!p.slug" :to="localePath('/')">{{ p.name }}</NuxtLink>
+                <NuxtLink v-else :to="localePath(`/alternatives/${p.slug}`)">{{ p.name }}</NuxtLink>
               </th>
               <td>{{ isZh ? p.rhythm.zh : p.rhythm.en }}</td>
               <td>{{ isZh ? p.best.zh : p.best.en }}</td>
@@ -214,17 +210,15 @@ useSeo({
     <section class="alt-cards" aria-labelledby="alt-cards-title">
       <h2 id="alt-cards-title" class="alt-h2">{{ pick('更多发布平台', 'More launch platforms') }}</h2>
       <div class="alt-card-grid">
-        <a
-          v-for="(p, i) in platforms.slice(1)"
+        <NuxtLink
+          v-for="p in platforms.slice(1)"
           :key="p.name"
           class="alt-card"
-          :href="p.url ?? '#'"
-          target="_blank"
-          rel="noopener"
+          :to="localePath(`/alternatives/${p.slug}`)"
         >
           <strong>{{ p.name }} {{ pick('替代品', 'alternative') }}</strong>
           <span>{{ isZh ? p.rhythm.zh : p.rhythm.en }}</span>
-        </a>
+        </NuxtLink>
       </div>
     </section>
 
