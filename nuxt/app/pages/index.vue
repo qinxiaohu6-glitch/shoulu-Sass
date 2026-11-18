@@ -299,15 +299,6 @@ function hostOf(url?: string): string {
   }
 }
 
-const proofs = computed(() => [
-  pick('页面会留下来', 'A page that stays up'),
-  pick(
-    '可以免费提交，或一次付费，付款成功后上线。',
-    'Free to list, or pay once to go live when payment succeeds.',
-  ),
-  pick('Billboard 从 $10 起，无订阅', 'Billboard from $10, no subscription'),
-])
-
 const faq = computed(() => {
   const standard = standardQuote.value.priceLabel
   const featured = featuredQuote.value.priceLabel
@@ -438,7 +429,7 @@ useHead({
             </button>
           </form>
           <p class="hero-launch__note">
-            {{ pick('免费收录。dofollow 链接一次付费，无订阅、无续费。', 'Free to list. Dofollow link is a one-time payment — no subscription, no renewal.') }}
+            {{ pick('免费收录，或一次付费，付款成功后即上线。无订阅、无续费。', 'Free to list, or pay once to go live when payment succeeds. No subscription, no renewal.') }}
           </p>
         </section>
 

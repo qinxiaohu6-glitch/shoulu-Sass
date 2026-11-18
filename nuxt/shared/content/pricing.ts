@@ -128,7 +128,10 @@ export const tiers: PriceTier[] = [
       zh: ['包含标准档全部权益', '目录与分类置顶 7 天', '首页卡片位', '之后回到标准档排序'],
     },
     cta: { en: 'Featured', zh: '精选' },
-    badge: { en: 'Most picked', zh: '最多人选' },
+    // Boost already carries "Most popular" / 最多人选. A second card with the
+    // same Chinese badge made the two paid tiers look interchangeable, so this
+    // one names what actually differs: the pin plus the homepage card.
+    badge: { en: 'Widest reach', zh: '曝光最广' },
   },
   {
     id: 'pro',
