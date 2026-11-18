@@ -151,14 +151,6 @@ useHead({
           <dd>{{ best }}</dd>
         </dl>
         <p class="alt-sub__note">{{ note }}</p>
-        <a
-          class="alt-sub__official"
-          :href="platform?.url"
-          target="_blank"
-          rel="noopener nofollow"
-        >
-          {{ pick('官方站点', 'Official site') }} ↗
-        </a>
       </article>
 
       <article class="alt-sub__card alt-sub__card--ours">
@@ -277,8 +269,6 @@ useHead({
 .alt-sub__card dt { font-size: 12px; letter-spacing: 0.04em; color: var(--muted-foreground); text-transform: uppercase; padding-top: 2px; }
 .alt-sub__card dd { margin: 0; font-size: 14px; line-height: 1.5; }
 .alt-sub__note { margin: 16px 0 0; padding-top: 14px; border-top: 1px dashed var(--border); font-size: 13px; line-height: 1.7; color: var(--muted-foreground); }
-.alt-sub__official { display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600; color: #b45309; text-decoration: none; }
-.alt-sub__official:hover { text-decoration: underline; }
 .alt-sub__when { display: grid; gap: 12px; }
 .alt-sub__when p { margin: 0; padding: 16px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); font-size: 14px; line-height: 1.7; }
 .alt-sub__faq { border-top: 1px solid var(--border); }

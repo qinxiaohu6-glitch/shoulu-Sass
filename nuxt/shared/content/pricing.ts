@@ -123,9 +123,10 @@ export const tiers: PriceTier[] = [
         'Everything in Standard',
         'Directory + category pin, 7 days',
         'Homepage card slot',
+        'Product Spotlight article',
         'Then returns to Standard order',
       ],
-      zh: ['包含标准档全部权益', '目录与分类置顶 7 天', '首页卡片位', '之后回到标准档排序'],
+      zh: ['包含标准档全部权益', '目录与分类置顶 7 天', '首页卡片位', 'Spotlight 深度文章', '之后回到标准档排序'],
     },
     cta: { en: 'Featured', zh: '精选' },
     // Boost already carries "Most popular" / 最多人选. A second card with the
@@ -146,12 +147,12 @@ export const tiers: PriceTier[] = [
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: [
-        'Everything in Featured',
+        'Everything in Featured, including the Spotlight',
         'Category pin, 90 days',
         '4 copy edits / year',
         'Questions go to the contact address in the footer.',
       ],
-      zh: ['包含精选档全部权益', '分类置顶 90 天', '全年 4 次文案修改', '问题发到页脚的联系地址。'],
+      zh: ['包含精选档全部权益（含 Spotlight 深度文章）', '分类置顶 90 天', '全年 4 次文案修改', '问题发到页脚的联系地址。'],
     },
     cta: { en: 'Pro', zh: '专业' },
   },
@@ -260,6 +261,16 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
       { en: '—', zh: '—' },
       { en: '7 days', zh: '7 天' },
       { en: '90 days', zh: '90 天' },
+    ],
+  },
+  {
+    label: { en: 'Spotlight article', zh: 'Spotlight 深度文章' },
+    values: [
+      { en: '—', zh: '—' },
+      { en: '—', zh: '—' },
+      { en: '—', zh: '—' },
+      { en: 'Included', zh: '包含' },
+      { en: 'Included', zh: '包含' },
     ],
   },
   {

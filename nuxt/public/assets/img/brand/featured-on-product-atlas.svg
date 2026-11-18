@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="64" viewBox="0 0 280 64" role="img" aria-label="Featured on Product Atlas">
+  <title>Featured on Product Atlas</title>
+  <rect x="0.5" y="0.5" width="279" height="63" rx="12" fill="#14161a" stroke="#2a2d34"/>
+  <g fill="none" stroke="#e0b354" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 44V26l10 9 10-9v18"/>
+  </g>
+  <text x="52" y="27" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="1.6" fill="#e0b354">FEATURED ON</text>
+  <text x="52" y="45" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="700" fill="#ffffff">Product Atlas</text>
+  <circle cx="255" cy="32" r="9" fill="none" stroke="#3a3f47" stroke-width="1.6"/>
+  <path d="M251 32.5l3 3 5-6" fill="none" stroke="#e0b354" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

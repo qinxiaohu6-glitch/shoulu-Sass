@@ -6,6 +6,7 @@ import { loadOverrides } from '../utils/overrides'
 import { listPublishedTools } from '../utils/submissions'
 import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { LAUNCH_PLATFORMS } from '~~/shared/content/launch-platforms'
+import { SPOTLIGHTS } from '~~/shared/content/spotlights'
 
 const SITE = 'https://dirtool.com'
 
@@ -59,6 +60,16 @@ async function entries(event: H3Event): Promise<Entry[]> {
       path: `/alternatives/${platform.slug}`,
       lastmod: today,
       priority: '0.6',
+    })),
+    { path: '/spotlights', priority: '0.7' },
+    { path: '/spotlights/guidelines', priority: '0.5' },
+    { path: '/spotlights/badge', priority: '0.3' },
+    // A spotlight is dated content, so each one carries its own lastmod rather
+    // than today's date.
+    ...SPOTLIGHTS.map((item) => ({
+      path: `/spotlights/${item.slug}`,
+      lastmod: item.publishedAt,
+      priority: '0.7',
     })),
     { path: '/billboard', priority: '0.8' },
     { path: '/sponsor', priority: '0.7' },

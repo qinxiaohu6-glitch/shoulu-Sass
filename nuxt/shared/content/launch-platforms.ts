@@ -10,6 +10,10 @@
  *     launch rhythm, who it is aimed at, whether it is a community.
  *   - Never state another platform's price, traffic, or domain authority. Those
  *     change without notice and a stale number is a false claim.
+ *   - **No outbound link to another platform.** Not on the table, not on a
+ *     sub-page. A comparison page that hands the visitor to the thing it is
+ *     comparing against is paying to advertise a competitor. The platform is
+ *     named, which is all a reader needs to look it up.
  *   - `slug` is the URL segment and is part of the public address. Adding a row
  *     adds a page; renaming a slug breaks a link.
  */
@@ -18,8 +22,6 @@ export type LaunchPlatform = {
   /** URL segment under /alternatives/. */
   slug: string
   name: string
-  /** The platform's own site, for the reader who wants the primary source. */
-  url: string
   rhythm: { en: string; zh: string }
   best: { en: string; zh: string }
   /**
@@ -33,7 +35,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'product-hunt',
     name: 'Product Hunt',
-    url: 'https://www.producthunt.com/',
     rhythm: { en: 'Daily, 24-hour leaderboard', zh: '每天 · 24 小时榜' },
     best: {
       en: 'Big, well-prepared launches with an audience ready on day one',
@@ -47,7 +48,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'betalist',
     name: 'BetaList',
-    url: 'https://betalist.com/',
     rhythm: { en: 'Curated listings of early-stage startups', zh: '精选早期创业项目' },
     best: {
       en: 'Pre-launch startups collecting beta signups',
@@ -61,7 +61,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'devhunt',
     name: 'DevHunt',
-    url: 'https://devhunt.org/',
     rhythm: { en: 'Weekly launches', zh: '每周发布' },
     best: {
       en: 'Developer tools and open source projects',
@@ -75,7 +74,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'uneed',
     name: 'Uneed',
-    url: 'https://www.uneed.best/',
     rhythm: { en: 'Daily launches with a waiting line', zh: '每天发布，需排队' },
     best: {
       en: 'Makers who want a daily launch and a tools directory listing',
@@ -89,7 +87,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'peerlist',
     name: 'Peerlist Launchpad',
-    url: 'https://peerlist.io/launchpad',
     rhythm: { en: 'Weekly launches for Peerlist members', zh: '面向 Peerlist 成员的每周发布' },
     best: {
       en: 'Builders who already use Peerlist as their profile',
@@ -103,7 +100,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'fazier',
     name: 'Fazier',
-    url: 'https://fazier.com/',
     rhythm: { en: 'Daily launches', zh: '每天发布' },
     best: {
       en: 'Indie makers looking for another daily launch spot',
@@ -117,7 +113,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'microlaunch',
     name: 'Microlaunch',
-    url: 'https://microlaunch.net/',
     rhythm: { en: 'Longer launch periods', zh: '更长的发布周期' },
     best: {
       en: 'Makers who want feedback over a longer window',
@@ -131,7 +126,6 @@ export const LAUNCH_PLATFORMS: LaunchPlatform[] = [
   {
     slug: 'hacker-news',
     name: 'Show HN (Hacker News)',
-    url: 'https://news.ycombinator.com/',
     rhythm: { en: 'Continuous, posts rise and fall within hours', zh: '持续发帖，几小时内升降' },
     best: {
       en: 'Technical products that can survive a sharp, honest crowd',
