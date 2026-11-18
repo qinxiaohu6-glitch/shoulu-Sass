@@ -15,6 +15,7 @@
 import { centsLabel } from '../content/campaign.ts'
 import { adPlans, tiers, type Pair } from '../content/pricing.ts'
 import { BILLBOARD_FLOOR_CENTS } from './billboard-bid.ts'
+import { effectiveQuote } from './pricing-effective.ts'
 
 export type BrowseTool = {
   slug: string
@@ -181,9 +182,11 @@ function adOccupant(ad: OfferAd): OfferOccupant | null {
 /**
  * The four spots that replaced the benefit cards.
  *
- * Prices and names come from `tiers` / `adPlans`. Passing a catalogue row
- * that is merely flagged paid does nothing unless `plan` is `featured` or
- * `pro` — seed products do not count as orders.
+ * Names come from `tiers` / `adPlans`; prices come from `effectiveQuote`, the
+ * same function checkout uses, so a slot can never advertise the regular price
+ * while the campaign price is what gets charged.
+ * Passing a catalogue row that is merely flagged paid does nothing unless
+ * `plan` is `featured` or `pro` — seed products do not count as orders.
  */
 export function homeOfferSlots(input: {
   listings: OfferListing[]
@@ -198,6 +201,9 @@ export function homeOfferSlots(input: {
     throw new Error('homepage offer slots are missing a row in the pricing tables')
   }
   const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+  const featuredPrice = effectiveQuote('listing', 'featured').priceLabel
+  const proPrice = effectiveQuote('listing', 'pro').priceLabel
+  const sidebarPrice = effectiveQuote('sidebar', '1').priceLabel
 
   const featured = paidListing(input.listings, 'featured')
   const pro = paidListing(input.listings, 'pro')
@@ -206,7 +212,7 @@ export function homeOfferSlots(input: {
     {
       id: 'featured',
       flag: 'FEATURED',
-      price: featuredTier.price,
+      price: featuredPrice,
       unit: featuredTier.unit,
       name: featuredTier.name,
       detail: { zh: '7 天置顶 + 首页卡', en: '7-day pin + homepage card' },
@@ -216,7 +222,7 @@ export function homeOfferSlots(input: {
     {
       id: 'pro',
       flag: 'PRO',
-      price: proTier.price,
+      price: proPrice,
       unit: proTier.unit,
       name: proTier.name,
       detail: { zh: '分类置顶 90 天', en: 'Category pin for 90 days' },
@@ -239,7 +245,7 @@ export function homeOfferSlots(input: {
     {
       id: 'sidebar',
       flag: 'SIDEBAR',
-      price: sidebarPlan.price,
+      price: sidebarPrice,
       unit: sidebarPlan.unit,
       name: sidebarPlan.name,
       detail: sidebarPlan.where,

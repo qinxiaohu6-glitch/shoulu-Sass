@@ -12,14 +12,14 @@
  * `shared/content/pricing.ts` and `server/utils/votes.ts`.
  */
 import { centsLabel } from '~~/shared/content/campaign'
-import { adPlans, tiers } from '~~/shared/content/pricing'
 import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
-const tierPrice = (id: string) => tiers.find((tier) => tier.id === id)?.price ?? ''
-const sidebar = adPlans[0]!
+const tierPrice = (id: string) => effectiveQuote('listing', id).priceLabel
+const sidebar = effectiveQuote('sidebar', '1')
 const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
-const bundleLabel = centsLabel(sidebar.bundleCents)
+const bundleLabel = effectiveQuote('sidebar', '4').priceLabel
 const localePath = useLocalePath()
 
 useSeo({
@@ -188,8 +188,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。如果想排得更靠前，为同一产品再付一次。金额会累加。被人超过只掉名次。此前从 $15 起。右栏 ${sidebar.price}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
-          `Billboard is one-time, name your price from ${floorLabel}. If you want a higher rank, pay again for the same product. The amounts add up. Being outbid only drops your rank. Was from $15. The sidebar is ${sidebar.price} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
+          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。如果想排得更靠前，为同一产品再付一次。金额会累加。被人超过只掉名次。此前从 $15 起。右栏 ${sidebar.priceLabel}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
+          `Billboard is one-time, name your price from ${floorLabel}. If you want a higher rank, pay again for the same product. The amounts add up. Being outbid only drops your rank. Was from $15. The sidebar is ${sidebar.priceLabel} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
         ),
         link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },

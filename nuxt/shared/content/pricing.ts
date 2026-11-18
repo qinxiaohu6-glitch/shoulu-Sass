@@ -1,13 +1,12 @@
-import { centsLabel } from './campaign.ts'
 import { billboardStandardCents } from './billboard.ts'
-import { BILLBOARD_FLOOR_CENTS } from '../utils/billboard-bid.ts'
-
-const billboardFloorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
 /**
- * Pricing copy, ported verbatim from the site that is live today
- * (dist/pricing.html and dist/zh/pricing.html) so the rebuild does not
- * silently reword an offer.
+ * Canonical pricing table. One name and one regular price per SKU:
+ * Free, Boost, Standard, Featured, Pro, Billboard and the right sidebar.
+ * `saleCents` / `saleWeeklyCents` / `saleBundleCents` are the launch prices
+ * charged only while the campaign clock is open; after it ends the regular
+ * price returns automatically. Checkout reads the server functions below,
+ * never a request-body amount.
  *
  * Every user-visible string is a `{ en, zh }` pair. When you change a price
  * here, change it in `comparison` too — the table is rendered from the same
@@ -21,14 +20,15 @@ export interface PriceTier {
   id: string
   name: Pair
   tagline: Pair
+  /** Regular list price, before any campaign discount. */
   price: string
-  /** The same number as `price`, in minor units — see `planAmountCents`. */
+  /** Regular list price in minor units. */
   amountCents: number
   /**
-   * Previous list price, struck through while launch pricing is on.
-   * Checkout ignores this. It is not a percentage off the live price.
+   * Campaign price in minor units. Charged only while the campaign clock is
+   * open; after it ends the regular `amountCents` is charged again.
    */
-  anchorCents?: number
+  saleCents?: number
   unit: Pair
   features: PairList
   cta: Pair
@@ -63,21 +63,49 @@ export const tiers: PriceTier[] = [
     cta: { en: 'Submit free', zh: '免费提交' },
   },
   {
+    id: 'boost',
+    name: { en: 'Boost', zh: '加速' },
+    tagline: {
+      en: 'Verified badge and a gold row. No extra steps.',
+      zh: '金色认证和高亮行。无需额外步骤。',
+    },
+    price: '$10',
+    amountCents: 1000,
+    saleCents: 499,
+    unit: { en: 'one-time', zh: '一次性' },
+    features: {
+      en: [
+        'Everything in Free launch',
+        'Gold verified badge',
+        'Highlighted gold row on the board',
+        'Always dofollow backlink',
+      ],
+      zh: [
+        '包含免费收录全部权益',
+        '金色认证徽章',
+        '榜单金色高亮行',
+        '永久 dofollow 反链',
+      ],
+    },
+    cta: { en: 'Boost', zh: '加速' },
+    badge: { en: 'Most popular', zh: '最多人选' },
+  },
+  {
     id: 'standard',
     name: { en: 'Standard', zh: '标准' },
     tagline: {
       en: 'Skip the wait. Get a dofollow link.',
       zh: '跳过等待。获得 dofollow 链接。',
     },
-    price: '$9',
-    amountCents: 900,
-    anchorCents: 1900,
+    price: '$19',
+    amountCents: 1900,
+    saleCents: 900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: ['When payment succeeds', 'Permanent dofollow', 'Listed above free', 'Weekly board eligible'],
       zh: ['付款成功后上线', '永久 dofollow', '排在免费收录之前', '可参与每周榜'],
     },
-    cta: { en: 'Pay · Standard', zh: '去付款 · 标准' },
+    cta: { en: 'Standard', zh: '标准' },
   },
   {
     id: 'featured',
@@ -86,9 +114,9 @@ export const tiers: PriceTier[] = [
       en: 'Skip the queue — and take the pin.',
       zh: '跳过排队，并拿到置顶。',
     },
-    price: '$19',
-    amountCents: 1900,
-    anchorCents: 3900,
+    price: '$39',
+    amountCents: 3900,
+    saleCents: 1900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: [
@@ -99,7 +127,7 @@ export const tiers: PriceTier[] = [
       ],
       zh: ['包含标准档全部权益', '目录与分类置顶 7 天', '首页卡片位', '之后回到标准档排序'],
     },
-    cta: { en: 'Pay · Featured', zh: '去付款 · 精选' },
+    cta: { en: 'Featured', zh: '精选' },
     badge: { en: 'Most picked', zh: '最多人选' },
   },
   {
@@ -109,9 +137,9 @@ export const tiers: PriceTier[] = [
       en: 'Hold the category pin longer.',
       zh: '分类置顶留得更久。',
     },
-    price: '$29',
-    amountCents: 2900,
-    anchorCents: 6900,
+    price: '$69',
+    amountCents: 6900,
+    saleCents: 2900,
     unit: { en: 'one-time', zh: '一次性' },
     features: {
       en: [
@@ -122,7 +150,7 @@ export const tiers: PriceTier[] = [
       ],
       zh: ['包含精选档全部权益', '分类置顶 90 天', '全年 4 次文案修改', '问题发到页脚的联系地址。'],
     },
-    cta: { en: 'Pay · Pro', zh: '去付款 · 专业' },
+    cta: { en: 'Pro', zh: '专业' },
   },
 ]
 
@@ -142,10 +170,13 @@ export interface AdPlan {
    * the price without changing the charge.
    */
   weeklyCents: number
-  /** Previous weekly list price. Struck through in the UI only. */
-  anchorWeeklyCents?: number
+  /** Campaign price per week. Regular `weeklyCents` returns after the clock. */
+  saleWeeklyCents?: number
   bundleWeeks: number
+  /** Regular four-week price. */
   bundleCents: number
+  /** Campaign four-week price. Regular `bundleCents` returns after the clock. */
+  saleBundleCents?: number
 }
 
 /** The only two purchase lengths the pricing page advertises. */
@@ -154,12 +185,13 @@ export const AD_WEEK_OPTIONS = [1, 4] as const
 export const adPlans: AdPlan[] = [
   {
     id: 'sidebar',
-    name: { en: 'Sidebar slot', zh: '右栏位' },
-    price: '$9',
-    weeklyCents: 900,
-    anchorWeeklyCents: 1900,
+    name: { en: 'Right sidebar ad', zh: '右栏广告' },
+    price: '$19',
+    weeklyCents: 1900,
+    saleWeeklyCents: 900,
     bundleWeeks: 4,
-    bundleCents: 3200,
+    bundleCents: 7600,
+    saleBundleCents: 3200,
     unit: { en: '/ week', zh: '/ 周' },
     where: {
       en: 'The rail on the homepage and the just-added feed',
@@ -177,12 +209,12 @@ export const adPlans: AdPlan[] = [
       ],
       zh: ['首页 + 最新收录页的右栏顶部', '卡片形态，含 logo 与一句话', '展示 7 天，周一起算'],
     },
-    bundle: { en: '4 weeks $32 — save $4', zh: '连投 4 周 $32 · 省 $4' },
+    bundle: { en: 'Four-week bundle available', zh: '可连投 4 周' },
   },
 ]
 
 /**
- * Rows are aligned to `tiers` order: free, standard, featured, pro.
+ * Rows are aligned to `tiers` order: free, boost, standard, featured, pro.
  * The price row is rendered from `effectiveQuote` on /pricing so the table
  * shows the amount charged, not a second list of numbers.
  */
@@ -191,6 +223,7 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
     label: { en: 'Go live', zh: '上线' },
     values: [
       { en: 'Reviewed by hand', zh: '人工审核' },
+      { en: 'When payment succeeds', zh: '付款成功后上线' },
       { en: 'When payment succeeds', zh: '付款成功后上线' },
       { en: 'When payment succeeds', zh: '付款成功后上线' },
       { en: 'When payment succeeds', zh: '付款成功后上线' },
@@ -203,11 +236,23 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
       { en: 'Permanent dofollow', zh: '永久 dofollow' },
       { en: 'Permanent dofollow', zh: '永久 dofollow' },
       { en: 'Permanent dofollow', zh: '永久 dofollow' },
+      { en: 'Permanent dofollow', zh: '永久 dofollow' },
+    ],
+  },
+  {
+    label: { en: 'Verified badge', zh: '认证徽章' },
+    values: [
+      { en: '—', zh: '—' },
+      { en: 'Gold badge', zh: '金色徽章' },
+      { en: '—', zh: '—' },
+      { en: '—', zh: '—' },
+      { en: '—', zh: '—' },
     ],
   },
   {
     label: { en: 'Pin', zh: '置顶' },
     values: [
+      { en: '—', zh: '—' },
       { en: '—', zh: '—' },
       { en: '—', zh: '—' },
       { en: '7 days', zh: '7 天' },
@@ -219,73 +264,54 @@ export const comparison: { label: Pair; values: Pair[] }[] = [
     values: [
       { en: '—', zh: '—' },
       { en: '—', zh: '—' },
+      { en: '—', zh: '—' },
       { en: 'Card slot', zh: '卡片位' },
       { en: 'Card slot', zh: '卡片位' },
     ],
   },
 ]
 
-/**
- * Billboard lines for /pricing only. The Billboard page and `billboard.ts`
- * keep their own copy until that page is revised separately.
- */
-export const pricingBillboardBlurb: Record<string, Pair> = {
-  entry: {
-    en: 'One-time payment. It goes live when payment succeeds — including homepage Top 10.',
-    zh: '一次付清。付款成功后上线；含首页 Top 10 展示。',
-  },
-  standard: {
-    en: 'One-time payment. Ranks above Entry. It goes live when payment succeeds.',
-    zh: '一次付清。排序高于入门档；付款成功后上线。',
-  },
-  prime: {
-    en: 'One-time payment. Top priority on the paid board. It goes live when payment succeeds.',
-    zh: '一次付清。付费板最高优先级；付款成功后上线。',
-  },
-}
-
-export const pricingBillboardChecks: Pair[] = [
-  { en: `Name your price, from ${billboardFloorLabel}`, zh: `自己出价，从 ${billboardFloorLabel} 起` },
-  { en: 'Top 10 on the homepage', zh: '前 10 名出现在首页' },
-  { en: 'One-time payment', zh: '一次付清' },
-  { en: 'Pay again and the amount stacks', zh: '再付一次，金额累加' },
-  { en: 'Outbid drops rank only', zh: '被超过只掉名次' },
-]
-
 export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
-    q: { en: 'Is anything a subscription?', zh: '有订阅吗？' },
+    q: { en: 'Does Boost buy votes?', zh: '加速会买票吗？' },
     a: {
-      en: 'No. Listings and Billboard are one-time. Sidebar is weekly rental only.',
-      zh: '没有。收录与 Billboard 都是一次付清。右栏只按周租。',
+      en: 'No. The top 3 is decided by upvotes only. Below the top 3, boosted launches are placed above standard launches, with a gold badge and a highlighted row so more people see them.',
+      zh: '不会。前三名只由投票决定。前三名以下，加速发布会排在标准收录之前，并带金色认证徽章和高亮行，让更多人看到。',
     },
   },
   {
-    q: { en: 'Free vs paid — what changes?', zh: '免费和付费差在哪？' },
-    a: {
-      en: 'Wait time, the link attribute (nofollow or permanent dofollow), and optional pins.',
-      zh: '等待时间、链接属性（nofollow 或永久 dofollow），以及可选置顶。',
-    },
-  },
-  {
-    q: { en: 'How fast do I go live?', zh: '多久上线？' },
+    q: { en: 'When does my launch go live?', zh: '我的发布什么时候上线？' },
     a: {
       en: 'Paid listings go live when payment succeeds. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
       zh: '付费档在付款成功后自动发布。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
     },
   },
   {
-    q: { en: 'Do you guarantee rankings or DR?', zh: '承诺排名或 DR 吗？' },
+    q: { en: 'How do I get a dofollow link?', zh: '怎样获得 dofollow 反链？' },
     a: {
-      en: 'No. We sell on-site placement and the stated link attribute — not search results.',
-      zh: '不承诺。出售的是站内展示和写明的链接属性，不是搜索结果。',
+      en: 'Boost, Standard, Featured and Pro all include a permanent dofollow backlink. Free listings are nofollow. You do not need to display a badge to keep the link.',
+      zh: '加速、标准、精选和专业档都包含永久 dofollow 反链。免费收录是 nofollow。你不需要展示徽章，也不会因此失去链接。',
     },
   },
   {
-    q: { en: 'Billboard vs the weekly board?', zh: 'Billboard 和每周榜有何不同？' },
+    q: { en: 'Can I change the plan after I submit?', zh: '提交后还能改方案吗？' },
     a: {
-      en: 'Billboard is paid placement. The weekly board is vote-ranked. They are separate.',
-      zh: 'Billboard 是付费展示。每周榜按投票排名。两者分开。',
+      en: 'Pick the plan on the submit form before you pay. The server calculates the amount from that plan; the browser cannot change what you are charged.',
+      zh: '请在提交表单里先选好方案再付款。金额由服务端按该方案计算，浏览器无法改写实际收费。',
+    },
+  },
+  {
+    q: { en: 'How do ad spots work?', zh: '广告位怎么运作？' },
+    a: {
+      en: 'Billboard is a one-time name-your-price placement: the Top 10 is ranked by the total backed, and you can pay again for the same product to add to it. The sidebar is rented by the week, Monday to Sunday, with four separate slots.',
+      zh: 'Billboard 是一次性出价展示：Top 10 按累计金额排名，同一产品可再次付款累加。右栏按周租用，周一起算 7 天，共 4 个独立位置。',
+    },
+  },
+  {
+    q: { en: 'Is anything a subscription?', zh: '有订阅吗？' },
+    a: {
+      en: 'No. Listings and Billboard are one-time. Only the sidebar is a weekly rental, and nothing renews automatically.',
+      zh: '没有。收录与 Billboard 都是一次付清。只有右栏按周租用，且不会自动续费。',
     },
   },
   {
@@ -357,6 +383,14 @@ export function planAmountCents(plan: string): number {
   return tier ? tier.amountCents : 0
 }
 
+/** Campaign price for a listing tier, or the regular price when it has none. */
+export function planSaleAmountCents(plan: string): number {
+  const slug = PLAN_ALIASES[plan] ?? plan
+  if (slug === 'ad') return billboardStandardCents()
+  const tier = tiers.find((t) => t.id === slug)
+  return tier ? (tier.saleCents ?? tier.amountCents) : 0
+}
+
 /**
  * What a weekly placement costs, in minor units.
  *
@@ -373,6 +407,16 @@ export function adPriceCents(slot: string, weeks: number): number {
   const plan = adPlans.find((a) => a.id === slot)
   if (!plan) return 0
   return weeks === plan.bundleWeeks ? plan.bundleCents : plan.weeklyCents * weeks
+}
+
+/** Campaign price for a weekly ad slot, or the regular price when it has none. */
+export function adSalePriceCents(slot: string, weeks: number): number {
+  if (slot === 'board') return 0
+  if (!Number.isInteger(weeks) || !(AD_WEEK_OPTIONS as readonly number[]).includes(weeks)) return 0
+  const plan = adPlans.find((a) => a.id === slot)
+  if (!plan) return 0
+  if (weeks === plan.bundleWeeks) return plan.saleBundleCents ?? plan.bundleCents
+  return (plan.saleWeeklyCents ?? plan.weeklyCents) * weeks
 }
 
 /** Display string for a computed charge, e.g. 9900 → "$99.00". */

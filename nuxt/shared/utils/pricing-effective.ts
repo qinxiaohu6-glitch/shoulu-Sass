@@ -1,23 +1,29 @@
 /**
  * The only function that turns a SKU into the cents a checkout may charge.
  *
- * Callers pass a kind and an id. They do not pass an amount. List prices live
- * on the pricing table. With launch pricing, that list price is the charge.
- * Anchors are display-only and only while the campaign clock is still open.
+ * `listAmountCents` is the regular price (Boost $10, Standard $19, Featured
+ * $39, Pro $69, sidebar $19/week and $76/four weeks). `saleAmountCents` is the
+ * explicit campaign price (Boost $4.99, Standard $9, Featured $19, Pro $29,
+ * sidebar $9/week and $32/four weeks). While the campaign clock is open the
+ * sale price is charged; after `CAMPAIGN.endsAt` the regular price returns
+ * automatically.
  *
- *   listing   id = free | standard | featured | pro | paid | ad
+ *   listing   id = free | boost | standard | featured | pro | paid | ad
  *   sidebar   id = "1" | "4"   (weeks; the only slot is sidebar)
  *   billboard id = floor | entry | standard | prime
  *
- * Free listings stay at 0. The retired weekly board slot stays at 0.
- * `CAMPAIGN.off` is 0, so a percentage never changes a charge. Strikes, when
- * the clock is still open, come from explicit anchors on the pricing rows.
- * Billboard `floor` is the bid minimum and is never struck.
+ * Billboard is name-your-price: the floor is the minimum and is never struck.
  */
 
-import { CAMPAIGN, campaignActive, campaignInScope, centsLabel, saleCents } from '../content/campaign.ts'
+import { campaignActive, campaignInScope, centsLabel } from '../content/campaign.ts'
 import { billboardTier } from '../content/billboard.ts'
-import { adPlans, adPriceCents, planAmountCents, tiers } from '../content/pricing.ts'
+import {
+  adPriceCents,
+  adSalePriceCents,
+  planAmountCents,
+  planSaleAmountCents,
+  tiers,
+} from '../content/pricing.ts'
 import { BILLBOARD_FLOOR_CENTS } from './billboard-bid.ts'
 
 export type PriceKind = 'listing' | 'sidebar' | 'billboard'
@@ -35,36 +41,36 @@ export function listAmountCents(kind: PriceKind, id: string): number {
   return billboardTier(id)?.amountCents ?? 0
 }
 
-/**
- * Previous list price for a strikethrough. Null when this SKU has no anchor.
- * Never a checkout amount.
- */
-export function anchorAmountCents(kind: PriceKind, id: string): number | null {
+/** Explicit campaign price, or the regular price when the SKU has no sale. */
+export function saleAmountCents(kind: PriceKind, id: string): number {
   if (kind === 'listing') {
-    const slug = id === 'paid' ? 'featured' : id
-    const tier = tiers.find((row) => row.id === slug)
-    const anchor = tier?.anchorCents
-    if (!tier || anchor == null || anchor <= tier.amountCents) return null
-    return anchor
+    if (id === 'free') return 0
+    return planSaleAmountCents(id)
   }
-  if (kind === 'sidebar' && id === '1') {
-    const plan = adPlans.find((row) => row.id === 'sidebar')
-    const anchor = plan?.anchorWeeklyCents
-    if (!plan || anchor == null || anchor <= plan.weeklyCents) return null
-    return anchor
+  if (kind === 'sidebar') {
+    const weeks = Number(id)
+    return adSalePriceCents('sidebar', weeks)
   }
-  return null
+  return listAmountCents(kind, id)
 }
 
 /**
- * Charged cents. With `CAMPAIGN.off` at 0 this is the list price.
- * A positive `off` would still be ignored for Billboard, which is out of scope.
+ * Regular list price for a strikethrough, or null when no campaign price is
+ * lower. This is display-only and never a checkout amount.
  */
+export function anchorAmountCents(kind: PriceKind, id: string): number | null {
+  const list = listAmountCents(kind, id)
+  const sale = saleAmountCents(kind, id)
+  return sale > 0 && sale < list ? list : null
+}
+
+/** Charged cents: the sale while the clock is open, the regular price after. */
 export function effectiveAmountCents(kind: PriceKind, id: string, now = Date.now()): number {
   const list = listAmountCents(kind, id)
   if (!list) return 0
-  if (!(CAMPAIGN.off > 0) || !campaignInScope(kind) || !campaignActive(now)) return list
-  return saleCents(list, CAMPAIGN.off)
+  if (!campaignInScope(kind) || !campaignActive(now)) return list
+  const sale = saleAmountCents(kind, id)
+  return sale > 0 && sale < list ? sale : list
 }
 
 export type EffectiveQuote = {
@@ -83,8 +89,11 @@ export function effectiveQuote(kind: PriceKind, id: string, now = Date.now()): E
   const amountCents = effectiveAmountCents(kind, id, now)
   const listLabel = centsLabel(listCents)
   const priceLabel = centsLabel(amountCents)
-  const anchor = anchorAmountCents(kind, id)
-  const active = campaignActive(now) && anchor != null && amountCents > 0 && anchor > amountCents
+  const active =
+    campaignActive(now) &&
+    campaignInScope(kind) &&
+    amountCents > 0 &&
+    listCents > amountCents
   return {
     kind,
     id,
@@ -92,7 +101,7 @@ export function effectiveQuote(kind: PriceKind, id: string, now = Date.now()): E
     amountCents,
     listLabel,
     priceLabel,
-    strikeLabel: active && anchor != null ? centsLabel(anchor) : null,
+    strikeLabel: active ? listLabel : null,
     active,
   }
 }

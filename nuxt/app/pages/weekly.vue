@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Week } from '~~/shared/types/catalog'
 import { WEEKLY_EMPTY_COPY } from '~~/shared/content/weekly-empty'
-import { isIsoWeekId } from '~~/shared/utils/weekly-board'
+import { isIsoWeekId, weekFromQuery } from '~~/shared/utils/weekly-board'
 
 const { lang, pick } = useLang()
 const localePath = useLocalePath()
@@ -103,7 +103,7 @@ const panels = computed<Panel[]>(() => {
 })
 
 const activeId = computed(() => {
-  const requested = String(route.query.week ?? '').trim()
+  const requested = weekFromQuery(route.query as Record<string, unknown>)
   if (isIsoWeekId(requested) && panels.value.some((item) => item.key === requested)) return requested
   return boardData.value.current?.id || panels.value[0]?.key || ''
 })
@@ -184,7 +184,10 @@ useSeo({
           {{ pick(WEEKLY_EMPTY_COPY.cta.zh, WEEKLY_EMPTY_COPY.cta.en) }}
         </NuxtLink>
       </div>
-      <table v-if="panel.rows.length" class="rank-table">
+      <!-- The table has five columns and a min width; on a phone it scrolls
+           inside this wrapper instead of widening the whole document. -->
+      <div v-if="panel.rows.length" class="rank-scroll">
+      <table class="rank-table">
         <thead>
           <tr>
             <th>#</th>
@@ -253,6 +256,7 @@ useSeo({
           </template>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>

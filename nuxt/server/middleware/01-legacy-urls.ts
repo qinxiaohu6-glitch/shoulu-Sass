@@ -22,7 +22,6 @@
  * one thing a crawler will complain about.
  */
 
-import { makerLegacyRedirect } from '~~/shared/utils/community'
 import { productRedirect } from '~~/shared/utils/product-routes'
 
 const HTML_SUFFIX = /\.html$/i
@@ -56,8 +55,10 @@ function legacyTarget(pathname: string): string | null {
     return bare.startsWith('/zh') ? '/zh' : '/'
   }
 
-  // Maker profiles moved under /community. One hop, not /makers then again.
-  return makerLegacyRedirect(bare) ?? productRedirect(bare) ?? (bare || '/')
+  // Retired community/maker pages must NOT be redirected to a live page —
+  // that would hide the removal from crawlers. They fall through to 404 below.
+  // A retired route is handled explicitly in 04-retired-routes.ts.
+  return productRedirect(bare) ?? (bare || '/')
 }
 
 export default defineEventHandler((event) => {

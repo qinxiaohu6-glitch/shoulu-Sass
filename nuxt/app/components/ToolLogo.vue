@@ -5,7 +5,8 @@
  * Catalogue logos are repo-relative and always present; a submitted listing
  * carries an absolute URL and may carry nothing at all. A missing logo used to
  * render a broken <img>, which reads as "this site is broken" — a monogram is
- * honest about the fact that no icon was supplied.
+ * honest about the fact that no icon was supplied. A URL that 404s is treated
+ * the same way: on error we swap to the initial rather than show a broken image.
  */
 withDefaults(
   defineProps<{
@@ -19,16 +20,19 @@ withDefaults(
   }>(),
   { lazy: false, decorative: false },
 )
+
+const failed = ref(false)
 </script>
 
 <template>
   <img
-    v-if="logo"
+    v-if="logo && !failed"
     :src="logoSrc(logo)"
     :alt="decorative ? '' : `${name} logo`"
     :width="size"
     :height="size"
     :loading="lazy ? 'lazy' : undefined"
+    @error="failed = true"
   >
   <span
     v-else

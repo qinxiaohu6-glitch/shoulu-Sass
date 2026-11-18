@@ -9,10 +9,15 @@ import type { DirectoryCopyKey } from '~/utils/directory-copy'
  *
  *   DIRECTORY_PAGE_SIZE   `routes/tools/index.tsx` → `pageSize: 24`
  *   SORT_VALUES           the `z.enum` in the same file
- *   SUBMIT_TIERS          `lib/directory/submit-sponsor-config.ts`
- *   SUBMIT_STEP_KEYS      same file
- *   SUBMIT_FAQ_ITEMS      same file, including the `{price}` / `{days}` / `{max}`
- *                         params each answer interpolates
+ *   SUBMIT_STEP_KEYS      `lib/directory/submit-sponsor-config.ts`
+ *   SUBMIT_FAQ_ITEMS      same file, including the `{max}` param some answers
+ *                         interpolate
+ *
+ * The source's two-tier `submit-sponsor-config.ts` table is deliberately not
+ * copied: it priced a single "$19 / featured 30 days" product that no longer
+ * exists here. `/submit` renders the real `tiers` from
+ * `shared/content/pricing.ts` through `effectiveQuote`, so there is exactly one
+ * place a price can come from.
  *
  * Sorting lives here too, because the four orders are the source's and each page
  * only chooses one — `getDirectoryToolsFn({ sort })` on the server side, inlined
@@ -100,41 +105,6 @@ export function pageSlice<T>(list: T[], page: number): T[] {
   return list.slice(start, start + DIRECTORY_PAGE_SIZE)
 }
 
-export interface SubmitTier {
-  id: string
-  nameKey: DirectoryCopyKey
-  price: string
-  priceInCents: number
-  featuredDays: number
-  featureKeys: DirectoryCopyKey[]
-  recommended?: boolean
-}
-
-/** Source-shaped tiers. Checkout does not read this table; `/submit` uses `tiers`. */
-export const SUBMIT_TIERS: SubmitTier[] = [
-  {
-    id: 'free',
-    nameKey: 'dir.submit.plan_standard',
-    price: 'Free',
-    priceInCents: 0,
-    featuredDays: 0,
-    featureKeys: ['dir.submit.plan_free_f1', 'dir.submit.plan_free_f2'],
-  },
-  {
-    id: 'premium',
-    nameKey: 'dir.submit.plan_premium',
-    price: '$19',
-    priceInCents: 1900,
-    featuredDays: 30,
-    featureKeys: [
-      'dir.submit.plan_premium_f1',
-      'dir.submit.plan_premium_f2',
-      'dir.submit.plan_premium_f3',
-    ],
-    recommended: true,
-  },
-]
-
 export const SUBMIT_STEP_KEYS: DirectoryCopyKey[] = [
   'dir.submit.step_1',
   'dir.submit.step_2',
@@ -152,7 +122,6 @@ export const SUBMIT_FAQ_ITEMS: SubmitFaqItem[] = [
   {
     questionKey: 'dir.submit.faq_q2',
     answerKey: 'dir.submit.faq_a2',
-    params: { price: '$19', days: 30 },
   },
   { questionKey: 'dir.submit.faq_q3', answerKey: 'dir.submit.faq_a3' },
   { questionKey: 'dir.submit.faq_q4', answerKey: 'dir.submit.faq_a4' },

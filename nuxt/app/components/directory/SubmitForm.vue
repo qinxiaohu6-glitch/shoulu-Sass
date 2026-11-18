@@ -67,11 +67,12 @@ const { categories: liveCategories, tags: liveTags } = useDirectoryMeta()
 const payment = await usePayment()
 
 /**
- * The three one-time tiers `/pricing` can preselect. `ad` is deliberately not
- * here: those weekly slots are sold on `/book-ad` with their own week picker,
- * and `planAmountCents('ad')` is the legacy Billboard Standard label, not a sidebar week.
+ * The four one-time listing tiers `/pricing` can preselect (Boost, standard,
+ * featured, pro). `ad` is deliberately not here: those weekly slots are sold
+ * on `/book-ad` with their own week picker, and `planAmountCents('ad')` is the
+ * legacy Billboard Standard label, not a sidebar week.
  */
-const PAYABLE_PLANS = ['standard', 'featured', 'pro'] as const
+const PAYABLE_PLANS = ['boost', 'standard', 'featured', 'pro'] as const
 
 /** Featured. Every new submission starts here unless the URL says otherwise. */
 const DEFAULT_PLAN = 'featured'
@@ -241,7 +242,24 @@ function clearDraft() {
   sessionStorage.removeItem(DRAFT_KEY)
 }
 
-onMounted(restoreDraft)
+/**
+ * Homepage hero pastes a URL here as `?url=…`. Pre-fill the draft box and run
+ * the (read-only) fetch once on mount so "paste → launch" is one step. A saved
+ * session draft is restored first, but an explicit ?url= wins.
+ */
+function urlFromQuery(raw: unknown): string {
+  const value = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim()
+  return /^https?:\/\//i.test(value) ? value : ''
+}
+
+onMounted(() => {
+  restoreDraft()
+  const incoming = urlFromQuery(route.query.url)
+  if (incoming) {
+    draftUrl.value = incoming
+    void draftListing()
+  }
+})
 
 const categoryOptions = computed(() =>
   liveCategories.value

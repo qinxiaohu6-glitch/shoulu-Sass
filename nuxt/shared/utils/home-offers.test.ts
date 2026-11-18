@@ -13,6 +13,7 @@ import {
   type BrowseTool,
   type OfferListing,
 } from './home-offers.ts'
+import { effectiveQuote } from './pricing-effective.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const read = (rel: string) => readFileSync(join(here, rel), 'utf8')
@@ -101,7 +102,7 @@ test('thumbnails stop at four real logos', () => {
   assert.equal(card.count, 5)
 })
 
-test('offer slots keep the published prices and stay empty without a real order', () => {
+test('offer slots quote the price checkout charges, not a second price list', () => {
   const slots = homeOfferSlots({ listings: [], billboard: null, sidebar: null })
   assert.deepEqual(
     slots.map((slot) => slot.id),
@@ -111,9 +112,11 @@ test('offer slots keep the published prices and stay empty without a real order'
   assert.equal(slots[1]?.price, '$29')
   assert.equal(slots[2]?.price, 'from $10')
   assert.equal(slots[3]?.price, '$9')
-  assert.equal(slots[0]?.price, tiers.find((tier) => tier.id === 'featured')?.price)
-  assert.equal(slots[1]?.price, tiers.find((tier) => tier.id === 'pro')?.price)
-  assert.equal(slots[3]?.price, adPlans.find((plan) => plan.id === 'sidebar')?.price)
+  // The slot price is the charged amount, so it tracks the campaign clock
+  // instead of drifting away from checkout when the clock closes.
+  assert.equal(slots[0]?.price, effectiveQuote('listing', 'featured').priceLabel)
+  assert.equal(slots[1]?.price, effectiveQuote('listing', 'pro').priceLabel)
+  assert.equal(slots[3]?.price, effectiveQuote('sidebar', '1').priceLabel)
   assert.equal(slots.every((slot) => slot.occupant === null), true)
   assert.deepEqual(slots[0]?.href, { path: '/submit', query: { plan: 'featured' } })
   assert.deepEqual(slots[1]?.href, { path: '/submit', query: { plan: 'pro' } })
@@ -129,8 +132,8 @@ test('offer slots keep the published prices and stay empty without a real order'
   assert.equal(offerSpotLine(slots[1]!, 'en'), 'Pro $29 one-time')
   assert.equal(offerSpotLine(slots[2]!, 'zh'), 'Billboard 从 $10 起 一次性')
   assert.equal(offerSpotLine(slots[2]!, 'en'), 'Billboard from $10 one-time')
-  assert.equal(offerSpotLine(slots[3]!, 'zh'), '右栏位 $9/周')
-  assert.equal(offerSpotLine(slots[3]!, 'en'), 'Sidebar slot $9/week')
+  assert.equal(offerSpotLine(slots[3]!, 'zh'), '右栏广告 $9/周')
+  assert.equal(offerSpotLine(slots[3]!, 'en'), 'Right sidebar ad $9/week')
   assert.equal(slots.some((slot) => /spots left|\d+\/\d+/.test(offerSpotLine(slot, 'en'))), false)
   assert.equal(slots.some((slot) => /周租|\/week board|Board slot/.test(`${slot.name.en} ${slot.detail.en}`)), false)
 })
@@ -213,23 +216,33 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   assert.equal(home.includes('Just launched'), true)
   assert.equal(home.includes('Schedule opens soon'), false)
   assert.equal(home.includes('List your product.'), true)
-  assert.equal(home.includes('Keep the page.'), true)
+  assert.equal(home.includes('Get found, not buried.'), true)
+  // Original, SEO-aware copy — never the competitor's verbatim headline.
+  assert.equal(home.includes('Launch this week.'), false)
+  assert.equal(home.includes('Get real users.'), false)
+  assert.equal(home.includes('Launch for free'), false)
   assert.equal(home.includes('spots left'), false)
-  assert.equal(home.includes('Your ad here'), false)
+  // The homepage now carries real advertising slots (ProductsBoost-style rail).
+  assert.equal(home.includes('Your ad here'), true)
+  assert.equal(home.includes('rail-ad'), true)
+  assert.equal(home.includes('boostQuote'), true)
   assert.equal(home.includes('成为该分类第一个'), false)
   assert.equal(home.includes('赞助这个分类'), false)
-  assert.equal(pricing.includes('收录后你能得到什么'), true)
+  // The pricing page now follows the competitor shell; the old benefit grid
+  // was removed rather than repeated under the new FAQ.
+  assert.equal(pricing.includes('收录后你能得到什么'), false)
+  assert.equal(pricing.includes('每个选项显示在哪里'), true)
   assert.deepEqual(
     listingBenefits.map((item) => item.title.zh),
     ['付费即得 dofollow 反链', 'AI 搜索读得懂', '每周一次冲榜机会', '先粘贴网址'],
   )
   assert.deepEqual(
     tiers.map((tier) => `${tier.id}:${tier.price}`),
-    ['free:$0', 'standard:$9', 'featured:$19', 'pro:$29'],
+    ['free:$0', 'boost:$10', 'standard:$19', 'featured:$39', 'pro:$69'],
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}`),
-    ['sidebar:$9'],
+    ['sidebar:$19'],
   )
   assert.deepEqual(
     BILLBOARD_TIERS.map((tier) => `${tier.id}:${tier.price}`),

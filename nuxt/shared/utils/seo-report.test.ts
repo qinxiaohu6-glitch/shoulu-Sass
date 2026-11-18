@@ -136,6 +136,6 @@ test('the pdf route re-runs the audit and does not invent a file when that fails
   assert.equal(deal.includes('Moonshot'), false)
   assert.equal(deal.includes('everything we sell'), false)
   assert.equal(deal.includes('/tools/'), false)
-  assert.ok(pricing.indexOf('<BlackFridayDeal') < pricing.indexOf('STEP {{ step.n }}'))
+  assert.ok(pricing.indexOf('pb-card-grid--two') < pricing.indexOf('pb-section-head'))
   assert.equal(pricing.includes('id="black-friday"'), false)
 })

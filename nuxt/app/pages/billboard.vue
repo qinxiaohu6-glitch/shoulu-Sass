@@ -10,6 +10,7 @@
 import { BILLBOARD_TOP_N } from '~~/shared/content/billboard'
 import { englishCount } from '~~/shared/utils/english-count'
 import { centsLabel } from '~~/shared/content/campaign'
+import { slugForPlacementUrl } from '~~/shared/utils/billboard'
 import {
   amountToTakeRank,
   backingLabel,
@@ -20,8 +21,22 @@ import {
 import { backingCents } from '~~/shared/utils/billboard'
 
 const { pick, isZh } = useLang()
+const localePath = useLocalePath()
 const { ranked } = await useBillboard()
 const { ready: paymentReady } = await usePayment()
+const submitted = await useSubmittedTools()
+const overrides = useOverrides()
+
+/** Real listing slug for a claimed URL, so the row can link to our product page. */
+const urlToSlug = computed(() => {
+  const all = mergeDirectory(orderedTools('en', overrides.value), submitted.value, overrides.value)
+  const out: Record<string, string> = {}
+  for (const row of ranked.value) {
+    const slug = slugForPlacementUrl(row.url, all, overrides.value.hidden)
+    if (slug) out[row.url] = slug
+  }
+  return out
+})
 
 const url = ref('')
 const busy = ref(false)
@@ -285,8 +300,10 @@ useHead({
             </span>
             <span class="bb-rank__meta">
               <strong>
-                {{ row.name }}
-                <em>BILLBOARD</em>
+                <NuxtLink v-if="urlToSlug[row.url]" :to="localePath(`/products/${urlToSlug[row.url]}`)">
+                  {{ row.name }} <em>BILLBOARD</em>
+                </NuxtLink>
+                <template v-else>{{ row.name }} <em>BILLBOARD</em></template>
               </strong>
               <span>{{ row.tagline }}</span>
             </span>
@@ -375,3 +392,15 @@ useHead({
     />
   </div>
 </template>
+
+<style scoped>
+.bb-rank__meta strong a {
+  color: inherit;
+  text-decoration: none;
+}
+.bb-rank__meta strong a:hover {
+  color: var(--primary, #b45309);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+</style>

@@ -8,8 +8,10 @@ import { centsLabel } from '~~/shared/content/campaign'
 import { screenshotSrc } from '~~/shared/utils/screenshot'
 import type { BillboardCell, BillboardRow } from '~~/shared/utils/billboard'
 
-defineProps<{
+const props = defineProps<{
   cells: BillboardCell<BillboardRow>[]
+  /** placement URL -> our own /products/<slug>, when the site lists it. */
+  productSlugs?: Record<string, string>
 }>()
 
 const { pick } = useLang()
@@ -30,6 +32,11 @@ function onShotError(src: string) {
 
 function logoOf(row: BillboardRow): string {
   return row.logo || faviconForUrl(row.url)
+}
+
+/** Link to our own product page when the paid URL is also a listing, else the site. */
+function slugOf(row: BillboardRow): string {
+  return props.productSlugs?.[row.url] ?? ''
 }
 </script>
 
@@ -53,7 +60,22 @@ function logoOf(row: BillboardRow): string {
           }"
         >
           <template v-if="cell.kind === 'live'">
+            <NuxtLink
+              v-if="slugOf(cell.placement)"
+              class="bb-shot"
+              :class="{ 'bb-shot--image': shotOf(cell.placement) }"
+              :to="localePath(`/products/${slugOf(cell.placement)}`)"
+            >
+              <img
+                v-if="shotOf(cell.placement)"
+                :src="shotOf(cell.placement)"
+                :alt="cell.placement.name"
+                @error="onShotError(shotOf(cell.placement))"
+              >
+              <span v-else class="bb-shot__plain">{{ cell.placement.name }}</span>
+            </NuxtLink>
             <a
+              v-else
               class="bb-shot"
               :class="{ 'bb-shot--image': shotOf(cell.placement) }"
               :href="cell.placement.url"
@@ -73,7 +95,13 @@ function logoOf(row: BillboardRow): string {
                 <ToolLogo :logo="logoOf(cell.placement)" :name="cell.placement.name" :size="28" decorative />
               </span>
               <span class="bb-meta">
-                <strong>
+                <NuxtLink v-if="slugOf(cell.placement)" :to="localePath(`/products/${slugOf(cell.placement)}`)">
+                  <strong>
+                    {{ cell.placement.name }}
+                    <em>BILLBOARD</em>
+                  </strong>
+                </NuxtLink>
+                <strong v-else>
                   {{ cell.placement.name }}
                   <em>BILLBOARD</em>
                 </strong>

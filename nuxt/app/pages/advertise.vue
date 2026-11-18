@@ -102,7 +102,7 @@ useSeo({
         <p class="adv-price">{{ card.price }}</p>
         <p>{{ card.body }}</p>
         <p class="adv-when">{{ card.when }}</p>
-        <p class="adv-pay">{{ pick('一次性付款 · 安全结账', 'One-time payment · secure checkout') }}</p>
+        <p class="adv-pay">{{ pick('安全结账 · 以结账页金额为准', 'Secure checkout · price confirmed at checkout') }}</p>
         <NuxtLink class="btn btn--primary" :to="card.to">{{ card.cta }}</NuxtLink>
       </div>
       <div class="adv-preview" :data-kind="card.preview" aria-hidden="true">

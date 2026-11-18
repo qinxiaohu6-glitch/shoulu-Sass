@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { isoWeekId, previousIsoWeekId } from './iso-week.ts'
-import { compareIsoWeek, rankOpenWeek, weekPresentation } from './weekly-board.ts'
+import { compareIsoWeek, rankOpenWeek, weekFromQuery, weekPresentation } from './weekly-board.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const read = (rel: string) => readFileSync(join(here, rel), 'utf8')
@@ -87,19 +87,73 @@ test('equal timestamps fall through to list time, then slug', () => {
   assert.deepEqual(bySlug.map((row) => row.slug), ['able', 'zeta'])
 })
 
-test('homepage This week uses the board, and Newest has no contest ranks', () => {
+test('homepage renders one board grouped by week, paid rows highlighted, no month tab', () => {
   const home = read('../../app/pages/index.vue')
   assert.match(home, /useBoardData\(/)
   assert.equal(home.includes('shanghaiWeekRange'), false)
   assert.equal(home.includes('No launches this week'), false)
   assert.equal(home.includes('Schedule opens soon'), false)
   assert.equal(home.includes('votes_week'), false)
-  assert.match(home, /This month · Newest/)
-  assert.match(home, /本月 · 最新/)
-  assert.match(home, /No votes on the board this week\./)
-  assert.match(home, /本周榜上还没有票。/)
-  assert.match(home, /launch-row--newest/)
-  assert.match(home, /v-if="windowFilter === 'week'"/)
+  // The two split tabs are gone; one list is grouped by ISO week.
+  assert.equal(home.includes('This month · Newest'), false)
+  assert.equal(home.includes('本月 · 最新'), false)
+  assert.equal(home.includes("windowFilter"), false)
+  assert.match(home, /weekGroups/)
+  assert.match(home, /pb-week-head/)
+  assert.match(home, /No votes on the board yet\./)
+  assert.match(home, /pb-row--podium/)
+  // Each week lists the products listed in that week (real created_at), not
+  // only the few with votes — so every launch shows and none repeat across weeks.
+  assert.match(home, /weekOfCreatedAt/)
+  assert.match(home, /created_at/)
+  assert.match(home, /isoWeekId/)
+  assert.match(home, /votesBySlug/)
+  // Paid/boosted rows are pinned and highlighted inside each week.
+  assert.match(home, /aPaid/)
+  assert.match(home, /BOOST/)
+  // The last week's podium rail reads the archive, not invented numbers.
+  assert.match(home, /lastWeekTop3/)
+  // The podium rail must not blow past the 280px right column (horizontal scroll).
+  assert.match(home, /grid-template-columns:\s*minmax\(0,\s*1fr\)/)
+})
+
+test('the podium rail grid is width-constrained so long descriptions truncate', () => {
+  const home = read('../../app/pages/index.vue')
+  const listRule = home.match(/\.pb-top3__list \{[^}]*\}/)
+  assert.ok(listRule, 'pb-top3__list rule exists')
+  assert.match(listRule![0], /grid-template-columns:\s*minmax\(0,\s*1fr\)/)
+  assert.match(listRule![0], /display:\s*grid/)
+  const bodyRule = home.match(/\.pb-top3__body \{[^}]*\}/)
+  assert.ok(bodyRule, 'pb-top3__body rule exists')
+  assert.match(bodyRule![0], /min-width:\s*0/)
+})
+
+test('homepage shows one week at a time with a switcher, not an infinite stack', () => {
+  const home = read('../../app/pages/index.vue')
+  // The time machine is a real component; the board resolves the selected week.
+  assert.match(home, /<WeekSwitcher/)
+  assert.match(home, /activeWeekId/)
+  assert.match(home, /availableWeeks/)
+  assert.match(home, /boardData\.value\.week/)
+  // One group only — the weekGroups function returns a single-element array.
+  assert.match(home, /return \[\{\s*id,/)
+  // No more stacked multi-week loop over history for the main feed.
+  assert.equal(home.includes('for (const week of payload.history'), false)
+  // URL weeks use the competitor's ?year=&week= form.
+  assert.match(home, /weekFromQuery|year=|week=/)
+})
+
+test('WeekSwitcher links every week and highlights the active one', () => {
+  const sw = read('../../app/components/WeekSwitcher.vue')
+  assert.match(sw, /weekTo/)
+  assert.match(sw, /year: String/)
+  assert.match(sw, /week: String/)
+  assert.match(sw, /is-active/)
+  assert.match(sw, /aria-current/)
+  // prev/next arrows and the calendar picker exist.
+  assert.match(sw, /prevWeek/)
+  assert.match(sw, /nextWeek/)
+  assert.match(sw, /calendar-btn/)
 })
 
 test('weekly page reads the board API and keeps the sponsored row off the vote ranks', () => {
@@ -133,9 +187,22 @@ test('the Monday 03:00 UTC cron is unchanged', () => {
   assert.match(wrangler, /"crons": \["0 3 \* \* 1"\]/)
 })
 
-test('board route defaults to the current week and does not serve latestArchive', () => {
+test('board route defaults to the current week and accepts ?year=&week=', () => {
   const route = read('../../server/api/board.get.ts')
-  assert.match(route, /raw \|\| isoWeekId\(\)/)
+  assert.match(route, /weekFromQuery/)
   assert.match(route, /isIsoWeekId\(week\)/)
   assert.equal(route.includes('latestArchive'), false)
+  const util = read('../../shared/utils/weekly-board.ts')
+  assert.match(util, /export function weekFromQuery/)
+})
+
+test('weekFromQuery accepts ISO and competitor year/week query forms', () => {
+  assert.equal(weekFromQuery({ week: '2026-W46' }), '2026-W46')
+  assert.equal(weekFromQuery({ year: '2026', week: '46' }), '2026-W46')
+  assert.equal(weekFromQuery({ year: '2026', week: '6' }), '2026-W06')
+  assert.equal(weekFromQuery({ year: '2026', week: '1' }), '2026-W01')
+  assert.equal(weekFromQuery({ year: '2026', week: '54' }), '')
+  assert.equal(weekFromQuery({ year: '20x6', week: '46' }), '')
+  assert.equal(weekFromQuery({ week: 'latest' }), '')
+  assert.equal(weekFromQuery({}), '')
 })

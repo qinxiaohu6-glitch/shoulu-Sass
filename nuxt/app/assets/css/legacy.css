@@ -3086,6 +3086,11 @@ kbd {
 .tab-nav--weeks .pill.is-active { border-color: var(--primary); }
 .week-panel { display: none; }
 .week-panel.is-active { display: block; }
+/* The weekly board is a five-column table with a real minimum width. Below that
+   width it scrolls inside its own box; without this wrapper the table widened
+   the document and the whole page panned sideways on a phone. */
+.rank-scroll { overflow-x: auto; }
+.rank-scroll .rank-table { min-width: 560px; }
 .rank-table {
   width: 100%;
   border-collapse: separate;

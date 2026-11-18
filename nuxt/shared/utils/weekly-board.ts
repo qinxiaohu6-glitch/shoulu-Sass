@@ -25,6 +25,24 @@ export function isIsoWeekId(week: string): boolean {
   return WEEK_RE.test(week)
 }
 
+/**
+ * Read a week id from a URL query, supporting both this site's ISO form
+ * (`?week=2026-W46`) and the form used by the competitor
+ * (`?year=2026&week=46`). Returns '' for anything else so callers fall back
+ * to the current week. Kept here so the page, the board API and the data
+ * composable all agree on the same week.
+ */
+export function weekFromQuery(query: Record<string, unknown>): string {
+  const raw = String(query.week ?? '').trim()
+  if (isIsoWeekId(raw)) return raw
+  const year = String(query.year ?? '').trim()
+  if (/^\d{4}$/.test(year) && /^\d{1,2}$/.test(raw)) {
+    const n = Number(raw)
+    if (n >= 1 && n <= 53) return `${year}-W${String(n).padStart(2, '0')}`
+  }
+  return ''
+}
+
 /** Monday 00:00 UTC of an ISO week id, e.g. 2026-W46 → 2026-11-09. */
 export function isoWeekStart(weekId: string): Date | null {
   if (!isIsoWeekId(weekId)) return null

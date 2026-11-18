@@ -7,7 +7,8 @@
  * signed-out and the pages would render empty.
  */
 
-import { planAmountCents } from '~~/shared/content/pricing'
+import { planAmountCents, tiers } from '~~/shared/content/pricing'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 export type MySubmission = {
   id: string
@@ -75,28 +76,35 @@ export function useMySubmissions() {
   }
 }
 
-/** Plan slug → the label the pricing page uses. */
+/**
+ * Plan slug → the name the pricing page prints, read from the one table.
+ *
+ * `paid` is the submit form's older word for Featured and `ad` the retired
+ * board charge, which is Billboard Standard today. Anything unrecognised is a
+ * free listing, because that is the only plan that never has to pay.
+ */
 export function planLabelOf(plan: string, isZh: boolean): string {
-  if (plan === 'pro') return isZh ? '专业版' : 'Pro'
-  if (plan === 'featured') return 'Featured'
-  if (plan === 'standard' || plan === 'ad') return 'Standard'
-  return isZh ? '免费版' : 'Free'
+  const slug = plan === 'paid' ? 'featured' : plan === 'ad' ? 'standard' : plan
+  const tier = tiers.find((item) => item.id === slug)
+  if (!tier) return isZh ? '免费' : 'Free'
+  return isZh ? tier.name.zh : tier.name.en
 }
 
 /**
- * What each tier costs, straight from the pricing page.
+ * What this row would charge right now, straight from the pricing page.
  *
- * The numbers now live in `shared/content/pricing.ts`, next to the copy that
+ * The numbers live in `shared/content/pricing.ts`, next to the copy that
  * prints them, because checkout on the server needs the same table and a
- * second copy is how a $39 page starts charging $19. This is only the
- * formatting side.
+ * second copy is how a $39 page starts charging $19. `effectiveQuote` is the
+ * same function checkout uses, so a campaign price is shown here too instead
+ * of the regular one.
  */
 export function planCentsOf(plan: string): number {
   return planAmountCents(plan)
 }
 
 export function planPriceOf(plan: string): string {
-  return `$${planCentsOf(plan) / 100}`
+  return effectiveQuote('listing', plan).priceLabel
 }
 
 /** `YYYY-MM-DD` in local time, the way the old dashboard printed it. */

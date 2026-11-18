@@ -132,6 +132,28 @@ export function samePlacementUrl(value: string): string {
   }
 }
 
+/**
+ * Resolve a paid placement's URL to a real on-site product slug.
+ *
+ * Billboard spots are claimed by URL, and many of them are also directory
+ * listings. Matching on host + path (ignoring `www`, scheme and trailing
+ * slash) lets the card link to our own /products/<slug> page instead of
+ * sending readers off-site. Returns '' when the website has no listing here;
+ * callers then fall back to the external URL.
+ */
+export function slugForPlacementUrl(
+  url: string,
+  listings: readonly { slug: string; url?: string }[],
+  hidden: readonly string[] = [],
+): string {
+  const key = samePlacementUrl(url)
+  if (!key) return ''
+  const match = listings.find(
+    (row) => !hidden.includes(row.slug) && row.url && samePlacementUrl(row.url) === key,
+  )
+  return match?.slug ?? ''
+}
+
 export type InvoiceDraft = {
   tier: BillboardTierId
   url: string

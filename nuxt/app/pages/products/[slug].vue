@@ -368,14 +368,7 @@ useHead({
                 <span class="sr-only">{{ t('directory.detail.maker') }}</span>
               </dt>
               <dd class="truncate text-sm font-medium">
-                <NuxtLink
-                  v-if="tool.makerSlug"
-                  :to="localePath(`/community/makers/${tool.makerSlug}`)"
-                  class="transition-colors hover:text-primary"
-                >
-                  {{ tool.makerName }}
-                </NuxtLink>
-                <template v-else>{{ tool.makerName }}</template>
+                {{ tool.makerName }}
               </dd>
             </div>
 
@@ -406,14 +399,13 @@ useHead({
               {{ t('directory.collections.in_collections') }}
             </p>
             <div class="flex flex-wrap gap-2">
-              <NuxtLink
+              <span
                 v-for="collection in inCollections"
                 :key="collection.slug"
-                :to="localePath(`/collections/${collection.slug}`)"
-                class="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm font-medium transition hover:border-primary/40 hover:text-primary"
+                class="inline-flex h-8 items-center rounded-lg border border-border px-3 text-sm font-medium"
               >
                 {{ collection.name }}
-              </NuxtLink>
+              </span>
             </div>
           </div>
         </div>

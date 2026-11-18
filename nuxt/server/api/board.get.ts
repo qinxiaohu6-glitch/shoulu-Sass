@@ -9,14 +9,13 @@
  */
 
 import { isoWeekId } from '~~/shared/utils/catalog'
-import { isIsoWeekId } from '~~/shared/utils/weekly-board'
+import { isIsoWeekId, weekFromQuery } from '~~/shared/utils/weekly-board'
 import { loadBoardPayload } from '../utils/board-week'
 import { useDb } from '../utils/db'
 import { loadEligibleListedAt } from '../utils/eligible-listings'
 
 export default defineEventHandler(async (event) => {
-  const raw = String(getQuery(event).week ?? '').trim()
-  const week = raw || isoWeekId()
+  const week = weekFromQuery(getQuery(event) as Record<string, unknown>) || isoWeekId()
   if (!isIsoWeekId(week)) {
     setResponseStatus(event, 400)
     return { ok: false, reason: 'bad_week', week: null, current: null, history: [], archived: [] }

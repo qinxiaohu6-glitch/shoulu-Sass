@@ -100,7 +100,7 @@ useSeo({
             </div>
           </div>
           <div class="tag-cloud">
-            <NuxtLink v-for="tag in popularTags" :key="tag.slug" class="tag-pill" :to="localePath(`/tags/${tag.slug}`)">
+            <NuxtLink v-for="tag in popularTags" :key="tag.slug" class="tag-pill" :to="localePath({ path: '/products', query: { tag: tag.slug } })">
               #{{ localizeTag(tag, lang).name }}
             </NuxtLink>
           </div>

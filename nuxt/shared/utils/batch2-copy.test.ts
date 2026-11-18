@@ -132,12 +132,16 @@ test('how it works uses the approved review sentence and does not sell an invoic
   assert.equal(faq.includes('hand-reviewed'), false)
 })
 
-test('homepage and pricing surface live stats wording and the optional badge', () => {
+test('homepage no longer carries the live stats strip and pricing uses the new shell', () => {
   const home = read('../../app/pages/index.vue')
   const pricing = read('../../app/pages/pricing.vue')
   const facts = read('../../app/components/LiveDirectoryFacts.vue')
-  assert.equal(home.includes('LiveDirectoryFacts'), true)
-  assert.equal(pricing.includes('LiveDirectoryFacts'), true)
+  // Both the homepage hero and the pricing page dropped the long stats strip.
+  assert.equal(home.includes('LiveDirectoryFacts'), false)
+  // The pricing page now uses the ProductsBoost three-column shell instead of
+  // the old live-stats strip; the same numbers stay available on /stats.
+  assert.equal(pricing.includes('LiveDirectoryFacts'), false)
+  assert.equal(pricing.includes('pb-shell'), true)
   assert.equal(facts.includes('LIVE_NUMBERS'), true)
   assert.equal(LIVE_NUMBERS.includes('No estimated visits or authority.'), true)
   assert.equal(facts.includes('/api/stats'), true)
@@ -226,8 +230,10 @@ test('approved P1 sentences replace the old public lines', () => {
   assert.equal(home.includes('within 24 hours'), false)
   assert.equal(home.includes('turns email on'), false)
   const layout = read('../../app/layouts/default.vue')
-  assert.equal(layout.includes("pick('创客', 'Makers')"), true)
-  assert.equal(layout.includes("pick('开发者', 'Makers')"), false)
+  // Community / maker pages were retired in the ProductsBoost alignment pass;
+  // no navigation entry may point at them any more.
+  assert.equal(layout.includes("to: '/community'"), false)
+  assert.equal(layout.includes("to: '/community/makers'"), false)
   assert.equal(read('../../app/pages/book-ad.vue').includes('has stopped'), false)
   assert.equal(read('../../shared/content/legal.ts').includes('confirms receipt by hand'), true)
 })

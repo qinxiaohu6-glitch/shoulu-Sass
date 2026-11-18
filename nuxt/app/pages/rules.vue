@@ -16,13 +16,13 @@
  *   - ad slots run Monday to Sunday, 7 days    → `server/utils/ad-bookings.ts`
  */
 import { centsLabel } from '~~/shared/content/campaign'
-import { adPlans } from '~~/shared/content/pricing'
 import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
-const sidebar = adPlans[0]!
+const sidebar = effectiveQuote('sidebar', '1')
 const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
-const bundleLabel = centsLabel(sidebar.bundleCents)
+const bundleLabel = effectiveQuote('sidebar', '4').priceLabel
 const localePath = useLocalePath()
 
 useSeo({
@@ -170,8 +170,8 @@ const sections = computed<RuleSection[]>(() => [
         `Billboard is name-your-price from ${floorLabel}, one-time. Rank follows total backed. It is not inserted into the weekly vote list. Was from $15.`,
       ),
       pick(
-        `右栏位 ${sidebar.price}/周，出现在首页与「最新收录」页的右栏；连投 4 周 ${bundleLabel}。`,
-        `Sidebar slot ${sidebar.price} a week, in the rail on the homepage and the just-added feed; ${bundleLabel} for four weeks.`,
+        `右栏广告 ${sidebar.priceLabel}/周，出现在首页与「最新收录」页的右栏；连投 4 周 ${bundleLabel}。`,
+        `Right sidebar ad ${sidebar.priceLabel} a week, in the rail on the homepage and the just-added feed; ${bundleLabel} for four weeks.`,
       ),
       pick(
         '广告链接一律带 rel="sponsored nofollow"，不传递权重 —— 付费外链传递权重正是搜索引擎明确处罚的做法。',

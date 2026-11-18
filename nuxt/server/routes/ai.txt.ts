@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   const counted = shanghaiDay()
   let sizeLine =
-    `Current product and category counts are on ${SITE}/stats. This file does not invent a count when that read fails.`
+    `Browse ${SITE}/products for the live directory. This file does not invent a count when that read fails.`
   try {
     const db = await useDb(event)
     const stats = await publicStats(db)

@@ -66,8 +66,6 @@ const navGroups = computed(() => [
       { label: pick('产品', 'Products'), to: '/products', icon: 'layout-grid' },
       { label: pick('分类', 'Categories'), to: '/categories', icon: 'shapes' },
       { label: pick('工具', 'Tools'), to: '/tools', icon: 'sparkles' },
-      { label: pick('社区', 'Community'), to: '/community', icon: 'users' },
-      { label: pick('创客', 'Makers'), to: '/community/makers', icon: 'user' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
       { label: 'Billboard', to: '/billboard', icon: 'megaphone' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check', icon: 'gauge' },
@@ -82,6 +80,7 @@ const navGroups = computed(() => [
       // content, not this site's writing. The page still exists at /blog so it
       // can be switched on once there is something real to publish.
       { label: pick('提交产品', 'Submit a product'), to: '/submit', icon: 'plus' },
+      { label: pick('发布平台对比', 'Alternatives'), to: '/alternatives', icon: 'git-compare' },
       { label: pick('我的提交', 'My submissions'), to: '/settings/submissions', icon: 'inbox' },
     ],
   },
@@ -97,8 +96,6 @@ function isActive(to: string) {
     ? (route.path.replace(/^\/zh(?=\/|$)/, '') || '/')
     : route.path
   if (to === '/') return path === '/'
-  // /community is the landing. Maker profiles live under it and have their own item.
-  if (to === '/community') return path === '/community'
   return path === to || path.startsWith(`${to}/`)
 }
 
@@ -143,10 +140,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('产品', 'Products'), to: '/products' },
       { label: pick('分类', 'Categories'), to: '/categories' },
       { label: pick('工具', 'Tools'), to: '/tools' },
-      { label: pick('社区', 'Community'), to: '/community' },
-      { label: pick('创客', 'Makers'), to: '/community/makers' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check' },
-      { label: pick('标签', 'Tags'), to: '/tags' },
       { label: pick('周榜', 'Weekly'), to: '/weekly' },
       { label: pick('最新收录', 'Just added'), to: '/just-added' },
     ],
@@ -155,6 +149,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
     title: pick('资源', 'Resources'),
     links: [
       { label: pick('定价', 'Pricing'), to: '/pricing' },
+      { label: pick('发布平台对比', 'Alternatives'), to: '/alternatives' },
       { label: 'Billboard', to: '/billboard' },
       { label: pick('投放', 'Advertise'), to: '/advertise' },
       { label: pick('目录数字', 'Directory numbers'), to: '/stats' },
@@ -357,9 +352,10 @@ watch(() => route.fullPath, () => {
           <nav class="topbar__nav" :aria-label="pick('主导航', 'Primary')">
             <NuxtLink class="topbar__link" :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/products')">{{ pick('产品', 'Products') }}</NuxtLink>
-            <NuxtLink class="topbar__link" :to="localePath('/community')">{{ pick('社区', 'Community') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/tools')">{{ pick('工具', 'Tools') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/seo-check')">{{ pick('SEO 诊断', 'SEO check') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/alternatives')">{{ pick('替代品', 'Alternatives') }}</NuxtLink>
             <NuxtLink class="topbar__link topbar__link--billboard" :to="localePath('/billboard')">Billboard</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>
           </nav>
@@ -488,6 +484,16 @@ watch(() => route.fullPath, () => {
             </span>
             <span v-else>{{ pick('免费提交 · 付费置顶', 'Free to submit · Paid to feature') }}</span>
           </div>
+          <nav class="footer__quick" :aria-label="pick('快捷链接', 'Quick links')">
+            <NuxtLink :to="localePath('/weekly')">{{ pick('归档', 'Archive') }}</NuxtLink>
+            <NuxtLink :to="localePath('/seo-check')">{{ pick('SEO 诊断', 'SEO check') }}</NuxtLink>
+            <NuxtLink :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>
+            <NuxtLink :to="localePath('/alternatives')">{{ pick('替代品', 'Alternatives') }}</NuxtLink>
+            <NuxtLink :to="localePath('/submit')">{{ pick('提交', 'Submit') }}</NuxtLink>
+            <NuxtLink :to="localePath('/sponsor')">{{ pick('投放', 'Sponsor') }}</NuxtLink>
+            <NuxtLink :to="localePath('/privacy-policy')">{{ pick('隐私', 'Privacy') }}</NuxtLink>
+            <NuxtLink :to="localePath('/terms-of-service')">{{ pick('条款', 'Terms') }}</NuxtLink>
+          </nav>
         </div>
       </footer>
     </div>
@@ -554,3 +560,23 @@ watch(() => route.fullPath, () => {
     <CampaignFloat />
   </div>
 </template>
+
+<style scoped>
+.footer__quick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  margin-top: 10px;
+}
+.footer__quick a {
+  font-size: 12px;
+  color: var(--muted-foreground, #6b7280);
+  text-decoration: none;
+}
+.footer__quick a:hover {
+  color: var(--primary, #b45309);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+</style>

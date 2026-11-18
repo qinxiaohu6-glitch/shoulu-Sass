@@ -1,11 +1,11 @@
 /**
- * Launch-pricing clock for the countdown shell and the anchor strikethroughs.
+ * Campaign clock for the launch prices.
  *
- * Live charges are the list prices in `pricing.ts`. `off` stays 0 so a
- * percentage never rewrites them. Strikes are explicit previous list prices
- * (`anchorCents`), not this rate. Flip `enabled` off to drop the bar, the
- * float, and the strikes. After `endsAt` they drop on their own; the live
- * prices stay. Billboard's floor is not in `scope` and is not struck.
+ * `pricing.ts` stores a regular price and an explicit campaign price per SKU.
+ * While the clock is open the campaign price is charged; after `endsAt` the
+ * regular price returns automatically. `off` stays 0 — a percentage is not
+ * used, because the four tiers do not share one discount rate. Billboard's
+ * floor is outside the campaign scope and is never struck.
  */
 export const CAMPAIGN_SCOPE = ['listing', 'sidebar'] as const
 export type CampaignScope = (typeof CAMPAIGN_SCOPE)[number]

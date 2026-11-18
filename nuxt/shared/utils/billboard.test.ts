@@ -36,10 +36,10 @@ function row(partial: Partial<BillboardRow> & Pick<BillboardRow, 'id' | 'tier' |
   }
 }
 
-test('listing prices are the cold-start charges; Billboard tiers stay storage labels', () => {
+test('listing prices are the regular list charges; Billboard tiers stay storage labels', () => {
   assert.deepEqual(
     tiers.map((tier) => `${tier.id}:${tier.price}:${tier.amountCents}`),
-    ['free:$0:0', 'standard:$9:900', 'featured:$19:1900', 'pro:$29:2900'],
+    ['free:$0:0', 'boost:$10:1000', 'standard:$19:1900', 'featured:$39:3900', 'pro:$69:6900'],
   )
   assert.deepEqual(
     BILLBOARD_TIERS.map((tier) => `${tier.id}:${tier.price}:${tier.amountCents}`),
@@ -47,13 +47,13 @@ test('listing prices are the cold-start charges; Billboard tiers stay storage la
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}:${plan.weeklyCents}:${plan.bundleCents}`),
-    ['sidebar:$9:900:3200'],
+    ['sidebar:$19:1900:7600'],
   )
   assert.equal(billboardStandardCents(), 2900)
   assert.equal(planAmountCents('ad'), 2900)
-  assert.equal(planAmountCents('standard'), 900)
-  assert.equal(adPriceCents('sidebar', 1), 900)
-  assert.equal(adPriceCents('sidebar', 4), 3200)
+  assert.equal(planAmountCents('standard'), 1900)
+  assert.equal(adPriceCents('sidebar', 1), 1900)
+  assert.equal(adPriceCents('sidebar', 4), 7600)
   assert.equal(adPriceCents('sidebar', 2), 0)
   assert.equal(adPriceCents('board', 1), 0)
   assert.equal(adPriceCents('board', 4), 0)

@@ -43,12 +43,12 @@ type Cell = {
 const cells = computed<Cell[]>(() => {
   const at = now.value
   return [
+    { id: 'boost', name: 'Boost', quote: effectiveQuote('listing', 'boost', at), badge: pick('最多人选', 'Most popular') },
     { id: 'standard', name: pick('标准', 'Standard'), quote: effectiveQuote('listing', 'standard', at) },
     {
       id: 'featured',
       name: pick('精选', 'Featured'),
       quote: effectiveQuote('listing', 'featured', at),
-      badge: pick('最多人选', 'Most picked'),
     },
     { id: 'pro', name: 'Pro', quote: effectiveQuote('listing', 'pro', at) },
     {

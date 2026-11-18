@@ -134,7 +134,7 @@ async function onPay(item: MySubmission) {
                 class="inline-flex items-center gap-1 rounded-md border border-border px-1.5 py-0.5 text-[11px] leading-none font-medium text-foreground"
               >
                 <Crown class="size-2.5 text-amber-500" />
-                <span>{{ t('dir.submit.plan_premium') }}</span>
+                <span>{{ planLabelOf(item.plan, isZh) }}</span>
               </span>
             </div>
             <p class="mt-1 truncate text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 import type { Ref } from 'vue'
 import type { Week } from '~~/shared/types/catalog'
-import { isIsoWeekId } from '~~/shared/utils/weekly-board'
+import { weekFromQuery } from '~~/shared/utils/weekly-board'
 
 /**
  * The live weekly board.
@@ -24,10 +24,7 @@ const EMPTY: BoardPayload = { ok: false, week: null, current: null, history: [],
 export async function useBoardData(): Promise<Ref<BoardPayload>> {
   const route = useRoute()
   const requestFetch = useRequestFetch()
-  const requested = computed(() => {
-    const raw = String(route.query.week ?? '').trim()
-    return isIsoWeekId(raw) ? raw : ''
-  })
+  const requested = computed(() => weekFromQuery(route.query as Record<string, unknown>))
 
   const { data } = await useAsyncData<BoardPayload>(
     'live-board',

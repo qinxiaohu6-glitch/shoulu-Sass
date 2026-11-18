@@ -275,7 +275,7 @@ useHead({
                 <span class="font-medium">{{ isZh ? entry.name.zh : entry.name.en }}</span>
                 <span class="font-serif text-xl tabular-nums">
                   <s v-if="weekQuote.strikeLabel" class="mr-1 text-sm text-muted-foreground">{{ weekQuote.strikeLabel }}</s>
-                  {{ entry.price }}
+                  {{ weekQuote.priceLabel }}<small class="ml-0.5 text-xs text-muted-foreground">{{ pick('/周', '/wk') }}</small>
                 </span>
               </div>
               <p class="mt-1 text-xs text-muted-foreground">
@@ -305,10 +305,13 @@ useHead({
               @click="weeks = option"
             >
               {{ option === 1 ? pick('1 周', '1 week') : pick('连投 4 周', '4 weeks') }}
+              <span class="ml-1.5 tabular-nums opacity-80">
+                {{ effectiveQuote('sidebar', String(option)).priceLabel }}
+              </span>
             </button>
           </div>
           <p v-if="weeks === 4" class="text-xs text-muted-foreground">
-            {{ isZh ? plan.bundle.zh : plan.bundle.en }}
+            {{ pick(`4 周合计 ${quote.priceLabel}`, `4 weeks total ${quote.priceLabel}`) }} · {{ isZh ? plan.bundle.zh : plan.bundle.en }}
           </p>
         </section>
 
