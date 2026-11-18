@@ -10,7 +10,18 @@ import { SPOTLIGHTS } from '~~/shared/content/spotlights'
 
 const SITE = 'https://dirtool.com'
 
-type Entry = { path: string; lastmod?: string; priority: string }
+type Entry = {
+  path: string
+  lastmod?: string
+  priority: string
+  /**
+   * The page has no translated twin. Spotlights are written in English and
+   * `/zh/spotlights*` answers a 301 to the English URL, so listing a zh variant
+   * would put a redirect in the sitemap — and the hreflang set would point at a
+   * URL that does not serve that language.
+   */
+  enOnly?: boolean
+}
 
 /**
  * Every public page, one entry per language. Kept in one place so the sitemap,
@@ -61,15 +72,16 @@ async function entries(event: H3Event): Promise<Entry[]> {
       lastmod: today,
       priority: '0.6',
     })),
-    { path: '/spotlights', priority: '0.7' },
-    { path: '/spotlights/guidelines', priority: '0.5' },
-    { path: '/spotlights/badge', priority: '0.3' },
+    { path: '/spotlights', priority: '0.7', enOnly: true },
+    { path: '/spotlights/guidelines', priority: '0.5', enOnly: true },
+    { path: '/spotlights/badge', priority: '0.3', enOnly: true },
     // A spotlight is dated content, so each one carries its own lastmod rather
     // than today's date.
     ...SPOTLIGHTS.map((item) => ({
       path: `/spotlights/${item.slug}`,
       lastmod: item.publishedAt,
       priority: '0.7',
+      enOnly: true,
     })),
     { path: '/billboard', priority: '0.8' },
     { path: '/sponsor', priority: '0.7' },
@@ -130,6 +142,17 @@ export default defineEventHandler(async (event) => {
   for (const entry of await entries(event)) {
     const en = `${SITE}${entry.path === '/' ? '/' : entry.path}`
     const zh = `${SITE}/zh${entry.path === '/' ? '/' : entry.path}`
+
+    // One language, one URL. No alternates either: hreflang pointing at a
+    // redirect is worse than no hreflang.
+    if (entry.enOnly) {
+      urls.push(
+        `<url><loc>${escapeXml(en)}</loc>` +
+          (entry.lastmod ? `<lastmod>${entry.lastmod}</lastmod>` : '') +
+          `<priority>${entry.priority}</priority></url>`,
+      )
+      continue
+    }
 
     // Each language variant lists the full alternate set, including itself —
     // that is what the hreflang spec expects and what Search Console checks.
