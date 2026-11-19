@@ -1,54 +1,100 @@
 /**
- * Product Spotlights.
+ * Product Spotlights — the shared half.
  *
  * A Spotlight is a long-form article about one listing, sold as part of the
- * Featured and Pro tiers — not as a separate SKU. The article lives at its own
- * URL (`/spotlights/<slug>`) and links to the listing page and to the product's
- * own site.
+ * Featured and Pro tiers rather than as a separate SKU. The maker writes it from
+ * a fixed template, the owner reviews it, and it is published at
+ * `/spotlights/<slug>`.
  *
- * Why this is a content registry and not a table yet:
+ * This module is the part both the browser and the server need: the shape of a
+ * record, the length gate, and which plans grant the entitlement. Storage lives
+ * in `server/utils/spotlights.ts` (table `spotlight`), and the public pages read
+ * it through `/api/spotlights`.
  *
- * The first three to five articles are a pilot. Until one of them earns an
- * impression, a submission form and an admin queue would be machinery around
- * an empty room. A pilot article is an editorial act, so it is written here,
- * reviewed in a pull request, and shipped with the site — the same shape the
- * blog uses. When the pilot proves out, this module's shape is what the table
- * columns become; nothing on the page depends on where the data lives.
+ * Editorial rules that the code enforces rather than trusts:
  *
- * House rules for anything added below:
- *
- *  - **One product per article.** Not a roundup, not a listicle.
- *  - **The product must already be listed.** A Spotlight is a benefit of a
- *    paid listing, and the article has to link to a live `/products/<slug>`.
- *  - **Only the product's own link is dofollow.** Every other external link in
- *    the body goes through `renderMarkdown`, which forces `nofollow`. That is
- *    what keeps the page a description of a product rather than a link farm.
- *  - **No invented quotes, metrics or users.** If the maker did not supply a
- *    number, the article does not contain one.
+ *  - **The product must already be listed.** `listingSlug` is required, so an
+ *    article always has a live internal link to point at.
+ *  - **Only the product's own link is dofollow.** Body links render through
+ *    `renderMarkdown`, which forces `nofollow`; the card link is written by the
+ *    page. That is what keeps an article a description of a product rather than
+ *    a link farm.
+ *  - **Length is a gate, not a suggestion.** 800–1,500 words, checked on submit
+ *    so a draft cannot reach the queue shorter than the published standard.
  */
 
+export type SpotlightStatus = 'pending' | 'approved' | 'rejected'
+
+/** A published article, as the public pages consume it. */
 export type Spotlight = {
-  /** URL segment under /spotlights/. Part of the public address. */
   slug: string
-  /** Shown in the header, the product card and the breadcrumb. */
+  /** Slug of the live listing this article belongs to. */
+  listingSlug: string
   productName: string
   /** The product's own site. Rendered as the one dofollow link on the page. */
   productUrl: string
-  /** Slug of the live listing this article belongs to. */
-  listingSlug: string
-  /** One line under the title. Not the listing tagline — the article's angle. */
+  /** One line under the title — the article's angle, not the listing tagline. */
   tagline: string
-  /** ISO date. Drives sort order, the sitemap `lastmod` and `datePublished`. */
-  publishedAt: string
-  /** Byline. A person, or "Product Atlas editorial" when we wrote it. */
-  author: string
   /** Markdown body. Rendered by `renderMarkdown`, so raw HTML is escaped. */
   body: string
-  /** Optional: the maker's own short bio, if they supplied one. */
+  author: string
   authorBio?: string
-  /** Optional: `{ en, zh }`-free on purpose — spotlights are English only. */
   bestFor?: string
   pricingSummary?: string
+  /** ISO date, `YYYY-MM-DD`. Drives sort order and `datePublished`. */
+  publishedAt: string
+}
+
+/** The queue row: everything the owner needs to decide, including the address. */
+export type SpotlightRecord = Spotlight & {
+  id: string
+  email: string
+  status: SpotlightStatus
+  reviewNotes: string
+  createdAt: number
+  updatedAt: number
+  reviewedAt: number | null
+  /** Null while the article is not live, which is what "unpublished" means. */
+  publishedAtMs: number | null
+}
+
+/**
+ * The draft as both forms hold it: the customer's at `/spotlights/submit` and
+ * the owner's at `/admin/spotlights/new`.
+ *
+ * One shape for two forms on purpose. The fields are what the published
+ * standard asks for, so a second, differently-named set would mean two things
+ * to validate and two places to forget when the template changes. The only
+ * difference the server sees is whether `email` is required — a customer must
+ * leave an address for the receipt, an article the owner writes from an email
+ * thread may have none.
+ */
+export type SpotlightDraftInput = {
+  listingSlug: string
+  productName: string
+  productUrl: string
+  tagline: string
+  body: string
+  author: string
+  authorBio: string
+  bestFor: string
+  pricingSummary: string
+  email: string
+}
+
+export function emptySpotlightDraft(): SpotlightDraftInput {
+  return {
+    listingSlug: '',
+    productName: '',
+    productUrl: '',
+    tagline: '',
+    body: '',
+    author: '',
+    authorBio: '',
+    bestFor: '',
+    pricingSummary: '',
+    email: '',
+  }
 }
 
 /**
@@ -65,23 +111,54 @@ export function planIncludesSpotlight(plan?: string | null): boolean {
   return (SPOTLIGHT_PLANS as readonly string[]).includes(plan)
 }
 
-/**
- * Published spotlights, newest first. Empty until the first pilot article is
- * written — the index page renders an honest empty state in that case rather
- * than a placeholder article nobody asked for.
- */
-export const SPOTLIGHTS: Spotlight[] = []
+/** The published standard, in words. Both ends are enforced on submit. */
+export const SPOTLIGHT_MIN_WORDS = 800
+export const SPOTLIGHT_MAX_WORDS = 1500
 
-export function spotlightBySlug(slug: string): Spotlight | undefined {
-  return SPOTLIGHTS.find((item) => item.slug === slug)
-}
+/** Field ceilings. Long enough for a real article, short enough to store. */
+export const SPOTLIGHT_MAX = {
+  productName: 80,
+  tagline: 140,
+  author: 80,
+  authorBio: 400,
+  bestFor: 200,
+  pricingSummary: 200,
+  email: 200,
+  body: 20000,
+} as const
 
-/** Newest first, without mutating the registry. */
-export function publishedSpotlights(): Spotlight[] {
-  return [...SPOTLIGHTS].sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-}
-
-/** Word count of the body, used by the guidelines page and the tests. */
 export function spotlightWords(body: string): number {
   return String(body ?? '').trim().split(/\s+/).filter(Boolean).length
+}
+
+/**
+ * A URL segment from a product name. ASCII only, because a slug with a percent
+ * escape in it is a link that gets mangled the first time it is pasted into a
+ * chat client.
+ */
+export function spotlightSlug(productName: string): string {
+  const base = String(productName ?? '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+    .replace(/-+$/g, '')
+  return base || 'spotlight'
+}
+
+/** True when a slug is safe to put in a path and cannot collide with a route. */
+export function isSpotlightSlug(value: string): boolean {
+  return /^[a-z0-9][a-z0-9-]{0,79}$/.test(value)
+}
+
+/**
+ * Reserved segments under /spotlights/. A published article may not take one of
+ * these, or it would shadow the index, the guidelines or the badge page.
+ */
+export const SPOTLIGHT_RESERVED_SLUGS = ['guidelines', 'badge', 'submit', 'new'] as const
+
+export function isReservedSpotlightSlug(value: string): boolean {
+  return (SPOTLIGHT_RESERVED_SLUGS as readonly string[]).includes(value)
 }

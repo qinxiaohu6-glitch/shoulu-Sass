@@ -238,3 +238,85 @@ export function ticketRepliedMail(
       `— Product Atlas\n`,
   }
 }
+
+/* -------------------------------------------------------------------------
+   spotlights — four messages, the same loop as a listing
+------------------------------------------------------------------------- */
+
+/**
+ * The shape these four need. Declared structurally rather than importing
+ * `SpotlightRecord`, because `utils/spotlights.ts` imports this module's
+ * sibling `utils/http.ts` and a type-only cycle across the two would be one
+ * more thing to keep in step.
+ */
+type SpotlightMailRow = {
+  slug: string
+  productName: string
+  listingSlug: string
+  email: string
+  reviewNotes?: string
+}
+
+/** "We have it" — so a writer is not left wondering whether the form worked. */
+export function spotlightSubmittedMail(row: SpotlightMailRow, site: string): MailMessage {
+  const name = row.productName || 'your Spotlight'
+  return {
+    to: row.email,
+    subject: `We received the ${name} Spotlight`,
+    text:
+      `Thanks — the ${name} Spotlight is in the review queue.\n\n` +
+      `One pass for accuracy, one for structure. Expect a few days; it is not a ` +
+      `guaranteed window. If something needs fixing you get a note saying what, ` +
+      `and you can send a revised draft.\n\n` +
+      `The article publishes at ${site}/spotlights/${row.slug} once it is approved.\n\n` +
+      `— Product Atlas\n`,
+  }
+}
+
+/** To the owner, so the console is not the only way to notice a new draft. */
+export function spotlightInboxMail(to: string, row: SpotlightMailRow, site: string): MailMessage {
+  const name = row.productName || row.slug
+  return {
+    to,
+    subject: `New Spotlight draft: ${name}`,
+    text:
+      `${name} sent a Spotlight draft.\n\n` +
+      `Listing: ${site}/products/${row.listingSlug}\n\n` +
+      `Review it: ${site}/admin/spotlights\n\n` +
+      `— Product Atlas\n`,
+  }
+}
+
+export function spotlightApprovedMail(row: SpotlightMailRow, site: string): MailMessage {
+  const name = row.productName || 'Your Spotlight'
+  return {
+    to: row.email,
+    subject: `${name} Spotlight is live`,
+    text:
+      `The ${name} Spotlight is live.\n\n` +
+      `Page: ${site}/spotlights/${row.slug}\n\n` +
+      `It links to your listing and to your site. The badge page has the embed ` +
+      `code if you want to point at it from your own site: ${site}/spotlights/badge\n\n` +
+      `— Product Atlas\n`,
+  }
+}
+
+/**
+ * Rejection carries the reason, because a writer who is not told what to fix
+ * cannot fix it — and a Spotlight is paid for, so a silent refusal is worse
+ * here than anywhere else in the site.
+ */
+export function spotlightRejectedMail(row: SpotlightMailRow, note: string, site: string): MailMessage {
+  const name = row.productName || 'Your Spotlight'
+  const reason = note ? `\nWhat needs work: ${note}\n` : ''
+  return {
+    to: row.email,
+    subject: `The ${name} Spotlight needs another pass`,
+    text:
+      `The ${name} Spotlight was not published.${reason}\n` +
+      `The standards are here: ${site}/spotlights/guidelines\n\n` +
+      `Send a revised draft through the same form and it goes back into the ` +
+      `queue.\n\n` +
+      `— Product Atlas\n`,
+  }
+}

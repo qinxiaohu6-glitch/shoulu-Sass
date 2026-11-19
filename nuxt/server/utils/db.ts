@@ -92,6 +92,11 @@ async function getLocal(): Promise<{ db: any; ready: boolean }> {
     `ALTER TABLE billboard_placement ADD COLUMN order_id TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE billboard_placement ADD COLUMN amount_cents INTEGER NOT NULL DEFAULT 0`,
     `CREATE INDEX IF NOT EXISTS idx_billboard_order ON billboard_placement (order_id)`,
+    // `spotlight` gained `ip_hash` after the table was first written into this
+    // file, so a checkout that already created it needs the column added. The
+    // CREATE TABLE above carries it for everyone else.
+    `ALTER TABLE spotlight ADD COLUMN ip_hash TEXT NOT NULL DEFAULT ''`,
+    `CREATE INDEX IF NOT EXISTS idx_spotlight_ip ON spotlight (ip_hash, created_at)`,
   ]) {
     try {
       db.exec(sql)

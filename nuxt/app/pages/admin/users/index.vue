@@ -28,6 +28,11 @@ import {
 const { t } = useSettingsI18n()
 const api = useAdminApi()
 const route = useRoute()
+// `navigateTo` is a script-level auto-import, so a template expression cannot
+// see it: `@select="navigateTo(…)"` compiles to `_ctx.navigateTo`, which is
+// undefined, and the menu item silently does nothing. The router is a setup
+// binding, so it survives into the template.
+const router = useRouter()
 
 /** `validateSearch`: empty `utm_source` is meaningful (untagged), so it is kept. */
 const initialSearch = typeof route.query.search === 'string' ? route.query.search : ''
@@ -210,7 +215,7 @@ const columns = computed<DataColumn[]>(() => [
                 </UiButton>
               </UiDropdownMenuTrigger>
               <UiDropdownMenuContent align="end" class="w-auto min-w-40 whitespace-nowrap">
-                <UiDropdownMenuItem @select="navigateTo(`/admin/users/${row.id}`)">
+                <UiDropdownMenuItem @select="router.push(`/admin/users/${row.id}`)">
                   <Eye class="size-4" />
                   {{ t('admin.user_detail.view') }}
                 </UiDropdownMenuItem>

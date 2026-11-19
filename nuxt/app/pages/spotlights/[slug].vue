@@ -9,13 +9,20 @@
  *    `renderMarkdown`, which forces `nofollow noopener` on every external link.
  *    The card's "Visit website" is written directly, so the paid benefit is one
  *    declared link and not a paragraph of them.
- *  - **English only.** The article is written in English and there is no
- *    translated twin, so `/zh/spotlights/...` redirects here with a 301 instead
- *    of serving a duplicate. That also keeps the canonical unambiguous.
+ *  - **One canonical URL per article.** The record carries no `locale`, so the
+ *    article is published once, in whatever language it was written, and
+ *    `/zh/spotlights/...` 301s to that one URL instead of serving the same
+ *    bytes twice. (The four pages around it are bilingual; this one cannot be
+ *    until an article knows its own language.)
  *  - **The listing must exist.** A Spotlight without a live listing is a dead
  *    internal link, so a missing listing is a 404, not a page with an empty card.
+ *
+ * The article is read from `/api/spotlights/<slug>` rather than a module
+ * constant. A draft is only reachable once the owner has approved it, and the
+ * endpoint answers the same 404 to a pending draft, a rejected one and a slug
+ * that never existed — so the URL cannot be used to probe the queue.
  */
-import { publishedSpotlights, spotlightBySlug } from '~~/shared/content/spotlights'
+import type { Spotlight } from '~~/shared/content/spotlights'
 import { breadcrumbSchema } from '~~/shared/utils/schema'
 import { mergeDirectory, orderedTools } from '~~/shared/utils/catalog'
 import { useSubmittedTools } from '~/composables/useSubmittedTools'
@@ -33,7 +40,29 @@ if (lang.value === 'zh') {
   await navigateTo(`/spotlights/${slug}`, { redirectCode: 301 })
 }
 
-const spotlight = spotlightBySlug(slug)
+const requestFetch = useRequestFetch()
+type OnePayload = { ok: boolean; item: Spotlight }
+type ListPayload = { ok: boolean; items: Spotlight[] }
+
+const [{ data: one }, { data: list }] = await Promise.all([
+  useAsyncData<OnePayload | null>(`spotlight-${slug}`, async () => {
+    try {
+      return await requestFetch<OnePayload>(`/api/spotlights/${encodeURIComponent(slug)}`)
+    } catch {
+      return null
+    }
+  }, { default: () => null }),
+  useAsyncData<ListPayload>('spotlights-index', async () => {
+    try {
+      const res = await requestFetch<ListPayload>('/api/spotlights')
+      return { ok: Boolean(res?.ok), items: res?.items ?? [] }
+    } catch {
+      return { ok: false, items: [] as Spotlight[] }
+    }
+  }, { default: (): ListPayload => ({ ok: false, items: [] }) }),
+])
+
+const spotlight = one.value?.item
 if (!spotlight) {
   throw createError({
     statusCode: 404,
@@ -68,7 +97,7 @@ const publishedLabel = published.toLocaleDateString('en-US', {
 })
 
 const more = computed(() =>
-  publishedSpotlights().filter((item) => item.slug !== spotlight.slug).slice(0, 3),
+  (list.value?.items ?? []).filter((item) => item.slug !== spotlight.slug).slice(0, 3),
 )
 
 useHead({

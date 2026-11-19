@@ -80,7 +80,11 @@ const navGroups = computed(() => [
       // content, not this site's writing. The page still exists at /blog so it
       // can be switched on once there is something real to publish.
       { label: pick('提交产品', 'Submit a product'), to: '/submit', icon: 'plus' },
-      { label: pick('发布平台对比', 'Alternatives'), to: '/alternatives', icon: 'git-compare' },
+      { label: pick('深度文章', 'Spotlights'), to: '/spotlights', icon: 'file-text' },
+      // `git-compare` is not in the sprite, so this rendered an empty glyph for
+      // as long as the item has existed. `arrow-up-right` is what the item
+      // means anyway: the other platforms, seen from here.
+      { label: pick('发布平台对比', 'Alternatives'), to: '/alternatives', icon: 'arrow-up-right' },
       { label: pick('我的提交', 'My submissions'), to: '/settings/submissions', icon: 'inbox' },
     ],
   },
@@ -150,6 +154,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
     links: [
       { label: pick('定价', 'Pricing'), to: '/pricing' },
       { label: pick('发布平台对比', 'Alternatives'), to: '/alternatives' },
+      { label: pick('深度文章', 'Spotlights'), to: '/spotlights' },
       { label: 'Billboard', to: '/billboard' },
       { label: pick('投放', 'Advertise'), to: '/advertise' },
       { label: pick('目录数字', 'Directory numbers'), to: '/stats' },
@@ -356,6 +361,7 @@ watch(() => route.fullPath, () => {
             <NuxtLink class="topbar__link" :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/seo-check')">{{ pick('SEO 诊断', 'SEO check') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/alternatives')">{{ pick('替代品', 'Alternatives') }}</NuxtLink>
+            <NuxtLink class="topbar__link topbar__link--spotlight" :to="localePath('/spotlights')">{{ pick('深度文章', 'Spotlights') }}</NuxtLink>
             <NuxtLink class="topbar__link topbar__link--billboard" :to="localePath('/billboard')">Billboard</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>
           </nav>

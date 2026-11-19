@@ -99,6 +99,9 @@ const nextWeek = computed(() => neighbour(1))
 
 const presentation = computed(() => weekPresentation(active.value))
 const isLive = computed(() => active.value === realCurrentWeek.value)
+const title = computed(() =>
+  isZh.value ? `第 ${weekNum(active.value)} 周` : `Week ${weekNum(active.value)}`,
+)
 const label = computed(() => {
   const p = presentation.value
   if (p) return isZh.value ? p.label_zh : p.label_en
@@ -169,8 +172,33 @@ function onDocClick(e: MouseEvent) {
   const el = (e.target as HTMLElement)?.closest?.('.ws__calendar-wrap')
   if (!el) calendarOpen.value = false
 }
-onMounted(() => document.addEventListener('click', onDocClick))
-onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+
+/**
+ * The rail is 16 stations wide (704px) but only ~330px fits on a phone, and it
+ * scrolls with the scrollbar hidden — so the open week, which sits 9 stations
+ * in, started off-screen: the strip looked like it was showing last month and
+ * the one station you care about was invisible. Centre it on mount and resize.
+ * On desktop the ruler fits whole and this leaves scrollLeft at 0.
+ */
+const railEl = ref<HTMLElement | null>(null)
+function centreActiveWeek() {
+  const el = railEl.value
+  const active = el?.querySelector<HTMLElement>('.ws__stop.is-active')
+  if (!el || !active) return
+  const wrap = el.getBoundingClientRect()
+  const cur = active.getBoundingClientRect()
+  el.scrollLeft += cur.left - wrap.left - (wrap.width - cur.width) / 2
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocClick)
+  centreActiveWeek()
+  window.addEventListener('resize', centreActiveWeek)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+  window.removeEventListener('resize', centreActiveWeek)
+})
 </script>
 
 <template>
@@ -186,8 +214,8 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
       <div class="ws__current">
         <p class="ws__title">
-          {{ isZh ? '第' : 'Week' }} {{ weekNum(active) }}
-          <span v-if="isLive" class="ws__live"><i />{{ pick('实时', 'Live') }}</span>
+          {{ title }}
+          <span v-if="isLive" class="ws__live"><i />{{ pick('本周', 'Live') }}</span>
         </p>
         <p class="ws__range">{{ label }}</p>
       </div>
@@ -201,7 +229,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
       <span v-else class="ws__arrow ws__arrow--off" aria-hidden="true">›</span>
     </div>
 
-    <div class="ws__ruler-wrap">
+    <div ref="railEl" class="ws__ruler-wrap">
       <ol class="ws__ruler">
         <li
           v-for="(w, i) in ruler"
@@ -219,7 +247,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
             <!-- the track segment entering this station -->
             <span class="ws__track" aria-hidden="true" />
             <span class="ws__halo" aria-hidden="true" />
-            <span class="ws__node" aria-hidden="true"><i /></span>
+            <span class="ws__node-slot"><span class="ws__node" aria-hidden="true"><i /></span></span>
             <span class="ws__num">{{ w.n }}</span>
           </NuxtLink>
         </li>
@@ -284,54 +312,67 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
   align-items: stretch;
   gap: 0;
   min-width: 0;
-  padding: 6px;
+  padding: 8px 12px;
   margin: 0 0 14px;
-  border: 1.5px dashed #d9dce2;
-  border-radius: 16px;
+  border: 1.5px dashed #e0e3e9;
+  border-radius: 18px;
   background: var(--card, #fff);
 }
-.ws__nav { display: flex; align-items: center; border-right: 1px solid #e5e7eb; }
+.ws__nav { display: flex; align-items: center; gap: 2px; border-right: 1px solid #eef0f3; }
 .ws__arrow {
   display: grid; place-items: center; flex: none;
-  width: 34px; height: 100%; min-height: 54px;
-  font-size: 24px; line-height: 1; color: var(--muted-foreground, #6b7280);
+  width: 34px; height: 34px;
+  font-size: 20px; line-height: 1; color: var(--muted-foreground, #8b9099);
   text-decoration: none; border-radius: 10px; transition: background .15s, color .15s;
 }
 .ws__arrow:hover { background: #f4f4f5; color: var(--foreground, #1a1a1a); }
-.ws__arrow--off { opacity: .35; pointer-events: none; }
-.ws__current { min-width: 128px; padding: 4px 14px; }
-.ws__title { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+.ws__arrow--off { opacity: .3; pointer-events: none; }
+.ws__current { min-width: 132px; padding: 2px 12px; display: flex; flex-direction: column; justify-content: center; }
+.ws__title { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.015em; display: flex; align-items: center; gap: 8px; }
 .ws__live {
   display: inline-flex; align-items: center; gap: 5px;
-  padding: 2px 9px; border-radius: 999px; background: #d4f75a; color: #2f3b00;
-  font-size: 10px; font-weight: 800; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; background: #d4f75a; color: #2f3b00;
+  font-size: 10px; font-weight: 800; letter-spacing: .04em;
 }
 .ws__live i { width: 6px; height: 6px; border-radius: 50%; background: #3f4d00; }
-.ws__range { margin: 3px 0 0; font-size: 11px; color: var(--muted-foreground, #6b7280); white-space: nowrap; }
+.ws__range { margin: 4px 0 0; font-size: 11.5px; color: var(--muted-foreground, #6b7280); white-space: nowrap; }
 
 /* ---- Transit-map rail: a continuous line with station stops ---- */
-.ws__ruler-wrap { min-width: 0; overflow-x: auto; scrollbar-width: none; padding-top: 4px; }
+.ws__ruler-wrap { min-width: 0; overflow-x: auto; scrollbar-width: none; padding-top: 6px; }
 .ws__ruler-wrap::-webkit-scrollbar { display: none; }
-.ws__ruler { display: flex; align-items: flex-end; height: 100%; margin: 0; padding: 0; list-style: none; width: max-content; }
-.ws__stop { position: relative; flex: none; width: 42px; height: 100%; }
+.ws__ruler { display: flex; align-items: flex-end; height: 100%; margin: 0; padding: 0; list-style: none; width: 100%; }
+/* Stations share the available width instead of hugging the left: a ruler that
+   stops two thirds of the way across reads as broken, not as "no more weeks". */
+.ws__stop { position: relative; flex: 1 1 0; min-width: 44px; height: 100%; }
 
 /* Month signposts above the line — bold, dark, like station-zone labels. */
 .ws__month {
-  position: absolute; top: 1px; left: 6px;
-  font-size: 9px; font-weight: 800; letter-spacing: .1em;
-  color: var(--muted-foreground, #6b7280); white-space: nowrap;
+  position: absolute; top: 0; left: 7px;
+  font-size: 9.5px; font-weight: 800; letter-spacing: .1em;
+  color: #9aa0a8; white-space: nowrap;
 }
 
+/* Three fixed rows — air, the node band, the number — so a 22px active node and
+   a 12px past node share one centre line. With bottom-aligned flex the big node
+   sat 5px higher than its neighbours and the rail cut under the dots. */
 .ws__stop-link {
-  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-  gap: 5px; width: 100%; height: 100%; padding-bottom: 3px;
+  position: relative; display: grid;
+  grid-template-rows: 1fr 22px 18px;
+  justify-items: center; align-items: center;
+  width: 100%; height: 100%;
   text-decoration: none; color: var(--muted-foreground, #9ca3af);
 }
+/* Explicit rows: the track and halo are absolute and take no row, so without
+   `grid-row` the node slot landed in row 1 and the number in row 2 — which put
+   the rail under the numbers instead of through the dots. */
+.ws__node-slot { display: grid; place-items: center; width: 100%; height: 22px; grid-row: 2; }
+.ws__num { grid-row: 3; }
 
 /* The rail segment entering each station. Reached = saturated brand line;
-   upcoming = faint dashed line. */
+   upcoming = faint dashed line. `calc` keeps it on the node band whatever the
+   strip's height. */
 .ws__track {
-  position: absolute; top: 26px; left: 0; right: 0; height: 4px;
+  position: absolute; top: calc(100% - 30.5px); left: 0; right: 0; height: 3px;
   background: repeating-linear-gradient(90deg, #dfe3ea 0 5px, transparent 5px 10px);
 }
 .ws__stop.is-reached .ws__track {
@@ -342,14 +383,14 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
 /* Station node: white core, dark ring, like a stop on a metro map. */
 .ws__node {
-  position: relative; z-index: 2; width: 13px; height: 13px; border-radius: 50%;
-  background: #fff; border: 2.5px solid #9aa2ad; box-sizing: border-box;
+  position: relative; z-index: 2; width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; border: 2.5px solid #a8aeb7; box-sizing: border-box;
   transition: transform .15s, border-color .15s;
 }
 .ws__node i { position: absolute; inset: 2px; border-radius: 50%; background: transparent; }
 .ws__stop.is-reached .ws__node { border-color: var(--primary, #b45309); }
 .ws__stop.is-reached.has-data .ws__node i { background: var(--primary, #b45309); }
-.ws__stop.is-future .ws__node { border-color: #d6dae1; background: #fafbfc; }
+.ws__stop.is-future .ws__node { border-color: #dde1e7; background: #fafbfc; }
 
 /* Active station: big volt node with a pulsing halo and a station flag. */
 .ws__stop.is-active .ws__node {
@@ -357,7 +398,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
   border-width: 3px; box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgba(212,247,90,.55), 0 4px 10px rgba(0,0,0,.18);
 }
 .ws__stop.is-active .ws__node i { background: #1a1a1a; inset: 5px; }
-.ws__halo { position: absolute; top: 15px; left: 50%; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; pointer-events: none; }
+.ws__halo { position: absolute; top: calc(100% - 40px); left: 50%; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; pointer-events: none; }
 .ws__stop.is-active .ws__halo { animation: ws-pulse 2s ease-out infinite; }
 @keyframes ws-pulse {
   0% { box-shadow: 0 0 0 0 rgba(212,247,90,.55); }
@@ -365,25 +406,30 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
   100% { box-shadow: 0 0 0 0 rgba(212,247,90,0); }
 }
 
-.ws__num { font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ws__num { position: relative; font-size: 11px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .ws__stop.is-reached .ws__num { color: #374151; }
-.ws__stop.is-active .ws__num { color: #1a1a1a; font-weight: 850; font-size: 12px; }
+.ws__stop.is-active .ws__num { color: #1a1a1a; font-weight: 850; font-size: 12.5px; }
 .ws__stop.is-future .ws__num { color: #b9bec7; }
-.ws__stop-link:hover .ws__node { transform: scale(1.22); }
+.ws__stop-link:hover .ws__node { transform: scale(1.2); }
 
-/* "Now" marker: a small live pip above the real current week's station. */
+/* "Now" marker: a small live pip beside the real current week's number. */
 .ws__stop.is-now:not(.is-active) .ws__node { border-color: #16a34a; }
 .ws__stop.is-now .ws__num::after {
-  content: ''; position: absolute; top: 15px; right: -2px;
+  content: ''; position: absolute; top: -3px; right: -7px;
   width: 5px; height: 5px; border-radius: 50%; background: #16a34a;
 }
 
-.ws__calendar-wrap { position: relative; border-left: 1px solid #e5e7eb; }
-.ws__calendar-btn {
-  display: grid; place-items: center; width: 48px; height: 100%; min-height: 54px;
-  border: 0; background: transparent; color: var(--muted-foreground, #6b7280); cursor: pointer;
+.ws__calendar-wrap {
+  position: relative; display: flex; align-items: center;
+  padding-left: 12px; border-left: 1px solid #eef0f3;
 }
-.ws__calendar-btn:hover { color: var(--foreground, #1a1a1a); }
+.ws__calendar-btn {
+  display: grid; place-items: center; width: 38px; height: 38px;
+  border: 1px solid #e5e7eb; border-radius: 11px; background: var(--card, #fff);
+  color: var(--muted-foreground, #6b7280); cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.ws__calendar-btn:hover { background: #f7f7f8; color: var(--foreground, #1a1a1a); border-color: #d7dae0; }
 .ws__calendar-pop {
   position: absolute; right: 0; top: calc(100% + 10px); z-index: 50;
   padding: 16px; border: 1px solid #e5e7eb; border-radius: 16px; background: var(--card, #fff);
@@ -431,8 +477,27 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 }
 .cal__today:hover { background: #f4f4f5; }
 
+/* Stacked under 640px. Keeping the three columns on a 390px screen gave the
+   rail ~80px of a 358px strip: two stations visible out of five, the rest
+   scrolled off behind a hidden scrollbar, with the calendar crowding the edge.
+   Title row on top, the rail takes the full width underneath. */
 @media (max-width: 640px) {
-  .ws { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .ws {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'nav cal' 'ruler ruler';
+    row-gap: 2px;
+  }
+  .ws__nav { grid-area: nav; border-right: 0; }
+  /* Explicit height: the ruler is `height:100%`, so in a row sized by its own
+     content it would resolve to auto and collapse the month-label band. */
+  .ws__ruler-wrap { grid-area: ruler; height: 54px; padding-top: 2px; }
+  /* A hard cut at both edges reads as clipping; the fade reads as "more weeks
+     that way", which is what the hidden-scrollbar rail actually is. */
+  .ws__ruler-wrap {
+    mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  }
+  .ws__calendar-wrap { grid-area: cal; border-left: 0; padding-left: 0; }
   .ws__current { min-width: 96px; padding: 4px 8px; }
   .ws__range { font-size: 10px; }
 }

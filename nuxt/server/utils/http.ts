@@ -113,6 +113,39 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
     zh: '我们这边出了点问题，请稍后再试。',
     en: 'Something went wrong on our side.',
   },
+  // Spotlight drafts. The word bounds are the published standard on
+  // /spotlights/guidelines, so the message quotes the same numbers rather than
+  // saying "too short" and leaving the writer to guess.
+  spotlight_short: {
+    status: 400,
+    zh: '字数不够：正文至少要 800 个英文单词。',
+    en: 'Too short: the article needs at least 800 words.',
+  },
+  spotlight_long: {
+    status: 400,
+    zh: '字数超出：正文最多 1,500 个英文单词。',
+    en: 'Too long: the article may run to 1,500 words at most.',
+  },
+  spotlight_no_listing: {
+    status: 409,
+    zh: '请先把这个产品提交上线，再写它的 Spotlight。文章需要链到站内的产品页。',
+    en: 'Submit the product first. A Spotlight links to a live listing, so it cannot be written before one exists.',
+  },
+  spotlight_duplicate: {
+    status: 409,
+    zh: '这个产品已经有一篇 Spotlight 了（在审核中或已发布）。',
+    en: 'This product already has a Spotlight, either in review or published.',
+  },
+  spotlight_not_found: {
+    status: 404,
+    zh: '找不到这篇 Spotlight。',
+    en: 'No such Spotlight.',
+  },
+  spotlight_slug_taken: {
+    status: 409,
+    zh: '这个网址后缀已经被占用了，换一个。',
+    en: 'That URL slug is taken — pick another.',
+  },
 }
 
 /**

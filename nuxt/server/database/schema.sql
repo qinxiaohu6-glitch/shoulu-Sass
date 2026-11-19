@@ -449,3 +449,49 @@ CREATE TABLE IF NOT EXISTS ticket_message (
 
 CREATE INDEX IF NOT EXISTS idx_ticket_message_ticket
   ON ticket_message (ticket_id, created_at);
+
+-- Product Spotlights: the long-form article sold with a Featured or Pro
+-- listing. Written by the maker from a fixed template, reviewed here, then
+-- published at /spotlights/<slug>.
+--
+-- `listing_slug` is required rather than optional: an article whose product is
+-- not on the site is a page that links to nothing, and the whole point is the
+-- internal link between the article and the listing.
+--
+-- `status` is the editorial decision only. `published_at` is set on approval and
+-- cleared on unpublish, so "is it live" is one nullable column rather than a
+-- second boolean that can disagree with the status.
+CREATE TABLE IF NOT EXISTS spotlight (
+  id              TEXT    PRIMARY KEY,
+  slug            TEXT    NOT NULL UNIQUE,
+  listing_slug    TEXT    NOT NULL,
+  product_name    TEXT    NOT NULL,
+  product_url     TEXT    NOT NULL,
+  tagline         TEXT    NOT NULL,
+  body            TEXT    NOT NULL,
+  author          TEXT    NOT NULL DEFAULT '',
+  author_bio      TEXT    NOT NULL DEFAULT '',
+  best_for        TEXT    NOT NULL DEFAULT '',
+  pricing_summary TEXT    NOT NULL DEFAULT '',
+  -- Submitter's address. Display only; nothing grants access by it.
+  email           TEXT    NOT NULL DEFAULT '',
+  -- Salted IP hash, never the address. Quota and abuse review only — the same
+  -- deal `submissions.ip_hash` gets. An address-only limit is trivial to walk
+  -- around with a plus-address, so the quota is counted per source as well.
+  ip_hash         TEXT    NOT NULL DEFAULT '',
+  -- pending | approved | rejected
+  status          TEXT    NOT NULL DEFAULT 'pending',
+  -- Why a draft was turned down. Shown to the owner, never on the public page.
+  review_notes    TEXT    NOT NULL DEFAULT '',
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  reviewed_at     INTEGER,
+  published_at    INTEGER
+);
+
+-- The queue sorts by status then recency; the public list filters on
+-- `published_at IS NOT NULL` and sorts by it.
+CREATE INDEX IF NOT EXISTS idx_spotlight_status  ON spotlight (status, updated_at);
+CREATE INDEX IF NOT EXISTS idx_spotlight_live    ON spotlight (published_at);
+CREATE INDEX IF NOT EXISTS idx_spotlight_listing ON spotlight (listing_slug);
+CREATE INDEX IF NOT EXISTS idx_spotlight_ip      ON spotlight (ip_hash, created_at);

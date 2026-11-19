@@ -19,8 +19,9 @@ const { isZh, pick } = useLang()
 const boardData = await useBoardData()
 
 const weekProducts = computed(() => (boardData.value.current?.ranking ?? []).length)
-const productCount = ref<number | null>(null)
-const categoryCount = ref<number | null>(null)
+/** Votes cast in the open week, and the median days from submit to review. */
+const weekVotes = ref<number | null>(null)
+const medianReviewDays = ref<number | null>(null)
 /** Oldest → newest, six ISO weeks; the last entry is the open week. */
 const launchWeeks = ref<{ id: string; listed: number }[]>([])
 
@@ -29,13 +30,13 @@ const requestFetch = useRequestFetch()
 try {
   const stats = await requestFetch<{
     ok: boolean
-    products: number
-    categories: number
+    week_votes?: number
+    median_review_days?: number | null
     launch_weeks?: { id: string; listed: number }[]
   }>('/api/stats')
   if (stats?.ok) {
-    productCount.value = stats.products
-    categoryCount.value = stats.categories
+    weekVotes.value = stats.week_votes ?? 0
+    medianReviewDays.value = stats.median_review_days ?? null
     launchWeeks.value = stats.launch_weeks ?? []
   }
 } catch {
@@ -82,7 +83,7 @@ const spark = computed(() => {
       </div>
       <p class="pb-strip__big">{{ weekListings !== null ? weekListings.toLocaleString() : '—' }}</p>
       <p class="pb-strip__hint">
-        {{ isZh ? '收录上线的产品' : 'products listed' }}
+        {{ isZh ? '本周上线的产品' : 'listed this week' }}
       </p>
       <svg
         v-if="spark"
@@ -103,21 +104,24 @@ const spark = computed(() => {
         <span>{{ pick('当前', 'Now') }}</span>
       </p>
     </div>
+    <!-- Deliberately NOT product and category totals: the rail beside this card
+         already prints both ("79 products listed", the category list with its
+         counts), so repeating them here was the same number twice on one
+         screen and pushed the two figures that are actually new off the card.
+         What is left is this week's activity and how long a review takes. -->
     <div class="pb-strip__cols">
       <div class="pb-strip__col">
-        <b>{{ productCount !== null ? productCount.toLocaleString() : '—' }}</b>
-        <span>{{ pick('在架产品', 'Products listed') }}</span>
-        <small>{{ pick('全站目录', 'in the directory') }}</small>
+        <b>{{ weekVotes !== null ? weekVotes.toLocaleString() : '—' }}</b>
+        <span>{{ pick('本周获票', 'Votes this week') }}</span>
+        <small>{{ pick(`${weekProducts} 个产品获票`, `${weekProducts} products voted`) }}</small>
       </div>
       <div class="pb-strip__col">
-        <b>{{ categoryCount !== null ? categoryCount.toLocaleString() : '—' }}</b>
-        <span>{{ pick('分类', 'Categories') }}</span>
-        <small>{{ pick('可浏览', 'to browse') }}</small>
-      </div>
-      <div class="pb-strip__col">
-        <b>{{ weekProducts.toLocaleString() }}</b>
-        <span>{{ pick('本周获票', 'Voted this week') }}</span>
-        <small>{{ pick('本周拿到票的产品', 'products with votes') }}</small>
+        <b :class="{ 'is-empty': medianReviewDays === null }">
+          {{ medianReviewDays !== null ? medianReviewDays.toFixed(1) : '—' }}
+          <u v-if="medianReviewDays !== null">{{ pick('天', 'd') }}</u>
+        </b>
+        <span>{{ pick('中位审核', 'Median review') }}</span>
+        <small>{{ pick('提交到上线', 'submit to live') }}</small>
       </div>
     </div>
   </section>
@@ -126,104 +130,118 @@ const spark = computed(() => {
 <style scoped>
 .pb-strip {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
   gap: 0;
   margin: 0 0 18px;
   padding: 0;
-  border: 1.5px dashed #d9dce2;
+  border: 1.5px dashed #e0e3e9;
   border-radius: 20px;
   background: var(--card, #fff);
   overflow: hidden;
 }
 .pb-strip__main {
   position: relative;
-  padding: 18px 22px 16px;
-  min-height: 150px;
+  padding: 20px 24px 34px;
+  min-height: 168px;
 }
 .pb-strip__main-top { display: flex; align-items: center; }
 .pb-strip__label {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  color: #6b7280;
+  letter-spacing: 0.08em;
+  color: #8b9099;
 }
 .pb-strip__label i {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 7px; height: 7px; border-radius: 50%;
   background: #22a544;
 }
 .pb-strip__big {
-  margin: 8px 0 0;
-  font-size: 42px;
+  margin: 10px 0 0;
+  font-size: 46px;
   font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 .pb-strip__hint {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 13px;
   color: #6b7280;
 }
 .pb-strip__spark {
   position: absolute;
-  right: 18px;
-  bottom: 30px;
+  right: 24px;
+  bottom: 34px;
   width: 46%;
-  height: 64px;
-  opacity: 0.9;
+  height: 76px;
+  opacity: 0.95;
 }
 .pb-strip__area { fill: rgba(249, 115, 22, 0.12); }
-.pb-strip__line { stroke: #f97316; stroke-width: 2.4; vector-effect: non-scaling-stroke; }
+.pb-strip__line { stroke: #f97316; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .pb-strip__dot { fill: #f97316; }
 .pb-strip__spark-empty {
   position: absolute;
-  right: 18px; bottom: 40px;
+  right: 24px; bottom: 52px;
   font-size: 11px; color: #9ca3af; max-width: 45%; text-align: right;
 }
 .pb-strip__axis {
   position: absolute;
-  left: 22px; right: 18px; bottom: 12px;
+  left: 24px; right: 24px; bottom: 14px;
   display: flex; justify-content: space-between;
   margin: 0;
-  font-size: 10px;
+  font-size: 10.5px;
   color: #9ca3af;
 }
 .pb-strip__cols {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-left: 1px solid #e5e7eb;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-left: 1px solid #eef0f3;
 }
 .pb-strip__col {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 18px 8px;
+  padding: 20px 10px;
   text-align: center;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid #eef0f3;
 }
 .pb-strip__col:last-child { border-right: 0; }
 .pb-strip__col b {
-  font-size: 28px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 34px;
   font-weight: 800;
   line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
-.pb-strip__col span {
-  margin-top: 8px;
+.pb-strip__col b u {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
+  text-decoration: none;
+  color: #6b7280;
+}
+/* A missing median is not a zero: an em dash at 34px/800 reads as a black bar. */
+.pb-strip__col b.is-empty { font-size: 26px; color: #c4c8cf; }
+.pb-strip__col span {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
 }
 .pb-strip__col small {
-  margin-top: 3px;
-  font-size: 10px;
+  margin-top: 4px;
+  font-size: 11px;
   color: #9ca3af;
-  line-height: 1.3;
+  line-height: 1.35;
 }
 @media (max-width: 760px) {
   .pb-strip { grid-template-columns: 1fr; }
-  .pb-strip__cols { border-left: 0; border-top: 1px solid #e5e7eb; }
-  .pb-strip__spark { width: 40%; }
+  .pb-strip__cols { border-left: 0; border-top: 1px solid #eef0f3; }
+  .pb-strip__spark { width: 42%; }
 }
 </style>

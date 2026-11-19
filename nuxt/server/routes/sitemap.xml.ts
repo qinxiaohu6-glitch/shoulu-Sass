@@ -6,7 +6,8 @@ import { loadOverrides } from '../utils/overrides'
 import { listPublishedTools } from '../utils/submissions'
 import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { LAUNCH_PLATFORMS } from '~~/shared/content/launch-platforms'
-import { SPOTLIGHTS } from '~~/shared/content/spotlights'
+import type { Spotlight } from '~~/shared/content/spotlights'
+import { listPublished } from '../utils/spotlights'
 
 const SITE = 'https://dirtool.com'
 
@@ -15,10 +16,11 @@ type Entry = {
   lastmod?: string
   priority: string
   /**
-   * The page has no translated twin. Spotlights are written in English and
-   * `/zh/spotlights*` answers a 301 to the English URL, so listing a zh variant
-   * would put a redirect in the sitemap — and the hreflang set would point at a
-   * URL that does not serve that language.
+   * The page has no translated twin. Still true for individual articles: a
+   * Spotlight record carries no locale, so `/zh/spotlights/<slug>` answers a 301
+   * to the one URL it lives at, and listing a zh variant would put a redirect in
+   * the sitemap. The four pages around the articles ARE bilingual now, so they
+   * no longer set this flag.
    */
   enOnly?: boolean
 }
@@ -37,11 +39,13 @@ async function entries(event: H3Event): Promise<Entry[]> {
   // has pulled, and what the community has published. A failure leaves both
   // empty, so the static list still ships rather than the whole sitemap 500ing.
   let published: Awaited<ReturnType<typeof listPublishedTools>> = []
+  let spotlights: Spotlight[] = []
   let overrides: OverrideView = { pinned: {}, hidden: [] }
   try {
     const db = await useDb(event)
-    ;[published, overrides] = await Promise.all([
+    ;[published, spotlights, overrides] = await Promise.all([
       listPublishedTools(db),
+      listPublished(db),
       loadOverrides(db),
     ])
   } catch (err) {
@@ -72,17 +76,9 @@ async function entries(event: H3Event): Promise<Entry[]> {
       lastmod: today,
       priority: '0.6',
     })),
-    { path: '/spotlights', priority: '0.7', enOnly: true },
-    { path: '/spotlights/guidelines', priority: '0.5', enOnly: true },
-    { path: '/spotlights/badge', priority: '0.3', enOnly: true },
-    // A spotlight is dated content, so each one carries its own lastmod rather
-    // than today's date.
-    ...SPOTLIGHTS.map((item) => ({
-      path: `/spotlights/${item.slug}`,
-      lastmod: item.publishedAt,
-      priority: '0.7',
-      enOnly: true,
-    })),
+    { path: '/spotlights', priority: '0.7' },
+    { path: '/spotlights/guidelines', priority: '0.5' },
+    { path: '/spotlights/badge', priority: '0.3' },
     { path: '/billboard', priority: '0.8' },
     { path: '/sponsor', priority: '0.7' },
     { path: '/advertise', priority: '0.6' },
@@ -120,6 +116,20 @@ async function entries(event: H3Event): Promise<Entry[]> {
     if (!visible(tool.slug)) continue
     if (isReservedProductSlug(tool.slug)) continue
     list.push({ path: `/products/${tool.slug}`, lastmod: tool.created_at, priority: '0.8' })
+  }
+
+  // Spotlights are dated content, so each carries its own `lastmod` — which is
+  // why they are pushed after the `.map` that stamps every static entry with
+  // today's date. An article whose listing has been hidden would be a live URL
+  // pointing at a 410, so it leaves with the listing.
+  for (const item of spotlights) {
+    if (!visible(item.listingSlug)) continue
+    list.push({
+      path: `/spotlights/${item.slug}`,
+      lastmod: item.publishedAt,
+      priority: '0.7',
+      enOnly: true,
+    })
   }
 
   return list

@@ -53,6 +53,7 @@ const navItems = computed<NavItem[]>(() => [
     items: [
       { href: '/admin/directory/tools', label: t('admin.nav.directory_tools') },
       { href: '/admin/submissions', label: '提交审核' },
+      { href: '/admin/spotlights', label: 'Spotlight 审核' },
       { href: '/admin/directory/categories', label: t('admin.nav.directory_categories') },
       { href: '/admin/directory/tags', label: t('admin.nav.directory_tags') },
       { href: '/admin/directory/collections', label: t('admin.nav.directory_collections') },

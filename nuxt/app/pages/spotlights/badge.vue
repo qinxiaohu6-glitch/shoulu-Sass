@@ -11,14 +11,13 @@
  *
  * Both snippets point at the listing page rather than the article, because a
  * listing is permanent and an article URL can be re-slugged.
+ *
+ * Bilingual: the section shipped English-only and this page 301'd `/zh/...`
+ * back to English. Copy goes through `pick()`, links through `localePath()`.
  */
-const { lang } = useLang()
+const { pick } = useLang()
+const localePath = useLocalePath()
 
-if (lang.value === 'zh') {
-  await navigateTo('/spotlights/badge', { redirectCode: 301 })
-}
-
-const canonical = 'https://dirtool.com/spotlights/badge'
 const badgePath = '/assets/img/brand/featured-on-product-atlas.svg'
 // The snippets need an absolute URL because they are pasted onto someone
 // else's site; the preview on this page must stay relative or it points at
@@ -34,43 +33,42 @@ const htmlSnippet = `<a href="${listingExample}" target="_blank" rel="noopener">
 
 const markdownSnippet = `[![Featured on Product Atlas](${badgeUrl})](${listingExample})`
 
-useHead({
-  title: 'Featured on Product Atlas badge · Product Atlas',
-  meta: [
-    {
-      name: 'description',
-      content:
-        'An optional badge for products listed or spotlighted on Product Atlas. Embed code, and why it is never a condition of publication.',
-    },
-    { property: 'og:title', content: 'Featured on Product Atlas badge' },
-    { property: 'og:type', content: 'website' },
-    { property: 'og:url', content: canonical },
-  ],
-  link: [{ rel: 'canonical', href: canonical }],
+useSeo({
+  title: computed(() =>
+    pick('收录徽章 Featured on Product Atlas · Product Atlas', 'Featured on Product Atlas badge · Product Atlas'),
+  ),
+  description: computed(() =>
+    pick(
+      '给已收录或做过聚光灯的产品用的可选徽章：嵌入代码，以及为什么它永远不是发布的前提条件。',
+      'An optional badge for products listed or spotlighted on Product Atlas. Embed code, and why it is never a condition of publication.',
+    ),
+  ),
 })
 </script>
 
 <template>
   <div class="container bd-page">
     <nav class="breadcrumb" aria-label="breadcrumb">
-      <NuxtLink to="/">Discover</NuxtLink>
+      <NuxtLink :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
       <Icon name="chevron-right" :size="14" />
-      <NuxtLink to="/spotlights">Product Spotlights</NuxtLink>
+      <NuxtLink :to="localePath('/spotlights')">{{ pick('产品聚光灯', 'Product Spotlights') }}</NuxtLink>
       <Icon name="chevron-right" :size="14" />
-      <span>Badge</span>
+      <span>{{ pick('徽章', 'Badge') }}</span>
     </nav>
 
     <header class="bd-head">
-      <p class="bd-kicker">BADGE</p>
-      <h1>Featured on Product Atlas</h1>
+      <p class="bd-kicker">{{ pick('徽章', 'BADGE') }}</p>
+      <h1>{{ pick('收录于 Product Atlas', 'Featured on Product Atlas') }}</h1>
       <p class="bd-lead">
-        A badge for a product that is listed or spotlighted here. Put it wherever it fits — a footer,
-        a press page, an about page. It is a convenience, not a requirement.
+        {{ pick(
+          '给已经收录、或者做过聚光灯的产品用的一枚徽章。放哪儿都行——页脚、媒体页、关于页。它是个方便，不是义务。',
+          'A badge for a product that is listed or spotlighted here. Put it wherever it fits — a footer, a press page, an about page. It is a convenience, not a requirement.',
+        ) }}
       </p>
     </header>
 
     <section aria-labelledby="bd-preview">
-      <h2 id="bd-preview">The badge</h2>
+      <h2 id="bd-preview">{{ pick('徽章长这样', 'The badge') }}</h2>
       <div class="bd-preview">
         <img
           :src="badgePath"
@@ -80,55 +78,63 @@ useHead({
         >
       </div>
       <p class="bd-note">
-        One file, no script, 280 × 64. It renders on light and dark backgrounds because the badge
-        carries its own background.
+        {{ pick(
+          '一个文件，没有脚本，280 × 64。自带底色，深浅背景上都能看清。',
+          'One file, no script, 280 × 64. It renders on light and dark backgrounds because the badge carries its own background.',
+        ) }}
       </p>
     </section>
 
     <section aria-labelledby="bd-html">
-      <h2 id="bd-html">Embed code</h2>
-      <p>Replace the example listing URL with your own product page.</p>
+      <h2 id="bd-html">{{ pick('嵌入代码', 'Embed code') }}</h2>
+      <p>{{ pick('把示例里的收录地址换成你自己的产品页。', 'Replace the example listing URL with your own product page.') }}</p>
       <pre class="bd-code"><code>{{ htmlSnippet }}</code></pre>
-      <p class="bd-note">Markdown, if your site uses it:</p>
+      <p class="bd-note">{{ pick('如果站点用 Markdown：', 'Markdown, if your site uses it:') }}</p>
       <pre class="bd-code"><code>{{ markdownSnippet }}</code></pre>
       <p class="bd-note">
-        Or link the image file directly:
-        <a :href="badgeUrl" download>download the SVG</a>.
+        {{ pick('或者直接链图片文件：', 'Or link the image file directly:') }}
+        <a :href="badgeUrl" download>{{ pick('下载 SVG', 'download the SVG') }}</a>。
       </p>
     </section>
 
     <section aria-labelledby="bd-rules">
-      <h2 id="bd-rules">The rules, in full</h2>
+      <h2 id="bd-rules">{{ pick('完整规则', 'The rules, in full') }}</h2>
       <ul class="bd-list">
         <li>
-          <strong>It is optional.</strong> A listing is published, ranked and kept whether or not the
-          badge is on your site.
+          <strong>{{ pick('它是可选的。', 'It is optional.') }}</strong>
+          {{ pick(
+            '收录页有没有这枚徽章，都照常发布、照常排名、照常保留。',
+            'A listing is published, ranked and kept whether or not the badge is on your site.',
+          ) }}
         </li>
         <li>
-          <strong>Nothing is held back until it goes up.</strong> No listing is queued behind a badge
-          placement.
+          <strong>{{ pick('不会因为没挂就压着不放。', 'Nothing is held back until it goes up.') }}</strong>
+          {{ pick('没有任何收录排在徽章后面等着。', 'No listing is queued behind a badge placement.') }}
         </li>
         <li>
-          <strong>The link does not have to be dofollow.</strong> Add
-          <code>rel="nofollow"</code> if that is your site's policy. We do not check.
+          <strong>{{ pick('链接不必是 dofollow。', 'The link does not have to be dofollow.') }}</strong>
+          {{ pick('站点政策要求 nofollow 就加', 'Add') }}
+          <code>rel="nofollow"</code>{{ pick('，我们不检查。', ' if that is your site\'s policy. We do not check.') }}
         </li>
         <li>
-          <strong>You can take it down.</strong> Nothing is unpublished and no link is removed from
-          your listing if the badge comes off.
+          <strong>{{ pick('随时可以撤。', 'You can take it down.') }}</strong>
+          {{ pick('撤掉徽章不会下架内容，也不会从收录页移除链接。', 'Nothing is unpublished and no link is removed from your listing if the badge comes off.') }}
         </li>
         <li>
-          <strong>We do not ask twice.</strong> There is no follow-up mail chasing a badge.
+          <strong>{{ pick('我们不会催第二次。', 'We do not ask twice.') }}</strong>
+          {{ pick('不会为了徽章发跟进邮件。', 'There is no follow-up mail chasing a badge.') }}
         </li>
       </ul>
       <p class="bd-warn">
-        The reason for all five: a link that is required in exchange for a listing is a link scheme,
-        and both sides lose when search engines treat it as one. The badge is worth having because
-        people choose to use it.
+        {{ pick(
+          '这五条的原因只有一个：拿链接换收录就是链接买卖，一旦被搜索引擎这么判定，两边都吃亏。徽章值得挂，是因为人自己愿意挂。',
+          'The reason for all five: a link that is required in exchange for a listing is a link scheme, and both sides lose when search engines treat it as one. The badge is worth having because people choose to use it.',
+        ) }}
       </p>
     </section>
 
     <p class="bd-foot">
-      <NuxtLink to="/spotlights">← All Product Spotlights</NuxtLink>
+      <NuxtLink :to="localePath('/spotlights')">{{ pick('← 全部产品聚光灯', '← All Product Spotlights') }}</NuxtLink>
     </p>
   </div>
 </template>

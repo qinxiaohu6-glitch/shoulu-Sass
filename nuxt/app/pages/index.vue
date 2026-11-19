@@ -540,7 +540,6 @@ useHead({ script: schemaScripts })
               }"
             >
               <span class="pb-row__rank" :class="`is-${row.rank}`">
-                <span v-if="group.current && row.rank === 1" class="pb-row__crown" aria-hidden="true">♛</span>
                 <em>{{ row.rank }}</em>
               </span>
               <component
@@ -549,6 +548,10 @@ useHead({ script: schemaScripts })
                 :to="isPreview ? undefined : localePath(`/products/${row.slug}`)"
               >
                 <span class="pb-row__logo">
+                  <!-- The row's only crown: rank already reads gold/silver/bronze. -->
+                  <span v-if="row.badges.length" class="pb-row__logo-crown">
+                    <PaidCrown />
+                  </span>
                   <ToolLogo :logo="row.logo" :name="row.name" :size="56" decorative />
                 </span>
                 <span class="pb-row__body">
@@ -868,13 +871,6 @@ useHead({ script: schemaScripts })
 .pb-row__rank.is-1 em { background: #f5b426; color: #4a3400; }
 .pb-row__rank.is-2 em { background: #c9ced6; color: #2a2d33; }
 .pb-row__rank.is-3 em { background: #e0b48a; color: #3a2a1a; }
-.pb-row__crown {
-  position: absolute;
-  top: -14px;
-  font-size: 20px;
-  color: #e5a023;
-  line-height: 1;
-}
 .pb-row__link {
   display: flex;
   align-items: center;
@@ -884,6 +880,7 @@ useHead({ script: schemaScripts })
   color: inherit;
 }
 .pb-row__logo {
+  position: relative;
   flex: none;
   display: inline-flex;
   padding: 3px;
@@ -892,6 +889,18 @@ useHead({ script: schemaScripts })
   background: #fff;
 }
 .pb-row--featured .pb-row__logo { border-color: #e5b53a; }
+.pb-row__logo-crown {
+  position: absolute;
+  /* Sits ON the logo's top edge rather than floating above it: the band's
+     bottom lip overlaps the border by ~5px, so it reads as one badge.
+     Explicit box — the SVG inside is `100%` and would otherwise collapse. */
+  top: -17px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 22px;
+  pointer-events: none;
+}
 .pb-row__body { min-width: 0; display: block; }
 .pb-row__title {
   display: flex;
@@ -912,14 +921,32 @@ useHead({ script: schemaScripts })
   font-weight: 800;
 }
 .pb-row__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-style: normal;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.03em;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: #f5b426;
-  color: #4a3400;
+  letter-spacing: 0.05em;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  color: #4a3200;
+  /* Minted, not printed: a warm face, a light lip on top, a dark lip below and
+     a hairline of shadow under it. Flat gold on a gold row read as a label. */
+  background: linear-gradient(180deg, #ffeaab 0%, #ffcb40 40%, #eda01a 62%, #d88a05 100%);
+  border: 1px solid #c07a00;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(150, 90, 0, 0.35),
+    0 1px 2px rgba(140, 90, 0, 0.3);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+/* The paid pill is a promise ("this row is promoted"), so it reads as a badge
+   rather than as a category label — same shape as the one on the pricing page. */
+.pb-row__badge::before {
+  content: '↑';
+  font-size: 10px;
+  line-height: 1;
 }
 .pb-row__desc {
   display: block;

@@ -228,7 +228,13 @@ test('the board strip headline counts listings, not votes', () => {
   const strip = read('../../app/components/WeeklyPulse.vue')
   assert.match(strip, /本周新收录/)
   assert.match(strip, /launch_weeks/)
-  assert.equal(strip.includes('weekVotes'), false)
+  // The guard used to ban the identifier `weekVotes` outright, which also
+  // banned putting a real vote count anywhere on the card. The invariant that
+  // actually matters is narrower: the BIG number is listings, and votes may
+  // only appear in the secondary column, clearly labelled as votes.
+  assert.match(strip, /pb-strip__big">\{\{ weekListings/)
+  assert.equal(/pb-strip__big">\{\{ weekVotes/.test(strip), false)
+  assert.match(strip, /本周获票/)
   assert.equal(strip.includes('本周票数'), false)
   const stats = read('../../server/utils/stats.ts')
   assert.match(stats, /loadEligibleListedAt/)
