@@ -10,10 +10,14 @@
  *    The card's "Visit website" is written directly, so the paid benefit is one
  *    declared link and not a paragraph of them.
  *  - **One canonical URL per article.** The record carries no `locale`, so the
- *    article is published once, in whatever language it was written, and
- *    `/zh/spotlights/...` 301s to that one URL instead of serving the same
- *    bytes twice. (The four pages around it are bilingual; this one cannot be
- *    until an article knows its own language.)
+ *    article is published once, in whatever language it was written. Both the
+ *    `/spotlights/...` and `/zh/spotlights/...` paths serve it — the 301 that
+ *    used to bounce the Chinese path back to English turned "switch language"
+ *    into a dead click (and, when the redirect landed mid-navigation, a 404),
+ *    and an article you cannot open is worse than a duplicate URL. The
+ *    canonical tag pins both paths to the default-locale URL, so the search
+ *    engine still sees one page. The chrome around the body is bilingual; the
+ *    body itself is the author's, in the language they wrote it in.
  *  - **The listing must exist.** A Spotlight without a live listing is a dead
  *    internal link, so a missing listing is a 404, not a page with an empty card.
  *
@@ -28,17 +32,12 @@ import { mergeDirectory, orderedTools } from '~~/shared/utils/catalog'
 import { useSubmittedTools } from '~/composables/useSubmittedTools'
 
 const route = useRoute()
-const { lang } = useLang()
+const { lang, isZh, pick } = useLang()
+const localePath = useLocalePath()
 const submitted = await useSubmittedTools()
 const overrides = useOverrides()
 
 const slug = String(route.params.slug ?? '')
-
-// One article, one language, one canonical. A `/zh` twin would be the same
-// bytes under a second URL, which is the duplicate this redirect prevents.
-if (lang.value === 'zh') {
-  await navigateTo(`/spotlights/${slug}`, { redirectCode: 301 })
-}
 
 const requestFetch = useRequestFetch()
 type OnePayload = { ok: boolean; item: Spotlight }
@@ -48,8 +47,15 @@ const [{ data: one }, { data: list }] = await Promise.all([
   useAsyncData<OnePayload | null>(`spotlight-${slug}`, async () => {
     try {
       return await requestFetch<OnePayload>(`/api/spotlights/${encodeURIComponent(slug)}`)
-    } catch {
-      return null
+    } catch (err) {
+      // Only a real 404 means "no such article". Anything else — a dropped
+      // request, a 5xx — used to be swallowed into `null` and rendered as a
+      // 404, which tells the reader the article does not exist when the truth
+      // is that we could not read it.
+      const status = (err as { statusCode?: number; response?: { status?: number } })?.statusCode
+        ?? (err as { response?: { status?: number } })?.response?.status
+      if (status === 404) return null
+      throw err
     }
   }, { default: () => null }),
   useAsyncData<ListPayload>('spotlights-index', async () => {
@@ -89,7 +95,7 @@ if (!listing) {
 
 const canonical = `https://dirtool.com/spotlights/${spotlight.slug}`
 const published = new Date(`${spotlight.publishedAt}T00:00:00Z`)
-const publishedLabel = published.toLocaleDateString('en-US', {
+const publishedLabel = published.toLocaleDateString(isZh.value ? 'zh-CN' : 'en-US', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -143,8 +149,8 @@ useHead({
         type: 'application/ld+json',
         innerHTML: JSON.stringify(
           breadcrumbSchema([
-            { name: 'Discover', path: '/' },
-            { name: 'Product Spotlights', path: '/spotlights' },
+            { name: pick('发现', 'Discover'), path: '/' },
+            { name: pick('产品聚光灯', 'Product Spotlights'), path: '/spotlights' },
             { name: spotlight.productName, path: `/spotlights/${spotlight.slug}` },
           ]),
         ),
@@ -158,16 +164,16 @@ useHead({
 <template>
   <div class="container sp-page">
     <nav class="breadcrumb" aria-label="breadcrumb">
-      <NuxtLink to="/">Discover</NuxtLink>
+      <NuxtLink :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
       <Icon name="chevron-right" :size="14" />
-      <NuxtLink to="/spotlights">Product Spotlights</NuxtLink>
+      <NuxtLink :to="localePath('/spotlights')">{{ pick('产品聚光灯', 'Product Spotlights') }}</NuxtLink>
       <Icon name="chevron-right" :size="14" />
       <span>{{ spotlight.productName }}</span>
     </nav>
 
     <article class="sp-article">
       <header class="sp-head">
-        <p class="sp-kicker">PRODUCT SPOTLIGHT</p>
+        <p class="sp-kicker">{{ pick('产品聚光灯', 'PRODUCT SPOTLIGHT') }}</p>
         <h1>{{ spotlight.productName }}: {{ spotlight.tagline }}</h1>
         <p class="sp-meta">
           <time :datetime="spotlight.publishedAt">{{ publishedLabel }}</time>
@@ -184,15 +190,15 @@ useHead({
           <strong>{{ listing.name }}</strong>
           <span>{{ listing.short }}</span>
           <ul v-if="spotlight.bestFor || spotlight.pricingSummary" class="sp-card__facts">
-            <li v-if="spotlight.bestFor"><em>Best for</em> {{ spotlight.bestFor }}</li>
-            <li v-if="spotlight.pricingSummary"><em>Pricing</em> {{ spotlight.pricingSummary }}</li>
+            <li v-if="spotlight.bestFor"><em>{{ pick('适合', 'Best for') }}</em> {{ spotlight.bestFor }}</li>
+            <li v-if="spotlight.pricingSummary"><em>{{ pick('价格', 'Pricing') }}</em> {{ spotlight.pricingSummary }}</li>
           </ul>
         </div>
         <div class="sp-card__actions">
           <a class="sp-btn sp-btn--primary" :href="spotlight.productUrl" target="_blank" rel="noopener">
-            Visit website ↗
+            {{ pick('访问官网', 'Visit website') }} ↗
           </a>
-          <NuxtLink class="sp-btn" :to="`/products/${listing.slug}`">View listing</NuxtLink>
+          <NuxtLink class="sp-btn" :to="localePath(`/products/${listing.slug}`)">{{ pick('查看收录页', 'View listing') }}</NuxtLink>
         </div>
       </aside>
 
@@ -204,38 +210,41 @@ useHead({
 
       <footer class="sp-foot">
         <div v-if="spotlight.authorBio" class="sp-bio">
-          <p class="sp-bio__label">About the author</p>
+          <p class="sp-bio__label">{{ pick('关于作者', 'About the author') }}</p>
           <p>{{ spotlight.authorBio }}</p>
         </div>
         <div class="sp-cta">
-          <p class="sp-cta__title">Try {{ listing.name }}</p>
+          <p class="sp-cta__title">{{ pick('试用', 'Try') }} {{ listing.name }}</p>
           <p class="sp-cta__note">
-            Listing on Product Atlas, or reading this for the first time? The product page has the
-            full profile, category and current rank.
+            {{ pick(
+              '产品页里有完整介绍、所属分类和当前排名。',
+              'The product page has the full profile, category and current ranking.',
+            ) }}
           </p>
           <div class="sp-cta__btns">
             <a class="sp-btn sp-btn--primary" :href="spotlight.productUrl" target="_blank" rel="noopener">
-              Visit {{ listing.name }} ↗
+              {{ pick('访问', 'Visit') }} {{ listing.name }} ↗
             </a>
-            <NuxtLink class="sp-btn" :to="`/products/${listing.slug}`">View listing</NuxtLink>
+            <NuxtLink class="sp-btn" :to="localePath(`/products/${listing.slug}`)">{{ pick('查看收录页', 'View listing') }}</NuxtLink>
           </div>
         </div>
         <p class="sp-disclosure">
-          This article is part of a paid listing on Product Atlas. The product's own link is
-          dofollow; every other external link in the body is nofollow. Nothing here was written to
-          order by the product's team.
+          {{ pick(
+            '本文随付费收录一起提供。产品官网链接是 dofollow，正文其它外链一律 nofollow；内容不因付费而改写。',
+            'This article accompanies a paid listing on Product Atlas. The product\'s own link is dofollow; all other outbound links in the body are nofollow. Nothing here was written to order by the product\'s team.',
+          ) }}
         </p>
       </footer>
     </article>
 
     <section v-if="more.length" class="sp-more" aria-labelledby="sp-more-title">
-      <h2 id="sp-more-title">More spotlights</h2>
+      <h2 id="sp-more-title">{{ pick('更多聚光灯', 'More spotlights') }}</h2>
       <div class="sp-more__grid">
         <NuxtLink
           v-for="item in more"
           :key="item.slug"
           class="sp-more__item"
-          :to="`/spotlights/${item.slug}`"
+          :to="localePath(`/spotlights/${item.slug}`)"
         >
           <strong>{{ item.productName }}</strong>
           <span>{{ item.tagline }}</span>
@@ -244,7 +253,7 @@ useHead({
     </section>
 
     <p class="sp-back">
-      <NuxtLink to="/spotlights">← All Product Spotlights</NuxtLink>
+      <NuxtLink :to="localePath('/spotlights')">← {{ pick('全部产品聚光灯', 'All Product Spotlights') }}</NuxtLink>
     </p>
   </div>
 </template>
