@@ -88,6 +88,29 @@ export function detailFor(tool: Tool, locale: Locale): DetailBlock {
   }
 }
 
+/**
+ * Whether a listing actually carries Chinese copy.
+ *
+ * A submission is published with `short_zh` and `long_zh` set to the English
+ * text — the submitter wrote one description and nobody has translated it yet
+ * (see `publicTool`). So `/zh/products/<slug>` renders Chinese buttons around
+ * an English listing, and that page is not a translation of the English one:
+ * it is the same document with a different header.
+ *
+ * Comparing the copy is the test, rather than storing a flag, because the
+ * answer changes the moment an operator fills in a translation in
+ * `dir_tool_tr` — and every page that cares (canonical, hreflang, sitemap)
+ * should change with it, without anybody remembering to flip a switch.
+ */
+export function hasChineseCopy(
+  tool: Pick<Tool, 'short_en' | 'short_zh' | 'long_en' | 'long_zh'>,
+): boolean {
+  const differs = (zh: string | undefined, en: string | undefined) =>
+    Boolean(zh && en && zh.trim() !== en.trim())
+  // The name is not enough: a page whose body is still English is English.
+  return differs(tool.short_zh, tool.short_en) || differs(tool.long_zh, tool.long_en)
+}
+
 export function localizeTool(tool: Tool, locale: Locale): LocalizedTool {
   return {
     ...tool,

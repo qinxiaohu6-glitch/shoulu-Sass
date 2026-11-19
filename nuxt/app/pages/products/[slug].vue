@@ -34,6 +34,7 @@
  */
 import type { SectionTabItem } from '~/utils/directory-ui'
 import type { Tool } from '~~/shared/types/catalog'
+import { hasChineseCopy } from '~~/shared/utils/catalog'
 import { CHECKED_BLOCK, FEATURES_EMPTY, PRICING_EMPTY, RELATED_HEADING } from '~~/shared/utils/batch2'
 import { listingDocumentTitle } from '~~/shared/utils/listing-title'
 
@@ -215,15 +216,19 @@ const canonicalPath = computed(
 )
 
 useSeo({
-  title: computed(() =>
-    listingDocumentTitle(tool.value!.name, tool.value!.short, t('directory.brand_name'), {
-      features: hasFeatures.value,
-      pricing: hasPricing.value,
-      related: related.value.length > 0,
-    }),
-  ),
+  // Name and one-liner, nothing else: the section names this used to append
+  // described the page's own table of contents and pushed the description past
+  // the point where a result is cut. See shared/utils/listing-title.ts.
+  title: computed(() => listingDocumentTitle(tool.value!.name, tool.value!.short)),
   description: computed(() => tool.value!.short),
   type: 'article',
+  /**
+   * A community submission ships with its Chinese copy set to the English text,
+   * so `/zh/products/<slug>` is the same document under a translated header.
+   * It keeps working for a Chinese reader — and stops claiming to be a Chinese
+   * page, which is what put 79 near-duplicate URLs in the index.
+   */
+  zhTwin: computed(() => Boolean(tool.value && hasChineseCopy(tool.value))),
 })
 
 useHead({

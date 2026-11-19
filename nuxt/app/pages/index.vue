@@ -10,7 +10,14 @@ import {
   nextLaunchInstant,
   remainingHms,
 } from '~~/shared/utils/directory-window'
-import { faqPageSchema, itemListSchema } from '~~/shared/utils/schema'
+import {
+  SCHEMA_SITE,
+  SCHEMA_SITE_NAME,
+  faqPageSchema,
+  itemListSchema,
+  siteEntitySchema,
+} from '~~/shared/utils/schema'
+import { CONTACT_EMAIL, SOCIAL_X_URL } from '~~/shared/content/site-contact'
 
 const { lang, isZh, pick } = useLang()
 const localePath = useLocalePath()
@@ -379,6 +386,23 @@ type SchemaScript = { type: 'application/ld+json'; innerHTML: string }
 
 const schemaScripts = computed<SchemaScript[]>(() => {
   const list: SchemaScript[] = [
+    // First, and unconditional: the site's own identity. It is the only block
+    // on the site that describes the publisher rather than a page, and it is
+    // what a search engine reads to print "Product Atlas" above a result.
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(
+        siteEntitySchema({
+          name: SCHEMA_SITE_NAME,
+          url: `${SCHEMA_SITE}/`,
+          // The 128px square the site already serves. Google wants at least
+          // 112px, and a logo that 404s is worse than none.
+          logo: `${SCHEMA_SITE}/assets/img/brand/logo.png`,
+          sameAs: [SOCIAL_X_URL],
+          email: CONTACT_EMAIL,
+        }),
+      ),
+    },
     {
       type: 'application/ld+json',
       innerHTML: JSON.stringify(

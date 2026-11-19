@@ -8,7 +8,7 @@ import { dirname, join } from 'node:path'
 import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { englishCount } from './english-count.ts'
-import { listingDocumentTitle } from './listing-title.ts'
+import { listingDocumentTitle, textWidth } from './listing-title.ts'
 
 const here = dirname(fileURLToPath(import.meta.url))
 
@@ -128,22 +128,32 @@ test('llms.txt and ai.txt describe the live directory and do not hard-code 0 or 
   assert.equal(read('../../server/routes/zh/llms.txt.ts').includes("sendRedirect(event, '/llms.txt', 301)"), true)
 })
 
-test('a product title is the name and one-liner, truncated around 60 characters', () => {
+test('a product title is the name and one-liner, cut to fit a result', () => {
   assert.equal(
     listingDocumentTitle('YouTranscripts', 'Turn videos into transcripts'),
-    'YouTranscripts — Turn videos into transcripts | Product Atlas',
+    'YouTranscripts — Turn videos into transcripts',
   )
-  const long = 'x'.repeat(80)
-  const title = listingDocumentTitle('Name', long)
-  const oneLiner = title.slice('Name — '.length, title.indexOf(' | Product Atlas'))
-  assert.equal(oneLiner.length, 60)
-  assert.equal(oneLiner.endsWith('…'), true)
+  // A title that fits is not touched.
+  assert.equal(listingDocumentTitle('Name', 'A short line'), 'Name — A short line')
+  // One that does not is cut to the width a result shows, ellipsis included.
+  const title = listingDocumentTitle('Name', 'x'.repeat(80))
+  assert.equal(textWidth(title), 60)
+  assert.equal(title.endsWith('…'), true)
   assert.equal(title.includes('Features'), false)
   assert.equal(title.includes('Pricing'), false)
   assert.equal(title.includes('Alternatives'), false)
   const page = read('../../app/pages/products/[slug].vue')
   assert.equal(page.includes('listingDocumentTitle'), true)
   assert.equal(page.includes('Features, Pricing & Alternatives'), false)
+})
+
+test('a chinese title is cut on width, not on character count', () => {
+  const title = listingDocumentTitle('Claude', '注重思考的 AI 助手，擅长写作、研究、编程与长文档处理。')
+  // 28 characters, but 56 columns: a character count would have let it through.
+  assert.equal(title.length > 60, false)
+  assert.equal(textWidth(title) <= 60, true)
+  assert.equal(title.endsWith('…'), true)
+  assert.equal(title.startsWith('Claude — 注重思考的'), true)
 })
 
 test('english counters use the singular only for 1', () => {

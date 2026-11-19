@@ -67,21 +67,18 @@ test('ask links prefill the approved prompt, llms.txt, and the current page', ()
   assert.equal(ask.includes('llms.txt'), true)
 })
 
-test('product sections enter the title only when they have content', () => {
-  const bare = listingDocumentTitle('YouTranscripts', 'Turn videos into transcripts')
-  assert.equal(bare.includes('Features'), false)
-  assert.equal(bare.includes('Pricing'), false)
-  assert.equal(bare.includes('Related'), false)
-  assert.equal(bare.includes('Alternatives'), false)
-  const full = listingDocumentTitle('YouTranscripts', 'Turn videos into transcripts', 'Product Atlas', {
-    features: true,
-    pricing: true,
-    related: true,
-  })
-  assert.equal(full.includes('Features, Pricing, Related'), true)
-  const featuresOnly = listingDocumentTitle('Name', 'A short line', 'Product Atlas', { features: true })
-  assert.equal(featuresOnly.includes('Features'), true)
-  assert.equal(featuresOnly.includes('Pricing'), false)
+test('a product title carries the listing, never the page furniture', () => {
+  const title = listingDocumentTitle('YouTranscripts', 'Turn videos into transcripts')
+  // The section names described the page's own table of contents; the brand
+  // cost 16 of the ~60 characters a result shows. Neither belongs in a title.
+  assert.equal(title.includes('Features'), false)
+  assert.equal(title.includes('Pricing'), false)
+  assert.equal(title.includes('Related'), false)
+  assert.equal(title.includes('Alternatives'), false)
+  assert.equal(title.includes('Product Atlas'), false)
+  // Long names keep the title to themselves rather than showing half a line.
+  const longName = 'A'.repeat(50)
+  assert.equal(listingDocumentTitle(longName, 'A one-liner that will not fit'), longName)
   const page = read('../../app/pages/products/[slug].vue')
   assert.equal(FEATURES_EMPTY, 'This listing does not include a features section.')
   assert.equal(page.includes('FEATURES_EMPTY'), true)

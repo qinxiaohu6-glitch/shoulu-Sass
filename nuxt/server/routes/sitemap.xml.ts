@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { categories, tools, weeks } from '~~/shared/utils/catalog'
+import { categories, hasChineseCopy, tools, weeks } from '~~/shared/utils/catalog'
 import type { OverrideView } from '~~/shared/utils/catalog'
 import { useDb } from '../utils/db'
 import { loadOverrides } from '../utils/overrides'
@@ -16,11 +16,14 @@ type Entry = {
   lastmod?: string
   priority: string
   /**
-   * The page has no translated twin. Still true for individual articles: a
-   * Spotlight record carries no locale, so `/zh/spotlights/<slug>` answers a 301
-   * to the one URL it lives at, and listing a zh variant would put a redirect in
-   * the sitemap. The four pages around the articles ARE bilingual now, so they
-   * no longer set this flag.
+   * The page has no translated twin, so it gets one entry and no alternates.
+   *
+   * True for two kinds of page. Individual articles: a Spotlight record carries
+   * no locale, so `/zh/spotlights/<slug>` answers a 301 to the one URL it lives
+   * at, and listing a zh variant would put a redirect in the sitemap. And a
+   * product listing with no Chinese copy: its `/zh` URL is the English document
+   * under a translated header, so the two are not alternates of each other.
+   * The four pages around the articles ARE bilingual, so they do not set it.
    */
   enOnly?: boolean
 }
@@ -94,7 +97,13 @@ async function entries(event: H3Event): Promise<Entry[]> {
   for (const tool of tools) {
     if (!visible(tool.slug)) continue
     if (isReservedProductSlug(tool.slug)) continue
-    list.push({ path: `/products/${tool.slug}`, lastmod: tool.created_at, priority: '0.9' })
+    list.push({
+      path: `/products/${tool.slug}`,
+      lastmod: tool.created_at,
+      priority: '0.9',
+      // No Chinese copy means no Chinese page: one entry, no alternates.
+      enOnly: !hasChineseCopy(tool),
+    })
   }
   for (const category of categories) {
     list.push({ path: `/categories/${category.slug}`, lastmod: today, priority: '0.7' })
@@ -115,7 +124,12 @@ async function entries(event: H3Event): Promise<Entry[]> {
   for (const tool of published) {
     if (!visible(tool.slug)) continue
     if (isReservedProductSlug(tool.slug)) continue
-    list.push({ path: `/products/${tool.slug}`, lastmod: tool.created_at, priority: '0.8' })
+    list.push({
+      path: `/products/${tool.slug}`,
+      lastmod: tool.created_at,
+      priority: '0.8',
+      enOnly: !hasChineseCopy(tool),
+    })
   }
 
   // Spotlights are dated content, so each carries its own `lastmod` — which is
