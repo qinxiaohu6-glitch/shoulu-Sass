@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
     `- [Ranking rules](${SITE}/rules): how the board, votes and links work, in full`,
     `- [Alternatives](${SITE}/alternatives): how launch platforms compare, and a multi-site launch plan`,
     `- [Questions](${SITE}/faq): how listing, votes, links, pricing and ad slots work, in short answers`,
-    `- [Billboard](${SITE}/billboard): one-time name-your-price from ${entry.priceLabel}, same Top 10 as the homepage`,
+    `- [Billboard](${SITE}/billboard): one-time name-your-price from ${entry.priceLabel}, same Top 5 as the homepage`,
     `- [Pricing](${SITE}/pricing): free, Boost ${boost.priceLabel}, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel} one-time tiers, plus Billboard and a weekly sidebar`,
     `- [Advertise](${SITE}/advertise): where Billboard, the sidebar, a written review and a featured listing are described`,
     `- [Sponsor a week](${SITE}/sponsor): weekly advertising — the featured spot and four sidebar slots`,

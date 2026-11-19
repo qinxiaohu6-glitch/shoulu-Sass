@@ -54,8 +54,8 @@ test('og:image is read from the homepage head, including a relative URL', () => 
   assert.equal(ogImageFromHtml('<html></html>', 'https://example.com/'), '')
 })
 
-test('the Billboard card binds screenshotSrc and the claim pill cannot wrap into the rank column', () => {
-  const grid = readFileSync(join(here, '../../app/components/BillboardGrid.vue'), 'utf8')
+test('the Billboard slot binds screenshotSrc and the claim pill cannot wrap into the rank column', () => {
+  const grid = readFileSync(join(here, '../../app/components/BillboardRail.vue'), 'utf8')
   const page = readFileSync(join(here, '../../app/pages/billboard.vue'), 'utf8')
   const css = readFileSync(join(here, '../../app/assets/css/legacy.css'), 'utf8')
   const home = readFileSync(join(here, '../../app/pages/index.vue'), 'utf8')

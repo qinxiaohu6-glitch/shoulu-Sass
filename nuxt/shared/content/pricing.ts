@@ -317,8 +317,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'How do ad spots work?', zh: '广告位怎么运作？' },
     a: {
-      en: 'Billboard is a one-time name-your-price placement: the Top 10 is ranked by the total backed, and you can pay again for the same product to add to it. The sidebar is rented by the week, Monday to Sunday, with four separate slots.',
-      zh: 'Billboard 是一次性出价展示：Top 10 按累计金额排名，同一产品可再次付款累加。右栏按周租用，周一起算 7 天，共 4 个独立位置。',
+      en: 'Billboard is a one-time name-your-price placement: the Top 5 is ranked by the total backed, and you can pay again for the same product to add to it. The sidebar is rented by the week, Monday to Sunday, with four separate slots.',
+      zh: 'Billboard 是一次性出价展示：Top 5 按累计金额排名，同一产品可再次付款累加。右栏按周租用，周一起算 7 天，共 4 个独立位置。',
     },
   },
   {

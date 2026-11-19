@@ -82,8 +82,8 @@ const rules = computed(() => [
     n: '02',
     title: pick('付款成功后上线', 'When payment succeeds'),
     body: pick(
-      '付款成功后出现在本页。进入前 10 名时同步出现在首页。无需排队审核。',
-      'Your spot appears on this page when payment succeeds. Top 10 also shows on the homepage. No review queue.',
+      '付款成功后出现在本页。进入前 5 名时同步出现在首页。无需排队审核。',
+      'Your spot appears on this page when payment succeeds. Top 5 also shows on the homepage. No review queue.',
     ),
   },
   {
@@ -100,7 +100,7 @@ const faq = computed(() => [
   {
     q: pick('我买到的是什么？', 'What am I buying?'),
     a: pick(
-      '一个永久的站内展示位，按该网站累计金额排序。前 10 名同时出现在首页。不承诺搜索排名或流量。',
+      '一个永久的站内展示位，按该网站累计金额排序。前 5 名同时出现在首页。不承诺搜索排名或流量。',
       'A permanent on-site spot, ranked by the total backed for that website. The top 10 also appear on the homepage. No promise of search rank or traffic.',
     ),
   },
@@ -201,8 +201,8 @@ useSeo({
   title: computed(() => pick('Billboard · Product Atlas', 'The Billboard · Product Atlas')),
   description: computed(() =>
     pick(
-      `自己出价，从 ${floorLabel} 起。一次付清。前 10 名同步首页。`,
-      `Name your price, from ${floorLabel}. One-time. Top 10 also shown on the home page.`,
+      `自己出价，从 ${floorLabel} 起。一次付清。前 5 名同步首页。`,
+      `Name your price, from ${floorLabel}. One-time. Top 5 also shown on the home page.`,
     ),
   ),
 })
@@ -237,8 +237,8 @@ useHead({
         <p class="bb-page__desc">
           {{
             pick(
-              '按你已经支持的累计金额排名。前 10 名出现在首页。被人超过只掉名次。',
-              'Ranked by the total you have backed. Top 10 on the homepage. If someone passes you, you only drop in rank.',
+              '按你已经支持的累计金额排名。前 5 名出现在首页。被人超过只掉名次。',
+              'Ranked by the total you have backed. Top 5 on the homepage. If someone passes you, you only drop in rank.',
             )
           }}
         </p>
@@ -275,7 +275,7 @@ useHead({
         <p class="bb-rank__stats">
           {{ centsLabel(totalBacked) }} {{ pick('累计', 'backed') }}
           · {{ ranked.length }} {{ isZh ? '个位置' : englishCount(ranked.length, 'spot') }}
-          · {{ pick('前 10 名同步首页', 'Top 10 on the homepage') }}
+          · {{ pick('前 5 名同步首页', 'Top 5 on the homepage') }}
         </p>
         <div class="bb-filters" role="tablist">
           <button
@@ -369,7 +369,7 @@ useHead({
 
     <section class="bb-close">
       <div>
-        <h2>{{ pick(`首页前 10 名。从 ${floorLabel} 起。`, `Homepage Top 10. From ${floorLabel}.`) }}</h2>
+        <h2>{{ pick(`首页前 5 名。从 ${floorLabel} 起。`, `Homepage Top 5. From ${floorLabel}.`) }}</h2>
         <p>
           {{ pick('一次付清。付款成功后上线。位置长期保留。', 'One-time payment. It goes live when payment succeeds. The spot stays.') }}
         </p>

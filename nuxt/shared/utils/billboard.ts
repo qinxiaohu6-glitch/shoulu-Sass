@@ -1,5 +1,5 @@
 /**
- * Billboard ranking. Homepage Top 10 and /billboard both call these functions
+ * Billboard ranking. Homepage Top 5 and /billboard both call these functions
  * on the same rows. A request that has not been paid is not a row.
  */
 

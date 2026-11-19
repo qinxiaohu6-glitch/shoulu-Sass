@@ -1,7 +1,7 @@
 /**
  * GET /api/billboard — the only public ranking.
  *
- * Homepage Top 10 and /billboard both read this. Invoice requests are not
+ * Homepage Top 5 and /billboard both read this. Invoice requests are not
  * in the result: the SQL requires status = live and a confirmed timestamp.
  */
 

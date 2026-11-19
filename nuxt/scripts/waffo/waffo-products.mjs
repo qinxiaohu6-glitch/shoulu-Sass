@@ -71,9 +71,9 @@ const CATALOGUE = [
     sku: 'billboard',
     name: 'Product Atlas — Billboard placement',
     description:
-      'Name-your-price placement in the Billboard Top 10. The amount charged is the bid, from $10. One-time.',
-    regular: '10.00',
-    sale: '10.00',
+      'Name-your-price placement in the Billboard Top 5. The amount charged is the bid, from $9.99. One-time.',
+    regular: '9.99',
+    sale: '9.99',
   },
   {
     sku: 'ad',
@@ -122,7 +122,10 @@ if (!APPLY) {
 const created = {}
 
 for (const entry of CATALOGUE) {
-  const reuse = entry.reuse ? before.find((p) => p.id === entry.reuse) : null
+  // Match by name first: without this, every re-run after a price change
+  // created a second product for the same SKU instead of repricing the one the
+  // live checkout already points at.
+  const reuse = before.find((p) => p.name === entry.name) || (entry.reuse ? before.find((p) => p.id === entry.reuse) : null)
   if (reuse) {
     const { product } = await client.onetimeProducts.update({
       id: reuse.id,

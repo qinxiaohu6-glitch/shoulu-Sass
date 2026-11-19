@@ -18,12 +18,12 @@ const cards = computed(() => {
     {
       id: 'billboard',
       kicker: 'BILLBOARD',
-      title: pick('首页 Top 10', 'Homepage Top 10'),
+      title: pick('首页 Top 5', 'Homepage Top 5'),
       price: pick(`从 ${entry.priceLabel} 起`, `From ${entry.priceLabel}`),
       when: pick('确认后上线', 'Live when the payment is confirmed'),
       body: pick(
-        '自己出价，一次付清。和首页 Top 10 是同一份已确认名单。',
-        'Name your price, one payment. The same confirmed list as the homepage Top 10.',
+        '自己出价，一次付清。和首页 Top 5 是同一份已确认名单。',
+        'Name your price, one payment. The same confirmed list as the homepage Top 5.',
       ),
       to: `${localePath('/billboard')}#claim`,
       cta: pick('认领展示位', 'Claim a spot'),

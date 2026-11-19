@@ -167,21 +167,21 @@ const adPlans = computed<PlanView[]>(() => {
       id: 'billboard',
       n: 'A',
       name: 'Billboard',
-      badge: pick('Top 10', 'Top 10'),
+      badge: pick('Top 5', 'Top 5'),
       description: pick('发布榜上的那一块大广告位。', 'The one big ad on the launch board.'),
       pricePrefix: pick('起', 'from'),
       price: floor.priceLabel,
       unit: pick('一次性', 'one-time'),
       features: pick(
         [
-          'Billboard Top 10 中的赞助横幅',
+          'Billboard Top 5 中的赞助横幅',
           '同时出现在发布榜与首页',
           '一次付清，同一产品可追加金额',
           '包含 logo、名称、标语与按钮',
           '付款成功后进入排名',
         ],
         [
-          'Sponsored banner in the Billboard Top 10',
+          'Sponsored banner in the Billboard Top 5',
           'Shown on the launch board and the homepage',
           'Pay once; bids stack for the same product',
           'Your logo, name, headline and button',
@@ -226,7 +226,7 @@ const adPlans = computed<PlanView[]>(() => {
 const whereItems = computed(() => [
   { n: '1', title: pick('免费发布', 'Free launch'), body: pick('发布周榜单中的普通一行，按投票排序。', "A regular row in your launch week's board, ranked by upvotes."), spot: '1' },
   { n: '2', title: pick('加速发布', 'Boost launch'), body: pick('金色高亮行，带认证徽章，排在标准收录之前。', 'A highlighted gold row with a verified badge, above standard launches.'), spot: '2' },
-  { n: 'A', title: 'Billboard', body: pick('发布榜 Top 10 中的赞助横幅。', 'Sponsored banner in the Billboard Top 10.'), spot: 'A' },
+  { n: 'A', title: 'Billboard', body: pick('发布榜 Top 5 中的赞助横幅。', 'Sponsored banner in the Billboard Top 5.'), spot: 'A' },
   { n: 'B', title: pick('右栏广告', 'Right sidebar ad'), body: pick('首页右栏，以及小屏时的榜单下方。', 'Right sidebar on the homepage, under the board on smaller screens.'), spot: 'B' },
 ])
 
@@ -506,7 +506,7 @@ useHead({
         <article class="pb-mini-ad">
           <span class="pb-mini-ad__tag">{{ pick('Billboard', 'Billboard') }}</span>
           <strong>{{ pick('你的广告放这里', 'Your ad here') }}</strong>
-          <p>{{ pick('首页 Billboard Top 10，付款成功后进入排名。', 'Billboard Top 10 on the homepage. It goes live when payment succeeds.') }}</p>
+          <p>{{ pick('首页 Billboard Top 5，付款成功后进入排名。', 'Billboard Top 5 on the homepage. It goes live when payment succeeds.') }}</p>
           <div class="pb-mini-ad__price">{{ pick('起', 'from') }} {{ effectiveQuote('billboard', 'floor').priceLabel }} <small>{{ pick('一次性', 'one-time') }}</small></div>
           <NuxtLink :to="`${localePath('/billboard')}#claim`">{{ pick('认领展示位', 'Claim a spot') }} ↗</NuxtLink>
         </article>

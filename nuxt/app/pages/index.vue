@@ -22,6 +22,14 @@ const { categories: liveCategories } = useDirectoryMeta()
 const { homeGrid, ranked: billboardRanked } = await useBillboard()
 const boardData = await useBoardData()
 
+/**
+ * Slots 1–2 ride the left rail and 3–5 the right, so reading the page
+ * left-to-right still runs 1→5. Splitting 3/2 would put rank 3 in the left
+ * column and rank 1 in the right.
+ */
+const billboardLeft = computed(() => homeGrid.value.slice(0, 2))
+const billboardRight = computed(() => homeGrid.value.slice(2))
+
 const all = computed(() =>
   mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value),
 )
@@ -476,8 +484,6 @@ useHead({ script: schemaScripts })
       </div>
     </div>
 
-    <BillboardGrid :cells="homeGrid" :product-slugs="billboardProductSlugs" />
-
     <WeekSwitcher v-if="activeWeekId" :active-id="activeWeekId" :weeks="availableWeeks" />
 
     <div class="home-dir">
@@ -486,6 +492,9 @@ useHead({ script: schemaScripts })
           {{ pick('浏览', 'Browse') }}
           <span>{{ browseOpen ? '–' : '+' }}</span>
         </button>
+        <!-- The board runs down the rail, not across the page: five slots level
+             with the feed instead of a ten-cell band above it. -->
+        <BillboardRail :cells="billboardLeft" :product-slugs="billboardProductSlugs" side="left" />
         <div class="home-dir__panel">
           <p class="home-dir__kicker">{{ pick('目录', 'DIRECTORY') }}</p>
           <p class="home-dir__stat"><strong>{{ all.length }}</strong> {{ isZh ? '个产品已收录' : `${englishCount(all.length, 'product')} listed` }}</p>
@@ -512,6 +521,10 @@ useHead({ script: schemaScripts })
       </aside>
 
       <section class="home-dir__main" aria-labelledby="just-launched-title">
+        <!-- Phone layout only: the rails dissolve below 980px, so the board is
+             rendered once here and the two rail copies are hidden. Without it
+             the list would sit between slot 2 and slot 3. -->
+        <BillboardRail class="bb-rail--stack" :cells="homeGrid" :product-slugs="billboardProductSlugs" side="stack" />
         <WeeklyPulse />
         <p class="home-dir__kicker">{{ pick('实时目录', 'LIVE DIRECTORY') }}</p>
         <div class="home-dir__head">
@@ -588,6 +601,7 @@ useHead({ script: schemaScripts })
       </section>
 
       <aside class="home-dir__right" aria-labelledby="featured-sell-title">
+        <BillboardRail :cells="billboardRight" :product-slugs="billboardProductSlugs" side="right" />
         <section v-if="lastWeekTop3.length" class="pb-top3" aria-labelledby="pb-top3-title">
           <div class="pb-top3__head">
             <h2 id="pb-top3-title">🏆 {{ pick('上周前三', "Last week's top 3") }}</h2>
@@ -828,9 +842,13 @@ useHead({ script: schemaScripts })
   font-weight: 800;
   letter-spacing: 0.06em;
 }
+/* One flat list with hairlines, not a stack of cards: the cards put a 1.5px
+   border and 16px of padding around every row, so five products filled a
+   screen and the board below them was pushed off it. */
 .home-feed {
   display: grid;
-  gap: 12px;
+  gap: 0;
+  border-top: 1px solid #eceef2;
 }
 .pb-row {
   position: relative;
@@ -838,15 +856,16 @@ useHead({ script: schemaScripts })
   grid-template-columns: 38px minmax(0, 1fr) 34px auto;
   align-items: center;
   gap: 12px;
-  padding: 16px 16px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 16px;
-  background: var(--card, #fff);
+  padding: 12px 4px;
+  border-bottom: 1px solid #eceef2;
+  background: transparent;
 }
+/* A paid row keeps a gold edge rather than a full gold box: a boxed row in a
+   list of hairlines reads as a different component, not as a promoted row. */
 .pb-row--featured {
-  border-color: #e5b53a;
-  background: linear-gradient(100deg, #fff7e0 0%, #fffaf0 70%, #fff 100%);
-  box-shadow: 0 1px 0 #f5d987 inset;
+  padding-left: 14px;
+  background: linear-gradient(90deg, rgba(255, 247, 224, 0.85), rgba(255, 255, 255, 0));
+  box-shadow: inset 3px 0 0 #e5b53a;
 }
 .pb-row__rank {
   position: relative;
@@ -883,22 +902,43 @@ useHead({ script: schemaScripts })
   position: relative;
   flex: none;
   display: inline-flex;
-  padding: 3px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  /* No plate, no ring. Every catalogue logo is an opaque tile with its own
+     background, so the white box plus grey border framed all of them in the
+     same square and flattened them into identical blocks. The icon is the
+     mark; the rounding lives on the image so it cannot clip the crown.
+     Explicit box: a listing with no icon falls back to a monogram, and a
+     shrink-to-fit wrapper collapsed that to the width of one letter. */
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
 }
-.pb-row--featured .pb-row__logo { border-color: #e5b53a; }
+.pb-row__logo :deep(img) {
+  display: block;
+  width: 56px;
+  height: 56px;
+  /* `contain`, not `cover`: some brand marks are SVG with a non-square ratio
+     and stretching them would distort the logo. */
+  object-fit: contain;
+  border-radius: 10px;
+}
+.pb-row__logo :deep(.tool-logo__initial) {
+  background: #f2f3f5;
+  border-radius: 10px;
+}
 .pb-row__logo-crown {
   position: absolute;
-  /* Sits ON the logo's top edge rather than floating above it: the band's
-     bottom lip overlaps the border by ~5px, so it reads as one badge.
+  /* Perched on the logo's top edge, pivoting on its own bottom edge so the tilt
+     reads as "set down at an angle" rather than "rotated in place".
+     22px on a 56px tile: the catalogue icons are glyphs with generous internal
+     padding, so a crown sized to the tile covers the mark itself — at 28px the
+     "R" of Refund Score disappeared behind it.
      Explicit box — the SVG inside is `100%` and would otherwise collapse. */
-  top: -17px;
+  top: -13px;
   left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 22px;
+  width: 22px;
+  height: 17px;
+  transform: translateX(-50%) rotate(-14deg);
+  transform-origin: 50% 100%;
   pointer-events: none;
 }
 .pb-row__body { min-width: 0; display: block; }

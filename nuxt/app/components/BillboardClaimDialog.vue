@@ -46,8 +46,13 @@ const nameTouched = ref(false)
 
 const chargeCents = computed(() => {
   const dollars = Number(amountDollars.value)
-  const cents = Number.isFinite(dollars) ? Math.round(dollars) * 100 : 0
-  return Math.max(BILLBOARD_FLOOR_CENTS, cents > 0 ? cents : BILLBOARD_FLOOR_CENTS)
+  if (!Number.isFinite(dollars) || dollars <= 0) return BILLBOARD_FLOOR_CENTS
+  const cents = Math.round(dollars * 100)
+  // The floor is $9.99, so it is the one amount that is not a whole dollar.
+  // Anything above it snaps to whole dollars, which is what the server accepts
+  // and what the $1 ladder between ranks is built on.
+  if (cents <= BILLBOARD_FLOOR_CENTS) return BILLBOARD_FLOOR_CENTS
+  return Math.round(dollars) * 100
 })
 
 const landing = computed(() => rankForPayment(chargeCents.value, props.occupants, props.url))
@@ -68,7 +73,7 @@ const landingCopy = computed(() => {
 })
 
 const checks = computed(() => [
-  pick('首页展示前 10 名', 'Top 10 shown on the homepage'),
+  pick('首页展示前 5 名', 'Top 5 shown on the homepage'),
   pick('直接链到你的网站', 'Direct link to your website'),
   pick('付款成功后上线', 'It goes live when payment succeeds'),
   pick('不过期，不续费', 'No expiry, no renewal'),
@@ -182,7 +187,7 @@ function onClose() {
           {{ pick('你的金额', 'Your amount') }}
           <span class="bb-modal__money">
             <span>$</span>
-            <input v-model.number="amountDollars" type="number" min="1" step="1" inputmode="numeric" required>
+            <input v-model.number="amountDollars" type="number" :min="BILLBOARD_FLOOR_CENTS / 100" step="0.01" inputmode="decimal" required>
           </span>
           <small>{{ pick(`自己出价，从 ${floorLabel} 起`, `Name your amount, from ${floorLabel}`) }}</small>
         </label>

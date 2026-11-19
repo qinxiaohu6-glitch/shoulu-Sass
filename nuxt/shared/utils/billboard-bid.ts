@@ -3,7 +3,7 @@
  *
  * Rank is total backed for a website, highest first. The same amount keeps
  * the earlier payment ahead. A new bid must beat the occupant by $1, and
- * every new payment is at least $10. That floor is the cold-start minimum.
+ * every new payment is at least $9.99. That floor is the cold-start minimum.
  * A later payment for the same URL stacks; it does not open a second spot.
  *
  * The $10,000 ceiling is an abuse cap, not a product price.
@@ -14,7 +14,7 @@ import { centsLabel } from '../content/campaign.ts'
 import { backingCents, normalizeEmail, publicHttpUrl, samePlacementUrl } from './billboard.ts'
 import { screenshotSrc } from './screenshot.ts'
 
-export const BILLBOARD_FLOOR_CENTS = 1000
+export const BILLBOARD_FLOOR_CENTS = 999
 export const BILLBOARD_BID_MAX_CENTS = 1_000_000
 
 const GENERIC_HOST_LABELS = new Set(['www', 'app', 'get', 'try', 'use', 'go'])
@@ -38,14 +38,16 @@ export function tierForBid(cents: number): BillboardTierId {
 
 /**
  * Whole-dollar cents, clamped up to the floor and rejected above the cap.
- * `500` ($5) becomes `1000` ($10). A non-integer or a fractional dollar is refused.
+ * `500` ($5) becomes `999` ($9.99). A non-integer or a fractional dollar is
+ * refused — except at the floor itself, which is $9.99 and therefore the one
+ * bid that is not a whole dollar.
  */
 export function clampBillboardBid(raw: unknown): number | null {
   if (typeof raw === 'string' && raw.trim() === '') return null
   const n = typeof raw === 'number' ? raw : Number(raw)
   if (!Number.isFinite(n) || !Number.isInteger(n)) return null
   if (n < 0 || n > BILLBOARD_BID_MAX_CENTS) return null
-  if (n % 100 !== 0) return null
+  if (n % 100 !== 0 && n !== BILLBOARD_FLOOR_CENTS) return null
   return Math.max(BILLBOARD_FLOOR_CENTS, n)
 }
 

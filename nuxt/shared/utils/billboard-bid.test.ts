@@ -48,7 +48,9 @@ test('a same-URL top-up stacks before the rank is predicted', () => {
 
 test('the floor clamps, fractional dollars are refused, and the name comes from the host', () => {
   assert.equal(clampBillboardBid(1000), 1000)
-  assert.equal(clampBillboardBid(500), 1000)
+  assert.equal(clampBillboardBid(500), 999)
+  // $9.99 is the floor itself, so it is the one bid that is not a whole dollar.
+  assert.equal(clampBillboardBid(999), 999)
   assert.equal(clampBillboardBid(3100), 3100)
   assert.equal(clampBillboardBid(1550), null)
   assert.equal(clampBillboardBid(1_000_001), null)

@@ -1,5 +1,5 @@
 /**
- * Billboard — the one price table for the homepage Top 10 and /billboard.
+ * Billboard — the one price table for the homepage Top 5 and /billboard.
  *
  * The live board is pay-what-you-want from the floor in
  * `shared/utils/billboard-bid.ts` (`BILLBOARD_FLOOR_CENTS`). These three tiers
@@ -27,7 +27,7 @@ export type BillboardTier = {
   blurb: { en: string; zh: string }
 }
 
-export const BILLBOARD_TOP_N = 10
+export const BILLBOARD_TOP_N = 5
 
 export const BILLBOARD_TIERS: readonly BillboardTier[] = [
   {
@@ -38,8 +38,8 @@ export const BILLBOARD_TIERS: readonly BillboardTier[] = [
     floorCents: 0,
     name: { en: 'Entry', zh: '入门' },
     blurb: {
-      en: 'One-time payment. It goes live when payment succeeds — including homepage Top 10.',
-      zh: '一次付清。付款成功后上线；含首页 Top 10 展示。',
+      en: 'One-time payment. It goes live when payment succeeds — including homepage Top 5.',
+      zh: '一次付清。付款成功后上线；含首页 Top 5 展示。',
     },
   },
   {

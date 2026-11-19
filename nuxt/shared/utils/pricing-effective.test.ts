@@ -25,7 +25,7 @@ test('the Boost SKU lists at $10 and really charges $4.99 during the campaign', 
 
 test('launch pricing charges the campaign price and strikes the regular price', () => {
   assert.equal(CAMPAIGN.off, 0)
-  assert.equal(BILLBOARD_FLOOR_CENTS, 1000)
+  assert.equal(BILLBOARD_FLOOR_CENTS, 999)
   assert.deepEqual([...AD_WEEK_OPTIONS], [1, 4])
   assert.equal(campaignActive(before), true)
   assert.equal(effectiveAmountCents('listing', 'free', before), 0)
@@ -35,7 +35,7 @@ test('launch pricing charges the campaign price and strikes the regular price', 
   assert.equal(effectiveAmountCents('sidebar', '1', before), 900)
   assert.equal(effectiveAmountCents('sidebar', '4', before), 3200)
   assert.equal(effectiveAmountCents('sidebar', '2', before), 0)
-  assert.equal(effectiveAmountCents('billboard', 'floor', before), 1000)
+  assert.equal(effectiveAmountCents('billboard', 'floor', before), 999)
   assert.equal(effectiveAmountCents('billboard', 'entry', before), 1500)
   assert.equal(effectiveQuote('listing', 'standard', before).priceLabel, '$9')
   assert.equal(effectiveQuote('listing', 'standard', before).strikeLabel, '$19')
@@ -49,14 +49,14 @@ test('launch pricing charges the campaign price and strikes the regular price', 
   assert.equal(effectiveQuote('sidebar', '1', before).strikeLabel, '$19')
   assert.equal(effectiveQuote('sidebar', '4', before).priceLabel, '$32')
   assert.equal(effectiveQuote('sidebar', '4', before).strikeLabel, '$76')
-  assert.equal(effectiveQuote('billboard', 'floor', before).priceLabel, '$10')
+  assert.equal(effectiveQuote('billboard', 'floor', before).priceLabel, '$9.99')
   assert.equal(effectiveQuote('billboard', 'floor', before).strikeLabel, null)
   assert.equal(effectiveQuote('billboard', 'entry', before).strikeLabel, null)
 })
 
 test('the campaign clock drops the strike and returns to the regular price', () => {
   assert.equal(effectiveAmountCents('listing', 'standard', atEnd), 1900)
-  assert.equal(effectiveAmountCents('billboard', 'floor', atEnd), 1000)
+  assert.equal(effectiveAmountCents('billboard', 'floor', atEnd), 999)
   assert.equal(effectiveAmountCents('sidebar', '4', atEnd), listAmountCents('sidebar', '4'))
   assert.equal(effectiveQuote('listing', 'standard', atEnd).priceLabel, '$19')
   assert.equal(effectiveQuote('listing', 'standard', atEnd).strikeLabel, null)

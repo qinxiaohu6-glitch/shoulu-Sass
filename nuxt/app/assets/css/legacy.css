@@ -7265,120 +7265,191 @@ html[lang="en"] .ad-section__head h2 {
   margin-top: 16px;
 }
 
-.bb-wrap { margin: 8px 0 22px; }
-.billboard {
-  background: linear-gradient(125deg, #fff4d6 0%, #fef9e7 35%, #e8faf3 75%, #d9f5ec 100%);
-  border-radius: 28px;
-  padding: 18px 18px 16px;
-  box-shadow: 0 12px 40px rgba(180, 140, 40, 0.12), 0 0 0 1px rgba(253, 230, 138, 0.45);
-}
-.bb-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding: 0 4px;
-}
-.bb-label {
-  margin: 0;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  color: #b45309;
-  background: #fffef8;
-  border: 1.5px solid #f0c14b;
-  padding: 6px 12px;
-  border-radius: 999px;
-}
-.bb-cta { font-size: 14px; font-weight: 700; }
-.bb-grid {
+/* ── Billboard rail ─────────────────────────────────────────────────────
+   Five slots, not ten, and they sit in the two side rails instead of a
+   full-width band. Ten cells in two rows cost ~500px above the fold and read
+   as a wall of dashed boxes while nobody had bought one; a rail runs level with
+   the feed beside it, so the board adds no page height at all. */
+.bb-rail {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-}
-.bb-card {
-  background: #fff;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  box-shadow: 0 2px 10px rgba(15, 15, 15, 0.05);
+  gap: 9px;
+  align-content: start;
   min-width: 0;
+  margin: 0 0 16px;
 }
-.bb-card--prime { box-shadow: 0 0 0 1.5px #f0c14b, 0 4px 14px rgba(240, 193, 75, 0.25); }
-.bb-card--empty { background: transparent; box-shadow: none; }
-.bb-shot {
+.bb-rail__head {
   display: flex;
-  align-items: flex-end;
-  height: 136px;
-  padding: 12px;
-  background: linear-gradient(160deg, #f8fafc, #eef2ff);
-  border-bottom: 1px solid #f3f4f6;
-  color: #111;
-  font-size: 13px;
-  font-weight: 800;
-  overflow: hidden;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
-.bb-shot--image {
+.bb-rail__label {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+.bb-rail__label--hot { color: #c2410c; }
+.bb-rail__cta {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c2410c;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.bb-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 13px;
+  background: #fff;
+  border: 1px solid #e8eaee;
+  text-decoration: none;
+  color: inherit;
+}
+.bb-slot--empty { border-style: dashed; border-color: #e2e6ec; background: #fcfcfd; }
+.bb-slot--empty:hover { border-color: #f0c98a; background: #fffdf8; }
+.bb-slot--live {
   display: block;
   padding: 0;
-}
-.bb-shot img { display: block; width: 100%; height: 136px; object-fit: cover; }
-.bb-shot__plain {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
   overflow: hidden;
+  border-color: #eecf8b;
+  box-shadow: 0 0 0 1.5px #f2d795, 0 4px 14px rgba(217, 160, 58, 0.16);
 }
-.bb-shot--dashed {
-  border: 1.5px dashed #d6d3d1;
-  border-bottom: 0;
-  background: rgba(255, 255, 255, 0.45);
-  color: #78716c;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-}
-.bb-foot {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 10px;
-  min-width: 0;
-}
-.bb-logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  overflow: hidden;
+/* The position number, for open slots only. A paid slot wears the sponsored
+   badge instead: the card has no room for both, and the number is the thing
+   that matters to whoever is deciding whether to buy in. */
+.bb-slot__rank {
   flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 1px solid #e8eaee;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 9.5px;
+  font-weight: 800;
   display: grid;
   place-items: center;
-  background: #111;
-  color: #fff;
-  font-weight: 800;
 }
-.bb-logo--empty { background: #fdba74; color: #7c2d12; }
-.bb-meta { flex: 1; min-width: 0; }
-.bb-meta strong, .bb-meta span {
+/* Gold on any screenshot. The plate is a gradient rather than a flat fill so
+   the badge keeps a metallic edge over the dark og-images most products ship,
+   and the white hairline keeps it off a light screenshot.
+   Anchored right, not left: virtually every og-image puts the brand mark in the
+   top-left corner, so a badge there covers the one thing the buyer paid to show.
+   The top-right of those images is almost always empty. */
+.bb-slot__paid {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px 0 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: linear-gradient(180deg, #ffeaa9 0%, #f7cf57 55%, #e8b32c 100%);
+  box-shadow: 0 1px 4px rgba(90, 55, 0, 0.38);
+  color: #5c3d00;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bb-slot__paid svg { display: block; width: 9px; height: 9px; }
+/* An open slot gets a 38px tile. A paid slot gets a real 16:9 screenshot across
+   the card, because "your screenshot on the homepage" is what the buyer pays
+   for — at 38px a homepage shot is an unreadable smear of pixels. */
+.bb-slot__shot {
+  flex: none;
   display: block;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+.bb-slot__shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bb-slot--live .bb-slot__shot { width: 100%; height: 86px; border-radius: 0; background: #f8fafc; }
+.bb-slot--live .bb-slot__shot img { object-position: top center; }
+/* No screenshot: a centred logo on the same wash the old grid used, rather
+   than the product name at 18px fighting the rank chip for the corner. */
+.bb-slot__shot-plain {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  background: linear-gradient(160deg, #f8fafc, #eef2ff);
+}
+.bb-slot__shot-plain img { width: 40px; height: 40px; border-radius: 10px; object-fit: contain; }
+.bb-slot__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+}
+.bb-slot__logo { flex: none; display: inline-flex; width: 22px; height: 22px; }
+.bb-slot__logo img { width: 22px; height: 22px; border-radius: 6px; object-fit: contain; }
+.bb-slot__shot--empty {
+  border: 1.5px dashed #e5e9ef;
+  background: #fff;
+  color: #c2c8d1;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1;
+}
+.bb-slot__body { min-width: 0; flex: 1 1 auto; overflow: hidden; }
+.bb-slot__name {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: inherit;
+  text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.bb-meta strong { font-size: 12px; }
-.bb-meta strong em {
-  margin-left: 4px;
-  font-style: normal;
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  background: #111;
-  color: #fff;
-  border-radius: 999px;
-  padding: 1px 5px;
+.bb-slot__name:hover { text-decoration: underline; }
+.bb-slot__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.bb-meta span { font-size: 10px; color: #6b7280; }
+.bb-slot__price {
+  flex: none;
+  padding: 3px 6px;
+  border-radius: 7px;
+  background: #f4f5f7;
+  color: #14161a;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+.bb-slot__claim {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  color: #c2410c;
+  white-space: nowrap;
+}
+/* The phone copy of the board. Hidden on desktop, where the two rails already
+   carry slots 1–2 and 3–5. */
+.bb-rail--stack { display: none; }
+/* Still used by the /billboard rank rows. */
 .bb-price {
   background: #111;
   color: #fff;
@@ -7387,20 +7458,6 @@ html[lang="en"] .ad-section__head h2 {
   padding: 4px 8px;
   border-radius: 999px;
   flex: none;
-}
-.bb-empty {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  border: 1.5px dashed #d6d3d1;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.35);
-}
-.bb-note {
-  margin: 8px 4px 0;
-  text-align: right;
-  font-size: 11px;
-  color: #92400e;
 }
 .offer-card__flag {
   margin-right: 6px;
@@ -7805,12 +7862,10 @@ html[lang="en"] .ad-section__head h2 {
 .dark .feat-promo { background: #292214; }
 
 @media (max-width: 1100px) {
-  .bb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-cols, .bb-page__hero, .bb-rules { grid-template-columns: 1fr; }
   .bb-close { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 640px) {
-  .bb-grid { grid-template-columns: 1fr; }
   .bb-tiers { grid-template-columns: 1fr; }
   .mk-hero--compact .mk-h1 { font-size: 32px; }
 }
@@ -7897,9 +7952,11 @@ html[lang="en"] .ad-section__head h2 {
 
 .home-stage {
   display: grid;
-  grid-template-columns: minmax(180px, 230px) minmax(0, 1fr) minmax(180px, 230px);
+  grid-template-columns: 236px minmax(0, 1fr) 300px;
   grid-template-areas: "left hero right";
-  gap: 16px;
+  /* Same 22px gutter as .home-dir: the two blocks only line up on one pair of
+     vertical rules if the gutters match as well as the tracks. */
+  gap: 22px;
   align-items: start;
 }
 .home-stage__sides { display: contents; }
@@ -7954,7 +8011,7 @@ html[lang="en"] .ad-section__head h2 {
 }
 .home-dir {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 280px;
+  grid-template-columns: 236px minmax(0, 1fr) 300px;
   gap: 22px;
   margin: 8px 0 36px;
 }
@@ -8088,6 +8145,11 @@ html[lang="en"] .ad-section__head h2 {
   .home-feat { display: flex; overflow-x: auto; gap: 12px; padding-bottom: 6px; }
   .feat-card { min-width: 240px; flex: none; }
   .home-dir { grid-template-columns: 1fr; }
+  /* Rails dissolve on phones: showing the board once beats splitting it in two
+     around the list. */
+  .home-dir__left > .bb-rail,
+  .home-dir__right > .bb-rail { display: none; }
+  .bb-rail--stack { display: grid; }
   .home-dir__right { order: 2; }
   .home-dir__left { order: 3; }
   .home-dir__toggle { display: flex; justify-content: space-between; }
