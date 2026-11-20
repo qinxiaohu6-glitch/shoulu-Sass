@@ -7449,15 +7449,21 @@ html[lang="en"] .ad-section__head h2 {
 /* The phone copy of the board. Hidden on desktop, where the two rails already
    carry slots 1–2 and 3–5. */
 .bb-rail--stack { display: none; }
-/* Still used by the /billboard rank rows. */
+/* Still used by the /billboard rank rows. The number is the one thing a buyer
+   scans the board for, so it gets the gold pill rather than a dark chip that
+   read as a label. */
 .bb-price {
-  background: #111;
-  color: #fff;
-  font-size: 11px;
+  background: linear-gradient(140deg, #fbbf24, #f59e0b);
+  color: #431407;
+  font-size: 15px;
   font-weight: 800;
-  padding: 4px 8px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  padding: 7px 14px;
   border-radius: 999px;
   flex: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(120, 53, 15, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 .offer-card__flag {
   margin-right: 6px;
@@ -7715,7 +7721,24 @@ html[lang="en"] .ad-section__head h2 {
   border-radius: 14px;
   margin-bottom: 8px;
 }
-.bb-rank li.is-top { border-color: #fbbf24; background: linear-gradient(90deg, #fffbeb, #fff); }
+/* The top row is the thing being sold, so it carries the decoration: a gold
+   edge, a lit background and a medal instead of a grey counter. */
+.bb-rank li.is-top {
+  position: relative;
+  overflow: hidden;
+  border-color: #fbbf24;
+  background: linear-gradient(90deg, #fffbeb, #fff 60%);
+  box-shadow: 0 10px 26px -20px rgba(180, 83, 9, 0.95);
+}
+.bb-rank li.is-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  background: linear-gradient(#fbbf24, #f59e0b);
+}
 .bb-rank li.is-open {
   border-style: dashed;
   background: #fffbeb;
@@ -7744,17 +7767,41 @@ html[lang="en"] .ad-section__head h2 {
   width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
   background: #f3f4f6; font-weight: 800;
 }
+/* A white plate, not an orange one. A favicon is usually a transparent or
+   white-background mark; on an amber square it simply disappears. */
 .bb-rank__logo {
   width: 44px;
   height: 44px;
   border-radius: 12px;
   display: grid;
   place-items: center;
-  background: #fdba74;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #ece7df;
   color: #7c2d12;
   font-weight: 800;
+  font-size: 17px;
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.06);
 }
-.bb-rank li.is-top .bb-rank__n { background: #fbbf24; }
+.bb-rank__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.bb-rank li.is-open .bb-rank__logo {
+  background: #fffbeb;
+  border-color: #fde68a;
+  border-style: dashed;
+  box-shadow: none;
+  font-size: 20px;
+  font-weight: 700;
+  color: #b45309;
+}
+.bb-rank li.is-top .bb-rank__n {
+  background: linear-gradient(160deg, #fde68a, #f59e0b);
+  color: #431407;
+  box-shadow: inset 0 0 0 1px rgba(120, 53, 15, 0.18), 0 3px 8px -4px rgba(120, 53, 15, 0.7);
+}
 .bb-rank__meta strong, .bb-rank__meta span { display: block; }
 .bb-rank__meta strong em {
   margin-left: 6px; font-style: normal; font-size: 10px; background: #fbbf24;

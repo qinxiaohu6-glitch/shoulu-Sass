@@ -55,7 +55,12 @@ test('the floor clamps, fractional dollars are refused, and the name comes from 
   assert.equal(clampBillboardBid(1550), null)
   assert.equal(clampBillboardBid(1_000_001), null)
   assert.equal(productNameFromUrl('https://pancake.waffo.ai'), 'Pancake')
-  assert.match(faviconForUrl('https://pancake.waffo.ai'), /google\.com\/s2\/favicons\?domain=pancake\.waffo\.ai/)
+  // The icon is served from our own origin: a third-party favicon host is a
+  // round trip we do not control, and one that is unreachable for part of the
+  // audience leaves the slot empty.
+  assert.equal(faviconForUrl('https://pancake.waffo.ai'), '/api/favicon/pancake.waffo.ai')
+  assert.equal(faviconForUrl('https://www.pancake.waffo.ai/x'), '/api/favicon/pancake.waffo.ai')
+  assert.equal(faviconForUrl('not a url'), '')
   const draft = billboardBidDraft({
     url: 'https://pancake.waffo.ai',
     email: 'Buyer@Example.com',

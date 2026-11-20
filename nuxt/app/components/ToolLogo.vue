@@ -7,8 +7,13 @@
  * render a broken <img>, which reads as "this site is broken" — a monogram is
  * honest about the fact that no icon was supplied. A URL that 404s is treated
  * the same way: on error we swap to the initial rather than show a broken image.
+ *
+ * `error` alone is not enough. A request that never answers — a third-party host
+ * that is unreachable from the visitor's network — fires neither `load` nor
+ * `error`, and the icon slot stays an empty box forever. So the image also gives
+ * up after a few seconds and falls back to the monogram.
  */
-withDefaults(
+const props = withDefaults(
   defineProps<{
     logo: string
     name: string
@@ -21,18 +26,70 @@ withDefaults(
   { lazy: false, decorative: false },
 )
 
+/** Long enough for a slow icon, short enough that nobody stares at an empty box. */
+const GIVE_UP_MS = 4000
+
 const failed = ref(false)
+const image = ref<HTMLImageElement | null>(null)
+let timer: ReturnType<typeof setTimeout> | undefined
+
+function stopWaiting() {
+  if (timer) clearTimeout(timer)
+  timer = undefined
+}
+
+function startWaiting() {
+  stopWaiting()
+  if (!props.logo || failed.value) return
+  timer = setTimeout(() => {
+    failed.value = true
+  }, GIVE_UP_MS)
+}
+
+function onLoad() {
+  stopWaiting()
+}
+
+function onError() {
+  stopWaiting()
+  failed.value = true
+}
+
+onMounted(() => {
+  const node = image.value
+  // An icon already in the browser cache finishes before hydration runs, so
+  // `load` never fires on the hydrated node. The element itself knows.
+  if (node?.complete) {
+    if (node.naturalWidth > 0) return
+    failed.value = true
+    return
+  }
+  startWaiting()
+})
+
+watch(
+  () => props.logo,
+  () => {
+    failed.value = false
+    nextTick(startWaiting)
+  },
+)
+
+onBeforeUnmount(stopWaiting)
+
 </script>
 
 <template>
   <img
     v-if="logo && !failed"
+    ref="image"
     :src="logoSrc(logo)"
     :alt="decorative ? '' : `${name} logo`"
     :width="size"
     :height="size"
     :loading="lazy ? 'lazy' : undefined"
-    @error="failed = true"
+    @load="onLoad"
+    @error="onError"
   >
   <span
     v-else

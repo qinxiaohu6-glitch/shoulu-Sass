@@ -72,16 +72,22 @@ export function productNameFromUrl(value: string): string {
   return name.slice(0, 80)
 }
 
+/**
+ * The product icon for a claimed URL, served from our own origin.
+ *
+ * This used to point the browser straight at `google.com/s2/favicons`. Two
+ * things were wrong with that. It is a third-party round trip on every page
+ * view of a page we fully control, and for a large part of this site's audience
+ * that host does not answer at all — the request hangs rather than failing, so
+ * the icon slot sat there as an empty box with nothing to fall back on.
+ *
+ * `/api/favicon/<host>` fetches once from the edge, keeps the bytes in D1, and
+ * answers from there afterwards. The browser only ever talks to us.
+ */
 export function faviconForUrl(value: string): string {
-  const raw = value.trim()
-  if (!raw) return ''
-  try {
-    const host = new URL(raw.includes('://') ? raw : `https://${raw}`).hostname.replace(/^www\./i, '')
-    if (!host || !/^[a-z0-9.-]+$/i.test(host)) return ''
-    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`
-  } catch {
-    return ''
-  }
+  const host = domainLabel(value).toLowerCase()
+  if (!host || !/^[a-z0-9.-]+$/.test(host)) return ''
+  return `/api/favicon/${host}`
 }
 
 export function domainLabel(value: string): string {
