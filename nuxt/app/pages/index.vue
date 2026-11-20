@@ -2,6 +2,7 @@
 import { NuxtLink } from '#components'
 import { centsLabel } from '~~/shared/content/campaign'
 import { englishCount } from '~~/shared/utils/english-count'
+import { liveRankingRows } from '~~/shared/utils/archive-rows'
 import { isoWeekId } from '~~/shared/utils/iso-week'
 import { weekPresentation } from '~~/shared/utils/weekly-board'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
@@ -87,20 +88,18 @@ const heroRight = computed(() => featuredPool.value.slice(3, 5))
 const lastWeekTop3 = computed(() => {
   const week = boardData.value.history?.[0]
   if (!week) return []
-  const bySlug = new Map(all.value.map((tool) => [tool.slug, tool]))
-  return (week.ranking ?? [])
-    .filter((row) => row.votes > 0)
+  // A row whose listing has since been deleted has no name to show and no page
+  // to link to, so it drops out and the podium takes the next live listing.
+  return liveRankingRows(week.ranking, all.value)
+    .filter((row) => Number(row.votes) > 0)
     .slice(0, 3)
-    .map((row, i) => {
-      const tool = bySlug.get(row.slug)
-      return {
-        slug: row.slug,
-        name: tool?.name ?? row.slug,
-        short: tool?.short ?? '',
-        votes: row.votes,
-        rank: i + 1,
-      }
-    })
+    .map((row, i) => ({
+      slug: row.slug,
+      name: row.tool.name,
+      short: row.tool.short,
+      votes: Number(row.votes) || 0,
+      rank: i + 1,
+    }))
 })
 
 const tick = ref(Date.now())

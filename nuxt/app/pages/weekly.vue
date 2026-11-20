@@ -2,6 +2,7 @@
 import type { Week } from '~~/shared/types/catalog'
 import { WEEKLY_EMPTY_COPY } from '~~/shared/content/weekly-empty'
 import { isIsoWeekId, weekFromQuery } from '~~/shared/utils/weekly-board'
+import { liveRankingRows } from '~~/shared/utils/archive-rows'
 import { breadcrumbSchema, itemListSchema } from '~~/shared/utils/schema'
 
 const { lang, pick } = useLang()
@@ -23,7 +24,9 @@ type Panel = {
   key: string
   label: string
   current: boolean
-  rows: { rank: number; slug: string; votes: number; move: Move }[]
+  // `name`/`short` travel with the row because every row here is guaranteed to
+  // have a live listing — there is no slug fallback left to print.
+  rows: { rank: number; slug: string; name: string; short: string; votes: number; move: Move }[]
 }
 
 const directory = computed(() =>
@@ -50,8 +53,11 @@ function rowsOf(week: Week, previous: Week | undefined) {
   previous?.ranking.forEach((row, index) => {
     prev.set(row.slug, row.rank ?? index + 1)
   })
-  return week.ranking
-    .filter((row) => row.votes > 0)
+  // The archive keeps the slug that was live that week. A listing that has
+  // since been deleted has no name and no page, so its row leaves the table
+  // instead of printing a slug and linking to a 404.
+  return liveRankingRows(week.ranking, directory.value)
+    .filter((row) => Number(row.votes) > 0)
     .map((row, index) => {
       const rank = row.rank ?? index + 1
       const before = prev.get(row.slug)
@@ -62,7 +68,14 @@ function rowsOf(week: Week, previous: Week | undefined) {
           : before > rank
             ? { kind: 'up', delta: before - rank }
             : { kind: 'down', delta: rank - before }
-      return { rank, slug: row.slug, votes: row.votes, move }
+      return {
+        rank,
+        slug: row.slug,
+        name: row.tool.name,
+        short: row.tool.short,
+        votes: Number(row.votes) || 0,
+        move,
+      }
     })
 }
 
@@ -157,7 +170,7 @@ const schemaScripts = computed<SchemaScript[]>(() => {
         itemListSchema(
           `${title.value} · ${panel.value.label}`,
           panel.value.rows.map((row) => ({
-            name: toolOf(row.slug)?.name ?? row.slug,
+            name: row.name,
             path: `/products/${row.slug}`,
             position: row.rank,
           })),
@@ -248,8 +261,10 @@ useHead({ script: schemaScripts })
                     >
                   </span>
                   <span>
-                    <strong>{{ toolOf(row.slug)?.name ?? row.slug }}</strong>
-                    <em>{{ toolOf(row.slug)?.short }}</em>
+                    <!-- Every row here has a live listing (see `rowsOf`), so
+                         there is no slug fallback to print. -->
+                    <strong>{{ row.name }}</strong>
+                    <em>{{ row.short }}</em>
                   </span>
                 </NuxtLink>
               </td>

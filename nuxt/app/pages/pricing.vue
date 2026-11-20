@@ -15,6 +15,7 @@
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
 import { campaignDeadlineShanghai } from '~~/shared/content/billboard'
 import { effectiveQuote, type EffectiveQuote } from '~~/shared/utils/pricing-effective'
+import { liveRankingRows } from '~~/shared/utils/archive-rows'
 import { pricingFaq, tiers } from '~~/shared/content/pricing'
 import { tools } from '~~/shared/utils/catalog'
 import type { Week } from '~~/shared/types/catalog'
@@ -297,15 +298,15 @@ const lastWeekTop3 = computed(() => {
   const payload = liveData.value.board
   const week = payload.history[0] ?? payload.current
   if (!week) return []
-  const bySlug = new Map(tools.map((tool) => [tool.slug, tool]))
-  return week.ranking
-    .slice()
+  // Rows whose listing no longer exists would print a slug as the product name
+  // and link to a 404; the archive keeps the old slug, so it is filtered here.
+  return liveRankingRows(week.ranking, tools)
     .sort((a, b) => Number(b.votes) - Number(a.votes))
     .slice(0, 3)
     .map((row, index) => ({
       rank: index + 1,
       slug: row.slug,
-      name: bySlug.get(row.slug)?.name_en ?? row.slug,
+      name: row.tool.name_en,
       votes: Number(row.votes) || 0,
     }))
 })

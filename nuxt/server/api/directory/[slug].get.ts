@@ -13,10 +13,46 @@
  */
 
 import { useDb } from '../../utils/db'
+import type { Db } from '../../utils/db'
 import { getDirectoryTool } from '../../utils/directory'
 import { isHidden } from '../../utils/overrides'
-import { getPublicBySlug, publicTool } from '../../utils/submissions'
+import { getPublicBySlug, PAID_PLANS, publicTool } from '../../utils/submissions'
 import { isoWeekId } from '~~/shared/utils/catalog'
+
+/**
+ * The address a retired slug moved to, or ''.
+ *
+ * A listing that was deleted and re-added before slugs became stable left its
+ * old URL behind — and anything that already links to it (a Spotlight, a
+ * sitemap copy, a bookmark) hits a 404 for a product that is still here. The
+ * delete path records the slug and its domain; this walks that back to the
+ * live listing.
+ *
+ * Only a listing the public can actually open counts, so a redirect never
+ * lands on another 404.
+ */
+async function movedTo(db: Db, slug: string): Promise<string> {
+  const alias = await db
+    .prepare('SELECT domain FROM product_slug_alias WHERE slug = ?')
+    .bind(slug)
+    .first<{ domain: string }>()
+
+  const domain = String(alias?.domain ?? '').trim()
+  if (!domain) return ''
+
+  const rows = await db
+    .prepare(
+      `SELECT slug, plan, paid_at FROM submissions
+        WHERE domain = ? AND status = 'approved' AND slug <> ?`,
+    )
+    .bind(domain, slug)
+    .all<{ slug: string; plan: string; paid_at: number | null }>()
+
+  const live = rows.results.find(
+    (row) => row.paid_at || !(PAID_PLANS as readonly string[]).includes(String(row.plan)),
+  )
+  return String(live?.slug ?? '')
+}
 
 export default defineEventHandler(async (event) => {
   const slug = String(getRouterParam(event, 'slug') ?? '').trim()
@@ -59,6 +95,15 @@ export default defineEventHandler(async (event) => {
   // still answer, under the same `publiclyListed` rule the admin queue uses.
   const row = await getPublicBySlug(db, slug)
   if (!row) {
+    // A retired address for a listing that still exists answers 301, not 404.
+    // The page turns `reason: 'moved'` into a permanent redirect, so whatever
+    // already points here keeps working and the search engine moves its signal
+    // to the live URL instead of dropping the page.
+    const target = await movedTo(db, slug)
+    if (target) {
+      setResponseHeader(event, 'cache-control', 'no-store')
+      return { ok: false, reason: 'moved', to: target }
+    }
     setResponseStatus(event, 404)
     return { ok: false, reason: 'not_found' }
   }

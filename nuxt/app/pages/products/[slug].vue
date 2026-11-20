@@ -77,6 +77,8 @@ type DirectoryPayload = {
   tool?: Tool
   source?: 'db' | 'catalog' | 'submission'
   reason?: string
+  /** The live slug, when the requested one is a retired address. */
+  to?: string
 }
 
 const { data: payload, error: loadError } = await useAsyncData<DirectoryPayload>(
@@ -104,6 +106,20 @@ if (loadError.value) {
     statusCode: 500,
     statusMessage: isZh.value ? '暂时无法加载这个页面' : 'This page is temporarily unavailable',
     fatal: true,
+  })
+}
+
+/**
+ * A retired address answers 301, not 404.
+ *
+ * The listing is still here under a new slug — it was deleted and re-added
+ * before slugs became stable. Redirecting keeps every existing link working and
+ * tells a search engine the page moved rather than that it is gone.
+ */
+if (payload.value?.reason === 'moved' && payload.value.to) {
+  await navigateTo(localePath(`/products/${payload.value.to}`), {
+    redirectCode: 301,
+    replace: true,
   })
 }
 
