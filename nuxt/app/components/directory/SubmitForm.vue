@@ -317,7 +317,17 @@ const requestedName = computed(() =>
 )
 
 const selectedTier = computed(() => tiers.find((entry) => entry.id === plan.value) ?? tiers[0]!)
-const paidPrice = computed(() => selectedTier.value.price)
+/**
+ * What the selected plan costs *today*, not what it lists at.
+ *
+ * `tier.price` is the regular price — `effectiveQuote` is what the cards print
+ * and what checkout actually charges. Reading the raw field put "$39" on the
+ * pay button while the card beside it said "$19" and the charge was $19: the
+ * one number a buyer checks before paying was the one number that was wrong.
+ */
+const paidPrice = computed(
+  () => planOptions.value.find((entry) => entry.id === plan.value)?.price ?? selectedTier.value.price,
+)
 const isFreePlan = computed(() => selectedTier.value.amountCents === 0)
 
 /** The FAQ's `{price}` used to be a constant; it must follow the chosen tier. */
@@ -896,7 +906,7 @@ function reset() {
                 : pick('用 Google 登录后付款', 'Sign in with Google to pay')
               : isFreePlan
                 ? t('dir.submit.btn_review')
-                : t('dir.submit.btn_pay', { price: selectedTier.price })
+                : t('dir.submit.btn_pay', { price: paidPrice })
         }}
       </button>
     </form>

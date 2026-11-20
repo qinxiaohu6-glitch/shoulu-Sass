@@ -78,6 +78,15 @@ export async function usePayment() {
     } catch (err) {
       const message = (err as { data?: { reason?: string; message_zh?: string; message_en?: string } })?.data
       const raw = String((isZh.value ? message?.message_zh : message?.message_en) || '')
+      // The toast stays human; the console keeps the fact. A checkout that never
+      // reaches the server looks identical to one the provider refused, and
+      // without the status there is nothing to tell them apart with later.
+      console.error('[payment] checkout failed', {
+        submissionId,
+        status: (err as { statusCode?: number; status?: number })?.statusCode
+          ?? (err as { status?: number })?.status,
+        reason: message?.reason || (err as Error)?.message,
+      })
       toast.add({
         title: payErrorText(raw, message?.reason, isZh.value),
         color: 'error',

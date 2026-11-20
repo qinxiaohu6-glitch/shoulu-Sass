@@ -5,6 +5,7 @@ import { test } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { canDeleteTool, emptyToolForm, toToolEditPayload } from '../../app/utils/admin-tools-ui.ts'
 import { applyOverrideChange, placementStatus } from './listing-order.ts'
+import { payableDuplicateFor } from './listing-desk.ts'
 import {
   applyTombstone,
   canDeleteStoredListing,
@@ -166,4 +167,30 @@ test('boards drop hidden slugs and renumber from 1', () => {
   assert.match(detail, /overrides\.value/)
   const catalog = read('./catalog.ts')
   assert.match(catalog, /rankedBoard\(source, overrides\.hidden, limit\)/)
+})
+
+test('an unpaid duplicate of your own submission goes to checkout, not a dead end', () => {
+  // The decision, as a truth table. The old refusal was final: "already
+  // submitted" with no way to pay, on the one page whose button is labelled
+  // "pay" — and the row the visitor owns and has not paid for is precisely what
+  // they came back for.
+  const paid = ['standard', 'featured', 'pro', 'ad']
+  const mine = { owner_sub: 'google-sub', paid_at: null, plan: 'featured' }
+  assert.equal(payableDuplicateFor(mine, 'google-sub', paid), true)
+  // Someone else's row is not a payment target; paying it would be a gift.
+  assert.equal(payableDuplicateFor(mine, 'other-sub', paid), false)
+  // A paid row has nothing left to pay.
+  assert.equal(payableDuplicateFor({ ...mine, paid_at: 1 }, 'google-sub', paid), false)
+  // A free listing has no fee.
+  assert.equal(payableDuplicateFor({ ...mine, plan: 'free' }, 'google-sub', paid), false)
+  assert.equal(payableDuplicateFor(null, 'google-sub', paid), false)
+  assert.equal(payableDuplicateFor(mine, '', paid), false)
+
+  // And the route uses it before refusing, so the branch is reachable at all.
+  const src = read('../../server/api/submit.post.ts')
+  const narrow = src.indexOf('payableDuplicateFor(existing')
+  const refuse = src.indexOf('return sendSubmitError(event, err)')
+  assert.ok(narrow > -1, 'the duplicate branch exists')
+  assert.ok(refuse > narrow, 'it narrows before it refuses')
+  assert.match(src, /next: 'paid'/)
 })

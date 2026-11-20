@@ -8,12 +8,45 @@
  * has to look at it is how a directory loses trust on day one.
  */
 
+import type { H3Event } from 'h3'
 import { useDb } from '../utils/db'
-import { createSubmission, publicRecord, SubmissionError } from '../utils/submissions'
+import {
+  createSubmission,
+  getSubmission,
+  PAID_PLANS,
+  publicRecord,
+  SubmissionError,
+} from '../utils/submissions'
 import { clientIp, hashIp, sendSubmitError } from '../utils/http'
 import { ownerInbox, sendMail, siteUrl, submissionInboxMail, submittedMail } from '../utils/mail'
 import { readSession } from '../utils/session'
-import { submissionSessionOwner } from '~~/shared/utils/listing-desk'
+import { submissionSessionOwner, payableDuplicateFor } from '~~/shared/utils/listing-desk'
+
+/**
+ * "Already submitted" is the wrong answer when the row is this account's own
+ * and still unpaid.
+ *
+ * That row is exactly what the visitor is trying to pay for: they came back to
+ * /submit, picked a plan, pressed pay, and the only thing standing between them
+ * and checkout was their own earlier attempt. Answering 409 left them with no
+ * way forward on this page at all — the submission existed, so it could not be
+ * created again, and the pay button only ever resubmitted.
+ *
+ * The decision itself lives in `payableDuplicateFor` so it can be tested
+ * without a session: ownership, payment state and a fee-bearing plan.
+ */
+async function payableDuplicate(event: H3Event, err: SubmissionError) {
+  if (err.code !== 'duplicate' || !err.detail) return null
+  const owner = submissionSessionOwner(await readSession(event))
+  if (!owner) return null
+
+  const db = await useDb(event)
+  const existing = await getSubmission(db, err.detail)
+  if (!existing || !payableDuplicateFor(existing, owner.sub, PAID_PLANS)) return null
+
+  setResponseStatus(event, 200)
+  return { ok: true, duplicate: true, id: existing.id, next: 'paid' as const }
+}
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event).catch(() => null)
@@ -50,7 +83,11 @@ export default defineEventHandler(async (event) => {
       next: row.awaiting_payment ? 'paid' : 'review',
     }
   } catch (err) {
-    if (err instanceof SubmissionError) return sendSubmitError(event, err)
+    if (err instanceof SubmissionError) {
+      const payable = await payableDuplicate(event, err).catch(() => null)
+      if (payable) return payable
+      return sendSubmitError(event, err)
+    }
     console.error('[submit]', err)
     return sendSubmitError(event, new SubmissionError('internal_error'))
   }

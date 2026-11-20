@@ -108,3 +108,27 @@ export function submissionSessionOwner(
   if (!sub) return null
   return { sub, email: String(session?.email || '').trim() }
 }
+
+/**
+ * Is this existing row a payment target for this account?
+ *
+ * Answering "already submitted" to someone pressing a pay button is a dead
+ * end: the row cannot be created twice, and the button only ever resubmitted.
+ * When the row is the same account's own and still unpaid, it is exactly what
+ * they are trying to buy — so it is handed back to checkout instead.
+ *
+ * Three conditions, all required. Someone else's row is not a payment target
+ * (paying it would be a gift to a stranger), a paid row has nothing left to
+ * pay, and a plan without a fee has nothing to charge.
+ */
+export function payableDuplicateFor(
+  existing: { owner_sub?: string | null; paid_at?: number | null; plan?: string | null } | null | undefined,
+  ownerSub: string | null | undefined,
+  paidPlans: readonly string[],
+): boolean {
+  if (!existing) return false
+  const sub = String(ownerSub || '').trim()
+  if (!sub || String(existing.owner_sub || '').trim() !== sub) return false
+  if (existing.paid_at) return false
+  return paidPlans.includes(String(existing.plan || ''))
+}

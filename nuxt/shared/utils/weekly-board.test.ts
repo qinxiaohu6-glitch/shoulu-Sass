@@ -240,3 +240,29 @@ test('the board strip headline counts listings, not votes', () => {
   assert.match(stats, /loadEligibleListedAt/)
   assert.match(stats, /launch_weeks: launchWeeks/)
 })
+
+test('a feed row is one big link to the product, and it is a real anchor', () => {
+  const home = read('../../app/pages/index.vue')
+  // `<component :is="'NuxtLink'">` does not resolve the component: Vue treats
+  // an unknown string as a tag name, so the row shipped a literal <NuxtLink>
+  // element carrying `to` and no href. It looked like a link, was styled like
+  // one, and did nothing — the 30px arrow was the only way into a product.
+  // Pass the component itself.
+  assert.equal(/:is="[^"]*'NuxtLink'/.test(home), false)
+  assert.match(home, /import \{ NuxtLink \} from '#components'/)
+  assert.match(home, /:is="isPreview \? 'span' : NuxtLink"/)
+  // ...and the anchor stretches over the whole row instead of hugging its own
+  // text, so the rank, the gutters and the padding are all part of the target.
+  const stretch = home.match(/\.pb-row__link::after \{[^}]*\}/)
+  assert.ok(stretch, 'stretched-link rule exists')
+  assert.match(stretch![0], /position:\s*absolute/)
+  assert.match(stretch![0], /inset:\s*0/)
+  // The two controls inside the row must sit above that overlay, or the vote
+  // button would open the product instead of voting.
+  const vote = home.match(/\.pb-row :deep\(\.vote--stack\) \{[^}]*\}/)
+  assert.ok(vote, 'vote rule exists')
+  assert.match(vote![0], /z-index:\s*1/)
+  const visit = home.match(/\.pb-row__visit \{[^}]*\}/)
+  assert.ok(visit, 'visit rule exists')
+  assert.match(visit![0], /z-index:\s*1/)
+})

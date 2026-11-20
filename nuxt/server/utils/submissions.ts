@@ -21,6 +21,15 @@ import { categories, categoryBySlug, isoWeekId, slugify as slugifyText } from '~
 import { legalLogoUrl } from '~~/shared/utils/logo'
 import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { publicProductName } from '~~/shared/utils/public-name'
+import {
+  LONG_MAX,
+  LONG_MIN,
+  NAME_MAX,
+  NAME_MIN,
+  SHORT_MAX,
+  SHORT_MIN,
+  textFloor,
+} from '~~/shared/utils/submit-limits'
 import type { DetailBlock, Tool } from '~~/shared/types/catalog'
 import type { Db } from './db'
 
@@ -32,19 +41,13 @@ const MAX_SUBMISSIONS = 20_000
 const PER_IP_HOUR = 5
 const PER_IP_DAY = 20
 
-const NAME_MIN = 2
-const NAME_MAX = 60
-const SHORT_MIN = 20
-const SHORT_MAX = 200
-const LONG_MIN = 120
-const LONG_MAX = 4000
 const MAX_TAGS = 4
 
 const STATUSES = ['pending', 'approved', 'rejected'] as const
 export type Status = (typeof STATUSES)[number]
 
 /** Approving one of these before `paid_at` would publish what nobody paid for. */
-const PAID_PLANS = ['standard', 'featured', 'pro', 'ad'] as const
+export const PAID_PLANS = ['standard', 'featured', 'pro', 'ad'] as const
 export const isPaidPlan = (plan: string) => (PAID_PLANS as readonly string[]).includes(plan)
 
 /**
@@ -233,9 +236,26 @@ export function validate(payload: unknown): CleanSubmission {
   const [url, domain] = cleanUrl(body.url || body.website)
   if (cat.taken.has(domain)) throw new SubmissionError('already_listed', 'url', domain)
 
-  const name = publicProductName(cleanText(body.name, 'name', NAME_MIN, NAME_MAX))
-  const short = cleanText(body.short, 'short', SHORT_MIN, SHORT_MAX)
-  const long = cleanText(body.long, 'long', LONG_MIN, LONG_MAX, false)
+  // Plan is read before the copy is measured, because the tier decides whether
+  // a length floor applies at all. See `submit-limits.ts`: a buyer who is
+  // paying is not in a writing contest, and a rejected field at this point is
+  // a lost order rather than a saved review slot.
+  // "ad" is a weekly placement and the three paid tiers are one-time listings.
+  // They share one queue because the flow is identical up to payment: someone
+  // fills the form, an operator confirms the money, the record is what the
+  // invoice is written from. Collapsing them into "free" would bury a paid
+  // order with no way to tell it apart; collapsing them into each other would
+  // have the operator invoice the wrong amount.
+  let plan = String(body.plan ?? 'free').trim().toLowerCase()
+  if (plan === 'paid') plan = 'featured' // what the form sent before Standard existed
+  if (!(PLANS as readonly string[]).includes(plan)) plan = 'free'
+  const paid = isPaidPlan(plan)
+
+  const name = publicProductName(
+    cleanText(body.name, 'name', textFloor(paid, NAME_MIN), NAME_MAX),
+  )
+  const short = cleanText(body.short, 'short', textFloor(paid, SHORT_MIN), SHORT_MAX)
+  const long = cleanText(body.long, 'long', textFloor(paid, LONG_MIN), LONG_MAX, false)
 
   const category = String(body.category ?? '').trim().toLowerCase()
   if (!cat.cats.has(category)) throw new SubmissionError('bad_category', 'category')
@@ -261,16 +281,6 @@ export function validate(payload: unknown): CleanSubmission {
 
   const email = String(body.email ?? '').trim()
   if (email && !EMAIL_RE.test(email)) throw new SubmissionError('bad_email', 'email')
-
-  // "ad" is a weekly placement and the three paid tiers are one-time listings.
-  // They share one queue because the flow is identical up to payment: someone
-  // fills the form, an operator confirms the money, the record is what the
-  // invoice is written from. Collapsing them into "free" would bury a paid
-  // order with no way to tell it apart; collapsing them into each other would
-  // have the operator invoice the wrong amount.
-  let plan = String(body.plan ?? 'free').trim().toLowerCase()
-  if (plan === 'paid') plan = 'featured' // what the form sent before Standard existed
-  if (!(PLANS as readonly string[]).includes(plan)) plan = 'free'
 
   // Every listing needs a reachable address: the receipt, the review outcome
   // and any refund all go there, and a free listing with no email can never be

@@ -14,7 +14,9 @@
     "db:local": "wrangler d1 execute product-atlas --local --file server/database/schema.sql",
     "db:remote": "wrangler d1 execute product-atlas --remote --file server/database/schema.sql",
     "seed:directory": "node scripts/seed-directory.mjs",
-    "seed:directory:sql": "node scripts/seed-directory.mjs --sql"
+    "seed:directory:sql": "node scripts/seed-directory.mjs --sql",
+    "seed:board": "node scripts/seed-dev-board.mjs",
+    "seed:board:clean": "node scripts/seed-dev-board.mjs --clean"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.0",

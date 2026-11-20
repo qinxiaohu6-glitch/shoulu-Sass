@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NuxtLink } from '#components'
 import { centsLabel } from '~~/shared/content/campaign'
 import { englishCount } from '~~/shared/utils/english-count'
 import { isoWeekId } from '~~/shared/utils/iso-week'
@@ -579,8 +580,14 @@ useHead({ script: schemaScripts })
               <span class="pb-row__rank" :class="`is-${row.rank}`">
                 <em>{{ row.rank }}</em>
               </span>
+              <!-- The component is passed as a value, not as the string
+                   'NuxtLink': Vue treats an unknown string in `:is` as a tag
+                   name, so the string form rendered a literal <NuxtLink>
+                   element with a `to` attribute and no href — the row looked
+                   like a link, was styled like a link, and did nothing. The
+                   30px arrow beside it was the only way in. -->
               <component
-                :is="isPreview ? 'span' : 'NuxtLink'"
+                :is="isPreview ? 'span' : NuxtLink"
                 class="pb-row__link"
                 :to="isPreview ? undefined : localePath(`/products/${row.slug}`)"
               >
@@ -922,6 +929,26 @@ useHead({ script: schemaScripts })
   text-decoration: none;
   color: inherit;
 }
+/* The row is the target, not the text. The anchor used to hug its own content,
+   so the rank circle, the 12px gutter, the 12px of vertical padding and the
+   space before the arrow were all dead — a visitor aiming at a product row had
+   a link narrower than the row looks. Stretching the anchor over the whole row
+   (the standard stretched-link pattern) makes every pixel of it open the
+   product. The vote button and the arrow are lifted above the overlay, or the
+   overlay would swallow the vote; the rank needs no lift because it comes
+   earlier in the DOM, so the overlay paints over it. */
+a.pb-row__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+/* A row that is one big target needs to look like one. */
+.pb-row:not(.pb-row--featured):hover {
+  background: #fafbfc;
+}
+.pb-row--featured:hover {
+  background: linear-gradient(90deg, rgba(255, 247, 224, 0.95), rgba(255, 255, 255, 0));
+}
 .pb-row__logo {
   position: relative;
   flex: none;
@@ -1043,6 +1070,9 @@ useHead({ script: schemaScripts })
   color: #9ca3af;
   text-decoration: none;
   font-size: 16px;
+  /* Above the stretched link: it is its own control with its own hover. */
+  position: relative;
+  z-index: 1;
 }
 .pb-row__visit:hover { color: var(--primary, #b45309); background: #f5f5f5; }
 .pb-row__visit--static { cursor: default; }
@@ -1096,6 +1126,11 @@ useHead({ script: schemaScripts })
   background: #f8f9fb;
   color: #6b7280;
   line-height: 1.2;
+  /* Above the stretched link. Without this the row's overlay covers the vote
+     button and every click on it navigates to the product instead of voting —
+     the one thing on the row that must not be the row. */
+  position: relative;
+  z-index: 1;
 }
 .pb-row :deep(.vote--stack svg) {
   display: block;

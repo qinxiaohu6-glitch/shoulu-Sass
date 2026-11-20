@@ -138,3 +138,14 @@ test('fixed checkouts ignore a client amount; Billboard clamps a bid and does no
   assert.equal(/effectiveAmountCents\(/.test(board), false)
   assert.equal(/saleCents\(/.test(board), false)
 })
+
+test('the submit button quotes the campaign price, not the list price', () => {
+  const form = readFileSync(join(here, '../../app/components/directory/SubmitForm.vue'), 'utf8')
+  // `tier.price` is the regular price. The card beside the button and the
+  // amount checkout charges both use the campaign quote, so reading the raw
+  // field printed "$39" next to a card that said "$19" — the one number a
+  // buyer checks before paying was the one that was wrong.
+  assert.equal(/btn_pay', \{ price: selectedTier\.price \}/.test(form), false)
+  assert.match(form, /btn_pay', \{ price: paidPrice \}/)
+  assert.match(form, /planOptions\.value\.find\(\(entry\) => entry\.id === plan\.value\)\?\.price/)
+})
