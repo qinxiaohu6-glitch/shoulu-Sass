@@ -300,10 +300,26 @@ useHead({
             </span>
             <span class="bb-rank__meta">
               <strong>
-                <NuxtLink v-if="urlToSlug[row.url]" :to="localePath(`/products/${urlToSlug[row.url]}`)">
+                <!-- The spot is sold as a link to the buyer's own site, so a row
+                     whose product is not also a directory listing still has to
+                     be clickable — it used to render as plain text and the row
+                     did nothing at all. -->
+                <NuxtLink
+                  v-if="urlToSlug[row.url]"
+                  class="bb-rank__hit"
+                  :to="localePath(`/products/${urlToSlug[row.url]}`)"
+                >
                   {{ row.name }} <em>BILLBOARD</em>
                 </NuxtLink>
-                <template v-else>{{ row.name }} <em>BILLBOARD</em></template>
+                <a
+                  v-else
+                  class="bb-rank__hit"
+                  :href="row.url"
+                  target="_blank"
+                  rel="sponsored nofollow noopener"
+                >
+                  {{ row.name }} <em>BILLBOARD</em>
+                </a>
               </strong>
               <span>{{ row.tagline }}</span>
             </span>
@@ -394,6 +410,9 @@ useHead({
 </template>
 
 <style scoped>
+.bb-rank li {
+  position: relative;
+}
 .bb-rank__meta strong a {
   color: inherit;
   text-decoration: none;
@@ -402,5 +421,23 @@ useHead({
   color: var(--primary, #b45309);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+/* The whole row is the target, not just the product name — a 44px icon is not
+   a tap area on a phone, and the row already reads as one block. The claim
+   button has to sit above the overlay or it stops being a button. */
+.bb-rank__hit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.bb-rank__go {
+  position: relative;
+  z-index: 1;
+}
+/* Only rows that link somewhere react to hover; an empty slot already says so
+   with its dashed border and its own button. */
+.bb-rank li:hover:has(.bb-rank__hit) {
+  border-color: #d6cfc4;
 }
 </style>
