@@ -2,35 +2,22 @@
  * POST /api/storage/upload-image — source `routes/api/storage/upload-image.ts`.
  *
  * Same path, same `{ code, message, data }` envelope, same validation order, so
- * the browser-side uploader (`components/ImageUploader.vue`) is a straight port
- * and nothing changes the day a bucket exists.
+ * the browser-side uploader (`components/ImageUploader.vue`) is a straight port.
  *
  * The one real difference is the last step. The source asks its storage module
- * for a provider and, with none configured, either writes to `public/uploads`
- * (dev) or answers `common.upload.storage_not_configured` (Workers). This build
- * has no R2 binding and no filesystem on the Workers runtime, so it always
- * takes the second branch — with the source's own wording for it.
+ * for a provider; this build has no R2 binding and no filesystem on the Workers
+ * runtime, so the bytes go into D1 (`upload_asset`) and are served back from
+ * `/api/storage/file/<id>`. Everything above that line — auth, size caps, the
+ * MIME allow-list — is unchanged, so swapping in a bucket later touches only
+ * the insert below and the GET handler beside it.
  *
- * To turn uploads on:
- *   1. add an `r2_buckets` binding to `wrangler.jsonc`
- *   2. replace the `storage_not_configured` return below with the upload, and
- *      return `{ urls: [publicUrl], results: [...] }` from `respData`
- * Nothing in the browser code needs to change.
+ * Refusals are HTTP 200 with a non-zero `code`, which is what the uploader
+ * reads. Only an unexpected throw produces a non-200.
  */
 
 import { readSession } from '../../utils/session'
-
-/** Raster formats only — SVG can carry script, so it is not accepted. */
-const EXT_FROM_MIME: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/jpg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-  'image/avif': 'avif',
-  'image/heic': 'heic',
-  'image/heif': 'heif',
-}
+import { useDb } from '../../utils/db'
+import { assetExtFor, assetUrl, MAX_STORED_BYTES, newAssetId } from '~~/shared/utils/upload-asset'
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 const MAX_FILES_PER_REQUEST = 10
@@ -67,8 +54,7 @@ export default defineEventHandler(async (event) => {
   for (const file of files) {
     // The extension — and so how the file would be served — comes only from
     // this allow-list, never from the client-supplied file name.
-    const type = String(file.type ?? '')
-    if (!EXT_FROM_MIME[type]) {
+    if (!assetExtFor(String(file.type ?? ''))) {
       return uploadErr('common.upload.unsupported_type', { name: file.filename })
     }
     if (file.data.length > MAX_UPLOAD_BYTES) {
@@ -77,8 +63,41 @@ export default defineEventHandler(async (event) => {
         max: 10,
       })
     }
+    // The browser downscales before it posts, so this only fires for a client
+    // that skipped the resize — a direct API call, or a format the canvas
+    // refused to decode.
+    if (file.data.length > MAX_STORED_BYTES) {
+      return uploadErr('common.upload.inline_too_large', {
+        name: file.filename,
+        size: `${(file.data.length / 1024).toFixed(0)}KB`,
+        limit: `${Math.round(MAX_STORED_BYTES / 1024)}KB`,
+      })
+    }
   }
 
-  // No object storage is bound in this build. See the header for what to add.
-  return uploadErr('common.upload.storage_not_configured')
+  const db = await useDb(event)
+  const origin = getRequestURL(event).origin
+  const now = Math.floor(Date.now() / 1000)
+  const urls: string[] = []
+  const results: Array<Record<string, unknown>> = []
+
+  for (const file of files) {
+    const type = String(file.type ?? '').trim().toLowerCase()
+    const id = newAssetId(assetExtFor(type) as string)
+    const bytes = new Uint8Array(file.data)
+
+    await db
+      .prepare(
+        `INSERT INTO upload_asset (id, mime, bytes_b64, size, owner_sub, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(id, type, Buffer.from(bytes).toString('base64'), bytes.length, me.sub, now)
+      .run()
+
+    const url = assetUrl(origin, id)
+    urls.push(url)
+    results.push({ name: file.filename, url, size: bytes.length, type })
+  }
+
+  return respJson(0, 'ok', { urls, results })
 })

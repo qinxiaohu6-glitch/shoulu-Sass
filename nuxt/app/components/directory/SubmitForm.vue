@@ -398,19 +398,24 @@ async function submit() {
     error.value = t('dir.submit.error_email_required')
     return
   }
-  // The preview may fill this in. An empty or non-http value is refused here
-  // and again by `validate()` so a direct API call cannot skip it.
+  // Sign-in comes before the logo check, not after it. The icon is uploaded
+  // from the browser and `/api/storage/upload-image` requires a session, so a
+  // guest has no way to fill that field — asking them for a logo they cannot
+  // provide would be a dead end in front of a sign-in they still have to do.
+  if (!user.value) {
+    stashDraft()
+    await navigateTo(signInHref.value)
+    return
+  }
+  // The uploader may fill this in, and a preview can arrive from the URL scan.
+  // An empty or non-http value is refused here and again by `validate()` so a
+  // direct API call cannot skip it.
   if (!form.logo.trim()) {
     error.value = t('dir.submit.error_logo_required')
     return
   }
   if (!legalLogoUrl(form.logo)) {
     error.value = t('dir.submit.error_bad_logo')
-    return
-  }
-  if (!user.value) {
-    stashDraft()
-    await navigateTo(signInHref.value)
     return
   }
   submitting.value = true
@@ -726,18 +731,27 @@ function reset() {
           </div>
 
           <div class="space-y-2">
-            <label for="tool-logo" class="text-sm leading-none font-medium">
-              {{ t('dir.submit.field_logo') }}
-              <span class="text-destructive" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="tool-logo"
-              v-model="form.logo"
-              type="url"
-              required
-              :placeholder="t('dir.submit.field_logo_ph')"
-              class="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
+            <!-- Uploaded from the browser, not pasted as a URL: the person
+                 submitting a product has the icon on their disk, and asking
+                 them to host it somewhere first is the kind of step that ends
+                 a paid submission. `DirectoryImageField` is the same uploader
+                 the admin form uses, so both write the same kind of value. -->
+            <DirectoryImageField
+              v-if="user"
+              :label="pick('图标（必填）', 'Icon (required)')"
+              :value="form.logo"
+              :max-size-m-b="2"
+              @change="form.logo = $event"
+            />
+            <template v-else>
+              <UiLabel>{{ pick('图标（必填）', 'Icon (required)') }}</UiLabel>
+              <NuxtLink
+                :to="signInHref"
+                class="inline-flex h-9 items-center justify-center rounded-full border border-border bg-card px-4 text-sm font-medium transition hover:bg-muted"
+              >
+                {{ pick('用 Google 登录后上传图标', 'Sign in with Google to upload an icon') }}
+              </NuxtLink>
+            </template>
             <p class="text-xs text-muted-foreground">{{ t('dir.submit.field_logo_hint') }}</p>
           </div>
 

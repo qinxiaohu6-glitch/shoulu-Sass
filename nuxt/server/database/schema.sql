@@ -495,3 +495,41 @@ CREATE INDEX IF NOT EXISTS idx_spotlight_status  ON spotlight (status, updated_a
 CREATE INDEX IF NOT EXISTS idx_spotlight_live    ON spotlight (published_at);
 CREATE INDEX IF NOT EXISTS idx_spotlight_listing ON spotlight (listing_slug);
 CREATE INDEX IF NOT EXISTS idx_spotlight_ip      ON spotlight (ip_hash, created_at);
+
+-- Uploaded images (product icons, ticket attachments).
+--
+-- The bytes live in the row on purpose. This build binds no object storage and
+-- has no filesystem on Workers; an icon is a few tens of kilobytes after the
+-- browser downscales it, and `MAX_STORED_BYTES` caps the rest. If an R2 bucket
+-- is ever bound, only the two storage handlers change — nothing that reads a
+-- URL has to know the difference.
+--
+-- base64 rather than BLOB: D1 hands BLOBs back as ArrayBuffer and local SQLite
+-- hands them back as Uint8Array, and the encoding difference is a bug that only
+-- shows up in one of the two runtimes. Text is the same everywhere.
+CREATE TABLE IF NOT EXISTS upload_asset (
+  id         TEXT    PRIMARY KEY,
+  mime       TEXT    NOT NULL,
+  bytes_b64  TEXT    NOT NULL,
+  size       INTEGER NOT NULL,
+  owner_sub  TEXT    NOT NULL DEFAULT '',
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_upload_asset_created ON upload_asset (created_at);
+
+-- The slug a domain had the last time its listing was deleted.
+--
+-- A listing's URL is part of what the buyer paid for: the sitemap, the
+-- Spotlight and anything a search engine indexed all point at it. Deleting and
+-- re-adding a product used to mint a new slug from the new name, silently
+-- retiring every one of those links. `uniqueSlug()` now reads this table first,
+-- so the address belongs to the product rather than to the last form
+-- submission. See `deleteAdminTool()` for the write side.
+CREATE TABLE IF NOT EXISTS product_slug_alias (
+  slug       TEXT    PRIMARY KEY,
+  domain     TEXT    NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_slug_alias_domain ON product_slug_alias (domain, created_at);

@@ -395,8 +395,42 @@ function randomId(): string {
   return `s_${[...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')}`
 }
 
+/**
+ * The slug this domain had the last time its listing was deleted.
+ *
+ * A listing's URL is part of what the buyer paid for — the sitemap, the
+ * Spotlight and every indexed link point at it. Minting a fresh slug from the
+ * name typed on the second attempt retired all of them, which is exactly how
+ * `/products/peachchat-private-1v1-video-call-with-verified-g` died and took a
+ * published Spotlight's product card with it.
+ *
+ * The row is written by `deleteAdminTool()`. Empty means "never listed before".
+ */
+async function rememberedSlug(db: Db, domain: string): Promise<string> {
+  const row = await db
+    .prepare('SELECT slug FROM product_slug_alias WHERE domain = ? ORDER BY created_at DESC LIMIT 1')
+    .bind(domain)
+    .first<{ slug: string }>()
+  return String(row?.slug ?? '').trim()
+}
+
+/** Catalogue slugs, reserved routes and other live submissions all block a slug. */
+async function slugIsFree(db: Db, slug: string): Promise<boolean> {
+  if (!slug) return false
+  if (catalogIndex().slugs.has(slug) || isReservedProductSlug(slug)) return false
+  const hit = await db.prepare('SELECT 1 AS x FROM submissions WHERE slug = ?').bind(slug).first()
+  return !hit
+}
+
 async function uniqueSlug(db: Db, name: string, domain: string): Promise<string> {
   const base = slugify(name, domain)
+
+  // A product keeps the address it already had. Only a slug that is genuinely
+  // taken falls through to the derived one, so the remembered value can never
+  // steal a page that belongs to something else.
+  const remembered = await rememberedSlug(db, domain)
+  if (remembered && (await slugIsFree(db, remembered))) return remembered
+
   let candidate = base
   let n = 2
   // The catalogue's own slugs are reserved too, so a submission can never

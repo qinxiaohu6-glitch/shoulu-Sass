@@ -1279,9 +1279,9 @@ export async function deleteAdminTool(db: Db, slug: string) {
   // refused every catalogue preset the desk already showed as 已下架.
   const hidden = await isHidden(db, clean)
   const submitted = await db
-    .prepare('SELECT id FROM submissions WHERE slug = ?')
+    .prepare('SELECT id, domain FROM submissions WHERE slug = ?')
     .bind(clean)
-    .first<{ id: string }>()
+    .first<{ id: string; domain: string }>()
   const row = await db
     .prepare('SELECT status FROM dir_tool WHERE slug = ?')
     .bind(clean)
@@ -1298,6 +1298,20 @@ export async function deleteAdminTool(db: Db, slug: string) {
   // Pending rows that were never published are not on this desk; this only
   // runs for a slug the operator already unpublished (or that was never live).
   if (submitted) {
+    // Remember the address before the row goes. Re-adding this domain later
+    // then reuses this slug instead of minting one from the new name — which
+    // is what silently retired the old URL (and the Spotlight pointing at it)
+    // every time an operator deleted and re-added a listing. The write side is
+    // here; the read side is `uniqueSlug()` in submissions.ts.
+    if (submitted.domain) {
+      await db
+        .prepare(
+          `INSERT INTO product_slug_alias (slug, domain, created_at) VALUES (?, ?, ?)
+           ON CONFLICT(slug) DO UPDATE SET domain = excluded.domain, created_at = excluded.created_at`,
+        )
+        .bind(clean, submitted.domain, Math.floor(Date.now() / 1000))
+        .run()
+    }
     await db.prepare('DELETE FROM submissions WHERE slug = ?').bind(clean).run()
   }
   await db.prepare('DELETE FROM dir_collection_tool WHERE tool_slug = ?').bind(clean).run()

@@ -33,13 +33,13 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
   },
   logo_required: {
     status: 400,
-    zh: '请填写产品 logo 的图片网址（以 https:// 开头）。',
-    en: 'Add a logo image URL starting with https://.',
+    zh: '请先上传一张产品图标。',
+    en: 'Upload a product icon first.',
   },
   bad_logo: {
     status: 400,
-    zh: 'logo 必须是 http 或 https 图片网址，不能是空值、站内路径或脚本。',
-    en: 'The logo must be an http(s) image URL, not an empty value, a site path, or a script.',
+    zh: '图标没有上传成功，请重新上传一次。',
+    en: 'That icon did not upload — try again.',
   },
   already_listed: { status: 409, zh: '这个站点已经在目录里了。', en: 'That site is already listed.' },
   duplicate: {

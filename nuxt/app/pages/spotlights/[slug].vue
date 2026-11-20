@@ -29,6 +29,7 @@
 import type { Spotlight } from '~~/shared/content/spotlights'
 import { breadcrumbSchema } from '~~/shared/utils/schema'
 import { mergeDirectory, orderedTools } from '~~/shared/utils/catalog'
+import { findSpotlightListing } from '~~/shared/utils/spotlight-listing'
 import { useSubmittedTools } from '~/composables/useSubmittedTools'
 
 const route = useRoute()
@@ -79,19 +80,28 @@ if (!spotlight) {
 
 // Resolved once at setup, not a computed: everything it reads is already
 // awaited above, and a plain value is what lets the template narrow it.
-const listing = mergeDirectory(
+const merged = mergeDirectory(
   orderedTools(lang.value, overrides.value),
   submitted.value,
   overrides.value,
-).find((tool) => tool.slug === spotlight.listingSlug)
+)
 
-if (!listing) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: 'The listing this spotlight belongs to is not published',
-    fatal: true,
-  })
-}
+/**
+ * The article outlives the listing's slug.
+ *
+ * `listing_slug` is a snapshot taken the day the article was submitted. When a
+ * product is deleted and re-added its slug changes, and this page used to
+ * answer 404 for a published, paid-for article — while the sitemap kept
+ * advertising it. The host is the stable identifier, so it is tried second; and
+ * a listing that is genuinely gone no longer kills the page, it only drops the
+ * internal link to it (and the dofollow claim that came with it).
+ */
+const listing = findSpotlightListing(spotlight.listingSlug, spotlight.productUrl, merged)
+
+const productName = listing?.name ?? spotlight.productName
+const productShort = listing?.short ?? spotlight.tagline
+const productLogo = listing?.logo ?? ''
+const listingPath = computed(() => (listing ? localePath(`/products/${listing.slug}`) : ''))
 
 const canonical = `https://dirtool.com/spotlights/${spotlight.slug}`
 const published = new Date(`${spotlight.publishedAt}T00:00:00Z`)
@@ -103,7 +113,11 @@ const publishedLabel = published.toLocaleDateString(isZh.value ? 'zh-CN' : 'en-U
 })
 
 const more = computed(() =>
-  (list.value?.items ?? []).filter((item) => item.slug !== spotlight.slug).slice(0, 3),
+  (list.value?.items ?? [])
+    .filter((item) => item.slug !== spotlight.slug)
+    // A "More spotlights" card that leads to a 404 is worse than one card fewer.
+    .filter((item) => findSpotlightListing(item.listingSlug, item.productUrl, merged) !== null)
+    .slice(0, 3),
 )
 
 useHead({
@@ -185,20 +199,28 @@ useHead({
       <!-- The only dofollow link on the page. Everything in the body is
            nofollow, enforced by the markdown renderer. -->
       <aside class="sp-card">
-        <ToolLogo :logo="listing.logo" :name="listing.name" :size="52" decorative />
+        <ToolLogo :logo="productLogo" :name="productName" :size="52" decorative />
         <div class="sp-card__body">
-          <strong>{{ listing.name }}</strong>
-          <span>{{ listing.short }}</span>
+          <strong>{{ productName }}</strong>
+          <span>{{ productShort }}</span>
           <ul v-if="spotlight.bestFor || spotlight.pricingSummary" class="sp-card__facts">
             <li v-if="spotlight.bestFor"><em>{{ pick('适合', 'Best for') }}</em> {{ spotlight.bestFor }}</li>
             <li v-if="spotlight.pricingSummary"><em>{{ pick('价格', 'Pricing') }}</em> {{ spotlight.pricingSummary }}</li>
           </ul>
         </div>
         <div class="sp-card__actions">
-          <a class="sp-btn sp-btn--primary" :href="spotlight.productUrl" target="_blank" rel="noopener">
+          <!-- dofollow only while the listing is live: it is the paid benefit,
+               and an article whose listing has left the directory must not keep
+               handing it out. -->
+          <a
+            class="sp-btn sp-btn--primary"
+            :href="spotlight.productUrl"
+            target="_blank"
+            :rel="listing ? 'noopener' : 'nofollow noopener'"
+          >
             {{ pick('访问官网', 'Visit website') }} ↗
           </a>
-          <NuxtLink class="sp-btn" :to="localePath(`/products/${listing.slug}`)">{{ pick('查看收录页', 'View listing') }}</NuxtLink>
+          <NuxtLink v-if="listingPath" class="sp-btn" :to="listingPath">{{ pick('查看收录页', 'View listing') }}</NuxtLink>
         </div>
       </aside>
 
@@ -214,7 +236,7 @@ useHead({
           <p>{{ spotlight.authorBio }}</p>
         </div>
         <div class="sp-cta">
-          <p class="sp-cta__title">{{ pick('试用', 'Try') }} {{ listing.name }}</p>
+          <p class="sp-cta__title">{{ pick('试用', 'Try') }} {{ productName }}</p>
           <p class="sp-cta__note">
             {{ pick(
               '产品页里有完整介绍、所属分类和当前排名。',
@@ -222,17 +244,29 @@ useHead({
             ) }}
           </p>
           <div class="sp-cta__btns">
-            <a class="sp-btn sp-btn--primary" :href="spotlight.productUrl" target="_blank" rel="noopener">
-              {{ pick('访问', 'Visit') }} {{ listing.name }} ↗
+            <a
+              class="sp-btn sp-btn--primary"
+              :href="spotlight.productUrl"
+              target="_blank"
+              :rel="listing ? 'noopener' : 'nofollow noopener'"
+            >
+              {{ pick('访问', 'Visit') }} {{ productName }} ↗
             </a>
-            <NuxtLink class="sp-btn" :to="localePath(`/products/${listing.slug}`)">{{ pick('查看收录页', 'View listing') }}</NuxtLink>
+            <NuxtLink v-if="listingPath" class="sp-btn" :to="listingPath">{{ pick('查看收录页', 'View listing') }}</NuxtLink>
           </div>
         </div>
         <p class="sp-disclosure">
-          {{ pick(
-            '本文随付费收录一起提供。产品官网链接是 dofollow，正文其它外链一律 nofollow；内容不因付费而改写。',
-            'This article accompanies a paid listing on Product Atlas. The product\'s own link is dofollow; all other outbound links in the body are nofollow. Nothing here was written to order by the product\'s team.',
-          ) }}
+          {{
+            listing
+              ? pick(
+                  '本文随付费收录一起提供。产品官网链接是 dofollow，正文其它外链一律 nofollow；内容不因付费而改写。',
+                  'This article accompanies a paid listing on Product Atlas. The product\'s own link is dofollow; all other outbound links in the body are nofollow. Nothing here was written to order by the product\'s team.',
+                )
+              : pick(
+                  '这篇聚光灯原先随付费收录一起提供，那条收录目前不在目录里，因此官网链接暂时改为 nofollow。正文内容没有改动。',
+                  'This spotlight accompanied a paid listing that is no longer in the directory, so the product link is temporarily nofollow. The article itself is unchanged.',
+                )
+          }}
         </p>
       </footer>
     </article>

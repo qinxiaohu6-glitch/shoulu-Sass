@@ -6,6 +6,7 @@ import { loadOverrides } from '../utils/overrides'
 import { listPublishedTools } from '../utils/submissions'
 import { isReservedProductSlug } from '~~/shared/utils/product-routes'
 import { LAUNCH_PLATFORMS } from '~~/shared/content/launch-platforms'
+import { findSpotlightListing } from '~~/shared/utils/spotlight-listing'
 import type { Spotlight } from '~~/shared/content/spotlights'
 import { listPublished } from '../utils/spotlights'
 
@@ -134,10 +135,16 @@ async function entries(event: H3Event): Promise<Entry[]> {
 
   // Spotlights are dated content, so each carries its own `lastmod` — which is
   // why they are pushed after the `.map` that stamps every static entry with
-  // today's date. An article whose listing has been hidden would be a live URL
-  // pointing at a 410, so it leaves with the listing.
+  // today's date.
+  //
+  // The listing has to still resolve, not merely be unhidden. `listing_slug` is
+  // a snapshot from the day the article was submitted, and a delete-and-re-add
+  // changes it; the page follows the product to its new slug, so the check runs
+  // through the same resolver the page does. Otherwise the sitemap asks Google
+  // to crawl a URL that answers 404.
+  const liveListings = [...tools, ...published]
   for (const item of spotlights) {
-    if (!visible(item.listingSlug)) continue
+    if (!findSpotlightListing(item.listingSlug, item.productUrl, liveListings)) continue
     list.push({
       path: `/spotlights/${item.slug}`,
       lastmod: item.publishedAt,
