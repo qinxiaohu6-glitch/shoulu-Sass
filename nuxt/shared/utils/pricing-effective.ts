@@ -9,10 +9,12 @@
  * automatically.
  *
  *   listing   id = free | boost | standard | featured | pro | paid | ad
- *   sidebar   id = "1" | "4"   (weeks; the only slot is sidebar)
+ *   sidebar   id = "1" | "4"   (weeks)
  *   billboard id = floor | entry | standard | prime
  *
- * Billboard is name-your-price: the floor is the minimum and is never struck.
+ * New Billboard bids are closed. `billboard` amounts stay so an old row can
+ * still be labelled. The launch-board ad is priced in `effectiveAdCents`.
+ * The bid floor is never struck.
  */
 
 import { campaignActive, campaignInScope, centsLabel } from '../content/campaign.ts'
@@ -82,6 +84,16 @@ export type EffectiveQuote = {
   priceLabel: string
   strikeLabel: string | null
   active: boolean
+}
+
+/**
+ * What an ad checkout may charge. The launch-board ad is a flat weekly price.
+ * The sidebar still follows the campaign clock.
+ */
+export function effectiveAdCents(slot: string, weeks: number, now = Date.now()): number {
+  if (slot === 'board') return adPriceCents('board', weeks)
+  if (slot !== 'sidebar') return 0
+  return effectiveAmountCents('sidebar', String(weeks), now)
 }
 
 export function effectiveQuote(kind: PriceKind, id: string, now = Date.now()): EffectiveQuote {

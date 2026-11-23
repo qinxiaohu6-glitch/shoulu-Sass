@@ -158,14 +158,14 @@ const planNames = computed(() =>
 useSeo({
   title: computed(() =>
     pick(
-      '产品聚光灯：为收录产品写的长文 · Product Atlas',
-      'Product Spotlights: long-form articles about listed products · Product Atlas',
+      '产品聚光灯：为收录产品写的长文 · dirtool',
+      'Product Spotlights: long-form articles about listed products · dirtool',
     ),
   ),
   description: computed(() =>
     pick(
-      '一个产品一篇 800–1,500 字长文，挂在自己的网址上，正文链到收录页和官网。包含在精选与专业两档收录权益里。',
-      'One 800–1,500 word article per product, at its own URL, with a dofollow link to your site. Included with the Featured and Pro listings.',
+      '一个产品一篇 800–1,500 字长文，挂在自己的网址上，正文链到收录页和官网。已经付款的精选和专业档仍包含这篇。这两档已停售，不单卖。',
+      'One 800–1,500 word article per product, at its own URL, with a dofollow link to your site. A Featured or Pro listing already paid for still includes one. Those plans are no longer sold, and this is not sold on its own.',
     ),
   ),
 })
@@ -255,9 +255,9 @@ useHead({
           </li>
         </ul>
         <p class="spx-gain__note">
-          {{ pick('包含在', 'Included with the') }}
+          {{ pick('已经付款的', 'Included with a') }}
           <NuxtLink :to="localePath('/pricing')">{{ planNames }}</NuxtLink>
-          {{ pick('两档收录里，不单独售卖，也不影响排名。', 'listings. It is not sold separately and does not affect your ranking.') }}
+          {{ pick('收录仍包含一篇。这两档已停售，不单卖，也不影响排名。', 'listing that was already paid for. Those plans are no longer sold. It is not sold on its own and does not affect rank.') }}
         </p>
       </aside>
     </header>

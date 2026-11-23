@@ -6,7 +6,7 @@
  * checker, submit, and pricing — no unreleased tool routes.
  */
 
-export const BRAND_NAME = 'Product Atlas'
+export const BRAND_NAME = 'dirtool'
 export const BRAND_URL = 'https://dirtool.com'
 export const BRAND_FOOTER = `© ${BRAND_NAME} · ${BRAND_URL}`
 
@@ -58,7 +58,7 @@ export type SeoReport = {
 
 const COPY = {
   en: {
-    kicker: 'Product Atlas · SEO Check Report',
+    kicker: 'dirtool · SEO Check Report',
     title: 'SEO check report',
     score: (n: number, grade: string) => `Score ${n}/100 · Grade ${grade}`,
     checked: (url: string) => `Checked: ${url}`,
@@ -94,7 +94,7 @@ const COPY = {
     dr: 'Domain Rating checker',
   },
   zh: {
-    kicker: 'Product Atlas · SEO 诊断报告',
+    kicker: 'dirtool · SEO 诊断报告',
     title: 'SEO 诊断报告',
     score: (n: number, grade: string) => `分数 ${n}/100 · 等级 ${grade}`,
     checked: (url: string) => `检测对象：${url}`,

@@ -50,12 +50,12 @@ function urisOf(doc: PDFDocument): string[][] {
   })
 }
 
-test('the report names Product Atlas and only the three live dirtool.com paths', () => {
+test('the report names dirtool and only the three live dirtool.com paths', () => {
   const when = new Date('2026-11-10T02:00:00Z')
   const report = buildSeoReport(fixture(), 'en', when)
   assert.equal(report.filename, 'dirtool-seo-example.com-2026-11-10.pdf')
   assert.equal(seoPdfFilename('https://www.Example.com/a', when), report.filename)
-  assert.match(report.footer, /Product Atlas/)
+  assert.match(report.footer, /dirtool/)
   assert.match(report.footer, /https:\/\/dirtool\.com/)
   assert.match(report.cover.brand, /https:\/\/dirtool\.com/)
   assert.deepEqual(
@@ -89,7 +89,7 @@ test('a real PDF carries https://dirtool.com on the cover, section 6, and every 
   assert.equal(Buffer.from(bytes.subarray(0, 5)).toString('latin1'), '%PDF-')
   const doc = await PDFDocument.load(bytes)
   assert.match(doc.getSubject() ?? '', /https:\/\/dirtool\.com/)
-  assert.match(doc.getAuthor() ?? '', /Product Atlas/)
+  assert.match(doc.getAuthor() ?? '', /dirtool/)
   assert.ok(doc.getPageCount() >= 2)
   const uris = urisOf(doc)
   assert.equal(uris.length, doc.getPageCount())

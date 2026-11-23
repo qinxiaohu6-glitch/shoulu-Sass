@@ -7,7 +7,7 @@ const { pick } = useLang()
 const localePath = useLocalePath()
 
 useSeo({
-  title: computed(() => pick('工具 · Product Atlas', 'Tools · Product Atlas')),
+  title: computed(() => pick('工具 · dirtool', 'Tools · dirtool')),
   description: computed(() =>
     pick(
       '免费工具：Ahrefs DR4 查询，以及 28 项页内 SEO 诊断。没有假分数。',

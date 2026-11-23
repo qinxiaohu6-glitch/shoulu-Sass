@@ -154,7 +154,7 @@ const lead = computed(() =>
 )
 
 useSeo({
-  title: computed(() => `${title.value} · Product Atlas`),
+  title: computed(() => `${title.value} · dirtool`),
   description: lead,
 })
 

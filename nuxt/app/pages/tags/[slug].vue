@@ -73,7 +73,7 @@ const countText = computed(() =>
   t('directory.tag_named_count', { count: total.value, name: tag.value.name }),
 )
 
-const metaTitle = computed(() => `${tag.value.name} · Product Atlas`)
+const metaTitle = computed(() => `${tag.value.name} · dirtool`)
 const metaDescription = computed(() =>
   t('directory.tag.meta_desc', { count: total.value, name: tag.value.name }),
 )

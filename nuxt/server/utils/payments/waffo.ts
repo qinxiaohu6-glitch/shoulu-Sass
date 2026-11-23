@@ -18,9 +18,13 @@
  *   A directory submission has an email and nothing else, so the single
  *   `create-session` call is the same purchase without inventing an identity.
  *
- * · **The amount is sent, never read.** `priceSnapshot` carries the price the
- *   pricing table produced, so the dashboard product's own price is overridden
- *   and `order.amount_cents` always equals what the buyer was charged.
+ * · **The amount is sent and checked.** `priceSnapshot` carries the price the
+ *   pricing table produced. Waffo drops that field on any call that is not
+ *   signed as the merchant, and then charges the product's stored price
+ *   without saying so. Before a session is opened, the stored USD price is
+ *   read back. A product that exists only for this charge is repriced through
+ *   the API when it has drifted. A shared product is never repriced, and a
+ *   session is not opened when the stored price still differs.
  *
  * · **The webhook window is the SDK's default 45 minutes.** It is not a magic
  *   number to tune: the timestamp is stamped before the first delivery attempt
@@ -32,20 +36,19 @@
 
 import { WaffoPancake, WaffoPancakeError, verifyWebhook } from '@waffo/pancake-ts'
 import type { TaxCategory, WebhookEvent, WebhookEventData } from '@waffo/pancake-ts'
+import {
+  amountsEqual,
+  catalogueAmount,
+  fromAmountString,
+  productLockedToAmount,
+  selectProductId,
+  sessionQuote,
+  toAmountString,
+} from '~~/shared/payments/waffo-amount'
 import { PaymentError, headerOf } from './types'
 import type { CheckoutRequest, CheckoutSession, PaymentEvent, PaymentProvider } from './types'
 
 const SIGNATURE_HEADER = 'x-waffo-signature'
-
-/**
- * Currencies whose smallest unit *is* the unit. Waffo takes amounts as display
- * strings ("39.00" or "4500"), so the conversion has to know which ones have no
- * minor unit — dividing JPY by 100 would ask for a ¥0.39 charge.
- */
-const ZERO_DECIMAL = new Set([
-  'BIF', 'CLP', 'DJF', 'GNF', 'ISK', 'JPY', 'KMF', 'KRW',
-  'PYG', 'RWF', 'UGX', 'UYU', 'VND', 'VUV', 'XAF', 'XOF', 'XPF',
-])
 
 /** The SDK types `taxCategory` as an enum; an unknown string is a 400 at Waffo. */
 const TAX_CATEGORIES = [
@@ -99,27 +102,73 @@ export function waffoProvider(config: WaffoConfig): PaymentProvider {
 
     async createCheckout(input: CheckoutRequest): Promise<CheckoutSession> {
       if (!configured()) throw new PaymentError('not_configured')
+      if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+        throw new PaymentError('bad_amount', 'Amount must be a positive number of cents')
+      }
 
-      const productId = config.productIds[input.plan] || config.productIds['*'] || config.productId
+      const expected = toAmountString(input.amountCents, input.currency)
+      const productId = selectProductId(
+        config.productIds,
+        input.plan,
+        input.amountCents,
+        config.productId,
+      )
       if (!productId) {
         // A missing product id is a configuration gap, not a provider outage.
         // Saying so here puts the reason in the order's `note` column, which is
         // the difference between "fix the map" and "ask Waffo support".
         throw new PaymentError(
           'not_configured',
-          `No Waffo product id for plan "${input.plan}"`,
+          `No Waffo product id for plan "${input.plan}" at ${expected}`,
         )
       }
 
       try {
-        const session = await client().checkout.createSession({
+        const pancake = client()
+        const locked = productLockedToAmount(config.productIds, productId, input.amountCents)
+        let stored = await readCatalogueAmount(pancake, productId, input.currency)
+        if (!amountsEqual(stored, input.amountCents, input.currency)) {
+          // Repricing a product that other charges share would make the next
+          // buyer pay this buyer's amount. Refuse instead.
+          if (!locked) {
+            throw new PaymentError(
+              'bad_amount',
+              `Waffo product ${productId} is priced ${stored ?? 'unknown'} ${input.currency.toUpperCase()}, the page charges ${expected}. Checkout was not opened.`,
+            )
+          }
+          const updated = await pancake.onetimeProducts.update({
+            id: productId,
+            prices: {
+              [input.currency.toUpperCase()]: {
+                amount: expected,
+                taxCategory: taxCategoryOf(config.taxCategory),
+              },
+            },
+          })
+          stored = catalogueAmount(updated.product?.prices, input.currency)
+          const confirmed = await readCatalogueAmount(pancake, productId, input.currency)
+          if (
+            !amountsEqual(stored, input.amountCents, input.currency) ||
+            !amountsEqual(confirmed, input.amountCents, input.currency)
+          ) {
+            throw new PaymentError(
+              'bad_amount',
+              `Waffo price update for ${productId} returned ${confirmed ?? stored ?? 'unknown'}, the page charges ${expected}. Checkout was not opened.`,
+            )
+          }
+        }
+
+        const session = await pancake.checkout.createSession({
           productId,
           currency: input.currency.toUpperCase(),
-          // Overrides the dashboard price, so the charge equals the order row.
+          // Same number as the stored price. A dropped snapshot then still
+          // charges the page price, because the product was aligned above.
           priceSnapshot: {
-            amount: toAmountString(input.amountCents, input.currency),
+            amount: expected,
             taxCategory: taxCategoryOf(config.taxCategory),
           },
+          // A code would change the amount after the page quoted it.
+          allowPromotionCodes: false,
           // Optional at Waffo: an anonymous buyer is asked for it on the hosted
           // page. Sending it pre-fills the field and is what puts the address on
           // the order and the receipt.
@@ -131,11 +180,24 @@ export function waffoProvider(config: WaffoConfig): PaymentProvider {
             order_id: input.orderId,
             submission_id: input.submissionId,
             plan: input.plan,
+            amount_cents: String(input.amountCents),
           },
         })
 
+        const hosted = await readHostedQuote(session.checkoutUrl, config.environment)
+        if (
+          hosted.productId !== productId ||
+          !amountsEqual(hosted.amount, input.amountCents, input.currency)
+        ) {
+          throw new PaymentError(
+            'bad_amount',
+            `Hosted checkout locked ${hosted.amount ?? 'unknown'} on ${hosted.productId ?? 'unknown'}, the page charges ${expected} on ${productId}. Checkout was not opened.`,
+          )
+        }
+
         return { ref: session.sessionId, url: session.checkoutUrl }
       } catch (err) {
+        if (err instanceof PaymentError) throw err
         // Everything the SDK can fail on — bad signature, rejected product,
         // network — is the same thing to the caller: the provider did not
         // produce a checkout. The detail is kept for the order's note.
@@ -199,11 +261,11 @@ function translate(event: WebhookEvent<WebhookEventData>): PaymentEvent | null {
       orderId,
       providerRef,
       status: 'paid',
-      // `chargedAmount` is what the buyer's card was actually charged (tax
-      // included); `amount` is the same field under its deprecated name. If a
-      // tax setting in the Waffo store makes these exceed the listing price,
-      // the caller accepts the excess and records it on the order.
+      // `chargedAmount` is what the card paid, tax included. `goodsCents` is
+      // the pre-tax price. The webhook publishes only when that pre-tax price
+      // is the order amount. A large gap is not recorded as tax.
       amountCents: fromAmountString(data.chargedAmount ?? data.amount, currency),
+      goodsCents: goodsCentsOf(data),
       currency: currency.toLowerCase(),
       email,
       raw: event,
@@ -237,25 +299,54 @@ function describe(err: unknown): string {
   return err instanceof Error ? err.message : 'provider_error'
 }
 
+/**
+ * The price the hosted page will actually show. The session response itself
+ * has no amount; Waffo's checkout bootstrap does.
+ */
+async function readHostedQuote(
+  checkoutUrl: string,
+  environment: string,
+): Promise<{ amount: string | null; productId: string | null }> {
+  const url = new URL(checkoutUrl)
+  const parts = url.pathname.split('/').filter(Boolean)
+  const slug = parts[1]
+  const sessionId = parts[3]
+  if (parts[0] !== 'store' || parts[2] !== 'checkout' || !slug || !sessionId) {
+    return { amount: null, productId: null }
+  }
+  const bootstrap = new URL('/api/checkout/bootstrap', url.origin)
+  bootstrap.searchParams.set('slug', slug)
+  bootstrap.searchParams.set('session', sessionId)
+  bootstrap.searchParams.set('env', environment === 'test' ? 'test' : 'prod')
+  const res = await fetch(bootstrap)
+  if (!res.ok) return { amount: null, productId: null }
+  return sessionQuote(await res.json())
+}
+
+/** The product's stored price, before a session is created. */
+async function readCatalogueAmount(
+  pancake: WaffoPancake,
+  productId: string,
+  currency: string,
+): Promise<string | null> {
+  const res = await pancake.graphql.query<{ onetimeProduct?: { prices?: unknown } }>({
+    query: `query ($id: String!) {
+      onetimeProduct(id: $id) { prices { currency priceInfo { amount } } }
+    }`,
+    variables: { id: productId },
+  })
+  return catalogueAmount(res.data?.onetimeProduct?.prices, currency)
+}
+
+function goodsCentsOf(data: WebhookEventData): number | null {
+  const raw = data.listPrice?.subtotal ?? data.subtotal
+  if (raw == null || String(raw).trim() === '') return null
+  return fromAmountString(String(raw), String(data.currency || 'usd'))
+}
+
 function taxCategoryOf(raw: string): TaxCategory {
   const value = raw.trim().toLowerCase()
   return ((TAX_CATEGORIES as readonly string[]).includes(value)
     ? value
     : 'digital_goods') as TaxCategory
-}
-
-/* -------------------------------------------------------------------------
-   amounts — minor units in, Waffo's display strings out
-------------------------------------------------------------------------- */
-
-function toAmountString(cents: number, currency: string): string {
-  if (ZERO_DECIMAL.has(currency.toUpperCase())) return String(Math.round(cents))
-  return (cents / 100).toFixed(2)
-}
-
-function fromAmountString(value: string | undefined, currency: string): number {
-  if (!value) return 0
-  const parsed = Number(String(value).replace(/[^0-9.-]/g, ''))
-  if (!Number.isFinite(parsed)) return 0
-  return ZERO_DECIMAL.has(currency.toUpperCase()) ? Math.round(parsed) : Math.round(parsed * 100)
 }

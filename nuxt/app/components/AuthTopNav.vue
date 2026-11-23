@@ -64,8 +64,8 @@ async function switchLang() {
 
       <div class="topbar__logo">
         <NuxtLink class="brand" :to="localePath('/')">
-          <img src="/assets/img/brand/logo.png" alt="Product Atlas" width="28" height="28">
-          <span>Product Atlas</span>
+          <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28">
+          <span>dirtool</span>
         </NuxtLink>
       </div>
 

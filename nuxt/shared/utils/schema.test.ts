@@ -39,7 +39,7 @@ test('an item list keeps the order it is given and counts itself', () => {
 
 test('the site entity links its Organization and WebSite by @id', () => {
   const schema = siteEntitySchema({
-    name: 'Product Atlas',
+    name: 'dirtool',
     url: 'https://dirtool.com/',
     logo: 'https://dirtool.com/assets/img/brand/logo.png',
     sameAs: ['https://x.com/example'],
@@ -49,7 +49,7 @@ test('the site entity links its Organization and WebSite by @id', () => {
   assert.equal(org!['@type'], 'Organization')
   assert.equal(site!['@type'], 'WebSite')
   // The site name Google prints above a result comes from here, not from og:site_name.
-  assert.equal(site!.name, 'Product Atlas')
+  assert.equal(site!.name, 'dirtool')
   assert.equal(site!.url, 'https://dirtool.com/')
   assert.deepEqual(site!.publisher, { '@id': org!['@id'] })
   assert.equal((org!.logo as Record<string, unknown>).url, 'https://dirtool.com/assets/img/brand/logo.png')

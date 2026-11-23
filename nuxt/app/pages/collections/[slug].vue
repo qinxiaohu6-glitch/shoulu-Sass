@@ -104,7 +104,7 @@ const countLabel = computed(() =>
 )
 
 useSeo({
-  title: computed(() => `${collection.value.name} · Product Atlas`),
+  title: computed(() => `${collection.value.name} · dirtool`),
   description: computed(() =>
     collection.value.desc ||
     (isZh.value ? `${collection.value.name}这一合集里的收录。` : `Listings in ${collection.value.name}.`),

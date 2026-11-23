@@ -82,12 +82,12 @@ const openFaq = ref<number | null>(null)
 
 useSeo({
   title: computed(() =>
-    pick(`最值得考虑的 ${name.value} 替代品 · Product Atlas`, `Best ${name.value} alternative for indie makers · Product Atlas`),
+    pick(`最值得考虑的 ${name.value} 替代品 · dirtool`, `Best ${name.value} alternative for indie makers · dirtool`),
   ),
   description: computed(() =>
     pick(
-      `在找 ${name.value} 的替代品？对比 ${name.value} 与 Product Atlas 的发布节奏、适合人群与链接方式。免费发布，或一次付费加速。`,
-      `Looking for a ${name.value} alternative? Compare ${name.value} and Product Atlas: launch rhythm, who each is for, and how backlinks work. Launch free, or boost once.`,
+      `在找 ${name.value} 的替代品？对比 ${name.value} 与 dirtool 的发布节奏、适合人群与链接方式。免费发布，或一次付费加速。`,
+      `Looking for a ${name.value} alternative? Compare ${name.value} and dirtool: launch rhythm, who each is for, and how backlinks work. Launch free, or boost once.`,
     ),
   ),
 })
@@ -154,7 +154,7 @@ useHead({
       </article>
 
       <article class="alt-sub__card alt-sub__card--ours">
-        <h2>Product Atlas</h2>
+        <h2>dirtool</h2>
         <dl>
           <template v-for="row in ours" :key="row.label">
             <dt>{{ row.label }}</dt>

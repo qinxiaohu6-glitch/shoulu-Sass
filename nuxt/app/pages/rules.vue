@@ -16,17 +16,17 @@
  *   - ad slots run Monday to Sunday, 7 days    → `server/utils/ad-bookings.ts`
  */
 import { centsLabel } from '~~/shared/content/campaign'
-import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
 const sidebar = effectiveQuote('sidebar', '1')
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const boardLabel = centsLabel(adPriceCents('board', 1))
 const bundleLabel = effectiveQuote('sidebar', '4').priceLabel
 const localePath = useLocalePath()
 
 useSeo({
-  title: computed(() => pick('排名与收录规则 · Product Atlas', 'Ranking rules · Product Atlas')),
+  title: computed(() => pick('排名与收录规则 · dirtool', 'Ranking rules · dirtool')),
   description: computed(() =>
     pick(
       '每周榜单怎么算、票怎么记、链接是 dofollow 还是 nofollow、付费会不会改变排名 —— 全部写在这里。',
@@ -100,8 +100,8 @@ const sections = computed<RuleSection[]>(() => [
         'We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
       ),
       pick(
-        '标准、精选、专业三档在付款成功后自动发布。',
-        'Standard, Featured, and Pro go live automatically when payment succeeds.',
+        'Boost 在付款成功后自动发布。标准、精选和专业档已停售；已经付款的收录保留到原定日期结束。',
+        'Boost goes live when payment succeeds. Standard, Featured, and Pro are no longer sold; a listing already paid for stays until its pin date ends.',
       ),
       pick(
         '会被拒绝或上线后下架的：垃圾站、只为反链的提交、诈骗与恶意软件与钓鱼、成人内容、骚扰与仇恨、违法商品或服务、赌博、不是你的产品、打不开的站点、重复域名。',
@@ -118,20 +118,16 @@ const sections = computed<RuleSection[]>(() => [
     heading: pick('链接政策', 'Link policy'),
     items: [
       pick(
-        '付费收录：永久 dofollow，不挂 badge、不复查。',
-        'Paid listings: permanent dofollow, no badge, no re-checking.',
+        'Boost：永久 dofollow，不挂 badge、不复查。',
+        'Boost: a permanent dofollow link, with no badge and no re-checking.',
       ),
       pick(
         '免费收录：nofollow，不传递权重。页面照常保留，也照常参与每周榜单。',
         'Free listings: nofollow, so no authority passes. The page stays up and still competes on the weekly board.',
       ),
       pick(
-        '精选档在目录页和分类页置顶 7 天，之后回落到标准档排序 —— 链接不变。',
-        'Featured pins the listing to the top of the directory and category for 7 days, then it drops back to Standard ordering. The link does not change.',
-      ),
-      pick(
-        '专业档在分类页置顶 90 天。',
-        'Pro pins it to the top of its category page for 90 days.',
+        '已经付款的精选档在目录页和分类页置顶 7 天，专业档在分类页置顶 90 天。到期后链接不变。这两档已停售。Boost 没有限期置顶。',
+        'A Featured listing already paid for stays pinned on the directory and its category for 7 days. Pro stays pinned on its category for 90 days. The link does not change when the pin ends. Those plans are no longer sold. Boost does not add a timed pin.',
       ),
     ],
   },
@@ -139,8 +135,8 @@ const sections = computed<RuleSection[]>(() => [
     id: 'paying',
     heading: pick('付费不改变排名', 'Paying never changes rank'),
     lead: pick(
-      '付费只买三件事：链接变成 dofollow、排序靠前、一段时间的置顶位置。它买不到票。',
-      'Paying buys three things: a dofollow link, a higher position in the directory, and a pin for a fixed period. It does not buy votes.',
+      '付费买的是 dofollow 链接和目录里更靠前的位置。周广告买的是那一周的展示。它买不到票。',
+      'Paying buys a dofollow link and a higher place in the directory. A weekly ad buys that week of display. It does not buy votes.',
     ),
     items: [
       pick(
@@ -161,13 +157,13 @@ const sections = computed<RuleSection[]>(() => [
     id: 'ads',
     heading: pick('广告位', 'Ad slots'),
     lead: pick(
-      'Billboard 是一次性买下的位置。右栏仍按周租，周一起算，展示 7 天。',
-      'Billboard is bought once. The sidebar is still rented by the week, starting Monday, for seven days.',
+      '发布榜广告和右栏都按周租，周一起算，展示 7 天。Billboard 已停止新出价。',
+      'The launch-board ad and the sidebar are rented by the week, starting Monday, for seven days. New Billboard bids are closed.',
     ),
     items: [
       pick(
-        `Billboard 从 ${floorLabel} 起自己出价，一次付清。按累计金额排名，不插进每周投票榜。此前从 $15 起。`,
-        `Billboard is name-your-price from ${floorLabel}, one-time. Rank follows total backed. It is not inserted into the weekly vote list. Was from $15.`,
+        `发布榜广告 ${boardLabel}/周，前三名下面一条横幅，每周一个品牌。不插进每周投票榜。已经付款的 Billboard 仍留在 Billboard 页。`,
+        `The launch-board ad is ${boardLabel} a week: one banner under the top 3, one brand per week. It is not inserted into the weekly vote list. A Billboard bid already paid stays on the Billboard page.`,
       ),
       pick(
         `右栏广告 ${sidebar.priceLabel}/周，出现在首页与「最新收录」页的右栏；连投 4 周 ${bundleLabel}。`,

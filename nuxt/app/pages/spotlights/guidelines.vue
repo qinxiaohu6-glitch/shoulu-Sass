@@ -20,7 +20,7 @@ const localePath = useLocalePath()
 
 useSeo({
   title: computed(() =>
-    pick('聚光灯模板与审核标准 · Product Atlas', 'Product Spotlight template and review standards · Product Atlas'),
+    pick('聚光灯模板与审核标准 · dirtool', 'Product Spotlight template and review standards · dirtool'),
   ),
   description: computed(() =>
     pick(
@@ -291,7 +291,7 @@ const fails = computed(() => [
     <section aria-labelledby="gd-badge">
       <h2 id="gd-badge">{{ pick('徽章是可选的', 'The badge is optional') }}</h2>
       <p>
-        {{ pick('发布之后你可以在自己站上挂一枚「Featured on Product Atlas」徽章。它是方便，不是条件：徽章撤了不会下架，徽章没挂也不会压着不发。嵌入代码在', 'After publication you can put a "Featured on Product Atlas" badge on your site. It is a convenience, not a condition: nothing is unpublished if the badge comes down, and no listing is held back until it goes up. The embed code is on the') }}
+        {{ pick('发布之后你可以在自己站上挂一枚「Featured on dirtool」徽章。它是方便，不是条件：徽章撤了不会下架，徽章没挂也不会压着不发。嵌入代码在', 'After publication you can put a "Featured on dirtool" badge on your site. It is a convenience, not a condition: nothing is unpublished if the badge comes down, and no listing is held back until it goes up. The embed code is on the') }}
         <NuxtLink :to="localePath('/spotlights/badge')">{{ pick('徽章页', 'badge page') }}</NuxtLink>。
       </p>
     </section>

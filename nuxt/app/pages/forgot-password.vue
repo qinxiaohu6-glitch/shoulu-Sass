@@ -52,7 +52,7 @@ async function submit() {
 }
 
 useSeo({
-  title: computed(() => pick('找回密码 | Product Atlas', 'Forgot password | Product Atlas')),
+  title: computed(() => pick('找回密码 | dirtool', 'Forgot password | dirtool')),
   description: computed(() =>
     pick('输入你的邮箱，我们将发送密码重置链接。', "Enter your email and we'll send you a link to reset your password."),
   ),

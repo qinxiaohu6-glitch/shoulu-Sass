@@ -28,7 +28,7 @@ const message = computed(() => {
 
 useHead({
   htmlAttrs: { lang: computed(() => (isZh.value ? 'zh-Hans' : 'en')) },
-  title: computed(() => `${title.value} | Product Atlas`),
+  title: computed(() => `${title.value} | dirtool`),
   meta: [{ name: 'robots', content: 'noindex' }],
 })
 

@@ -46,7 +46,7 @@ async function submit() {
 }
 
 useHead({
-  title: computed(() => `${t('settings.profile.title')} · Product Atlas`),
+  title: computed(() => `${t('settings.profile.title')} · dirtool`),
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

@@ -10,8 +10,11 @@
  */
 export const CONTACT_EMAIL = 'qinxiaohu6@gmail.com'
 
-/** Replace with the registered / trading entity, not just the brand. */
-export const LEGAL_NAME = 'Product Atlas (Dirtool)'
+/**
+ * Public name until a registered entity is supplied. Do not invent a company
+ * name here. The site, the domain and this placeholder are all dirtool.
+ */
+export const LEGAL_NAME = 'dirtool'
 
 /**
  * A second, monitored contact channel. Waffo's site check explicitly accepts

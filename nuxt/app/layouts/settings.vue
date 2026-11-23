@@ -137,8 +137,8 @@ const footerNavItems = computed<NavItem[]>(() => [
         :mobile="mobile"
       >
         <template #brand>
-          <img src="/assets/img/brand/logo.png" alt="Product Atlas" width="28" height="28" >
-          <span class="flex-1 truncate font-serif text-lg leading-none italic">Product Atlas</span>
+          <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
+          <span class="flex-1 truncate font-serif text-lg leading-none italic">dirtool</span>
         </template>
         <template #footer>
           <UserMenu />

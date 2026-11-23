@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * /blog — empty until a Product Atlas note is published.
+ * /blog — empty until a dirtool note is published.
  * The two ShipAny posts that used to live here are gone; their URLs 404.
  */
 import { formatPostDate, getLocalPosts } from '~~/shared/content/blog'
@@ -12,11 +12,11 @@ const localePath = useLocalePath()
 const posts = computed(() => getLocalPosts(lang.value))
 
 useSeo({
-  title: computed(() => pick('博客 · Product Atlas', 'Blog · Product Atlas')),
+  title: computed(() => pick('博客 · dirtool', 'Blog · dirtool')),
   description: computed(() =>
     pick(
-      'Product Atlas 的笔记。新文章会出现在这里。',
-      'Notes from Product Atlas. New posts will show up here.',
+      'dirtool 的笔记。新文章会出现在这里。',
+      'Notes from dirtool. New posts will show up here.',
     ),
   ),
 })
@@ -29,8 +29,8 @@ useSeo({
         <h1 class="text-3xl font-semibold tracking-tight">{{ pick('博客', 'Blog') }}</h1>
         <p class="mt-3 max-w-2xl text-muted-foreground">
           {{ pick(
-            'Product Atlas 的笔记。新文章会出现在这里。',
-            'Notes from Product Atlas. New posts will show up here.',
+            'dirtool 的笔记。新文章会出现在这里。',
+            'Notes from dirtool. New posts will show up here.',
           ) }}
         </p>
       </div>

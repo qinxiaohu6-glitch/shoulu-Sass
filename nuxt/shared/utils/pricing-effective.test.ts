@@ -113,28 +113,31 @@ test('user-facing copy no longer sells the Black Friday percent-off', () => {
   }
 })
 
-test('the claim dialog names its minimum from the bid floor constant', () => {
-  const dialog = readFileSync(join(here, '../../app/components/BillboardClaimDialog.vue'), 'utf8')
-  assert.match(dialog, /const floorLabel = centsLabel\(BILLBOARD_FLOOR_CENTS\)/)
-  assert.match(dialog, /Name your amount, from \$\{floorLabel\}/)
-  assert.match(dialog, /自己出价，从 \$\{floorLabel\} 起/)
-  assert.equal(dialog.includes('from 15'), false)
-  assert.equal(dialog.includes('从 15'), false)
-  assert.equal(dialog.includes('ref(15)'), false)
+test('new Billboard bids are closed on the page and the checkout route', () => {
+  const page = readFileSync(join(here, '../../app/pages/billboard.vue'), 'utf8')
+  const board = readFileSync(join(here, '../../server/api/billboard/checkout.post.ts'), 'utf8')
+  assert.equal(page.includes('BillboardClaimDialog'), false)
+  assert.equal(page.includes('Name your amount'), false)
+  assert.equal(page.includes('Name your price'), false)
+  assert.match(page, /New bids are closed/)
+  assert.match(board, /billboard_closed/)
+  assert.equal(/billboardBidDraft\(/.test(board), false)
+  assert.equal(board.includes('from 15'), false)
 })
 
 test('fixed checkouts ignore a client amount; Billboard clamps a bid and does not discount it', () => {
   const listing = readFileSync(join(here, '../../server/api/payments/checkout.post.ts'), 'utf8')
   const ad = readFileSync(join(here, '../../server/api/payments/ad-checkout.post.ts'), 'utf8')
   const board = readFileSync(join(here, '../../server/api/billboard/checkout.post.ts'), 'utf8')
+  assert.match(listing, /effectiveAmountCents\(/)
+  assert.match(ad, /effectiveAdCents\(/)
   for (const source of [listing, ad]) {
-    assert.match(source, /effectiveAmountCents\(/)
     assert.equal(/body\??\.(amount|price|amount_cents)/.test(source), false)
   }
   assert.match(listing, /amount_cents: amountCents/)
-  assert.match(board, /billboardBidDraft\(/)
-  assert.match(board, /plan: 'billboard'/)
-  assert.match(board, /published: false/)
+  assert.match(board, /billboard_closed/)
+  assert.equal(/billboardBidDraft\(/.test(board), false)
+  assert.equal(/plan: 'billboard'/.test(board), false)
   assert.equal(/effectiveAmountCents\(/.test(board), false)
   assert.equal(/saleCents\(/.test(board), false)
 })

@@ -55,7 +55,7 @@ onMounted(async () => {
 })
 
 useSeo({
-  title: computed(() => pick('正在跳转… | Product Atlas', 'Signing you in… | Product Atlas')),
+  title: computed(() => pick('正在跳转… | dirtool', 'Signing you in… | dirtool')),
   description: computed(() => ''),
 })
 </script>

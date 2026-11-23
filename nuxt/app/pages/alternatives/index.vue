@@ -33,7 +33,7 @@ type Row = {
 const platforms: Row[] = [
   {
     slug: '',
-    name: 'Product Atlas',
+    name: 'dirtool',
     rhythm: { zh: '每周 · UTC 周一到周日', en: 'Weekly, Monday to Sunday (UTC)' },
     best: { zh: '独立开发者、个人创始人和小团队发布 SaaS、AI 工具与副业项目', en: 'Indie makers, solo founders and small teams shipping SaaS, AI tools and side projects' },
   },
@@ -98,7 +98,7 @@ const openFaq = ref<number | null>(null)
 
 useSeo({
   title: computed(() =>
-    pick('Product Hunt 替代品与发布平台对比 · Product Atlas', 'Product Hunt alternatives & launch platforms · Product Atlas'),
+    pick('Product Hunt 替代品与发布平台对比 · dirtool', 'Product Hunt alternatives & launch platforms · dirtool'),
   ),
   description: computed(() =>
     pick(

@@ -13,7 +13,7 @@ subject `Spotlight: <product name>`.
 
 - **Product name:**
 - **Product website:**
-- **Listing page URL** (on Product Atlas, if already live):
+- **Listing page URL** (on dirtool, if already live):
 - **Category / tags:**
 - **Contact email:**
 

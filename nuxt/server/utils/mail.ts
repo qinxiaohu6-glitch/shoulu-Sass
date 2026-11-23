@@ -16,7 +16,7 @@
  *
  * Config (runtimeConfig, i.e. NUXT_MAIL_API_KEY / NUXT_MAIL_FROM):
  *   mailApiKey  — the provider key
- *   mailFrom    — "Product Atlas <noreply@dirtool.com>"; must be a verified sender
+ *   mailFrom    — "dirtool <noreply@dirtool.com>"; must be a verified sender
  *   mailReplyTo — optional; where a reply lands
  *   siteUrl     — optional override of the public origin used in the links
  *   mailEndpoint — test seam only; empty means the real provider endpoint
@@ -113,7 +113,7 @@ export function submittedMail(row: SubmissionRow, site: string): MailMessage {
       `guaranteed, and busy periods can take longer. Paid placements are published ` +
       `automatically as soon as the payment succeeds — no manual confirmation.\n\n` +
       `You can follow it here: ${site}/settings/submissions\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -127,7 +127,7 @@ export function approvedMail(row: SubmissionRow, site: string): MailMessage {
       `Page: ${site}/products/${row.slug}\n\n` +
       `The link to your site is included on that page. If anything looks wrong, ` +
       `reply to this mail and we will fix it.\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -140,7 +140,7 @@ export function rejectedMail(row: SubmissionRow, note: string, site: string): Ma
     text:
       `${name} was not published.\n${reason}\n` +
       `You can edit it and submit again: ${site}/settings/submissions\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -160,7 +160,7 @@ export function submissionInboxMail(to: string, row: SubmissionRow, site: string
       `URL: ${row.url}\n` +
       `Plan: ${row.plan}\n\n` +
       `Review it: ${site}/admin/submissions\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -174,7 +174,7 @@ export function paymentConfirmedMail(row: SubmissionRow, site: string): MailMess
       `Page: ${site}/products/${row.slug}\n\n` +
       `Your placement runs for the period shown at checkout. When it ends the ` +
       `page stays up; only the pinned position goes away.\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -212,7 +212,7 @@ export function ticketOpenedMail(
       `${who} opened a ticket.\n\n` +
       `${ticket.title}\n\n` +
       `Answer it here: ${site}/admin/tickets?id=${ticket.id}\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -235,7 +235,7 @@ export function ticketRepliedMail(
       `Read the reply and continue here: ${site}/settings/tickets?id=${ticket.id}\n\n` +
       `If the link opens your ticket list, the reply is the newest message in ` +
       `the thread.\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -269,7 +269,7 @@ export function spotlightSubmittedMail(row: SpotlightMailRow, site: string): Mai
       `guaranteed window. If something needs fixing you get a note saying what, ` +
       `and you can send a revised draft.\n\n` +
       `The article publishes at ${site}/spotlights/${row.slug} once it is approved.\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -283,7 +283,7 @@ export function spotlightInboxMail(to: string, row: SpotlightMailRow, site: stri
       `${name} sent a Spotlight draft.\n\n` +
       `Listing: ${site}/products/${row.listingSlug}\n\n` +
       `Review it: ${site}/admin/spotlights\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -297,7 +297,7 @@ export function spotlightApprovedMail(row: SpotlightMailRow, site: string): Mail
       `Page: ${site}/spotlights/${row.slug}\n\n` +
       `It links to your listing and to your site. The badge page has the embed ` +
       `code if you want to point at it from your own site: ${site}/spotlights/badge\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }
 
@@ -317,6 +317,6 @@ export function spotlightRejectedMail(row: SpotlightMailRow, note: string, site:
       `The standards are here: ${site}/spotlights/guidelines\n\n` +
       `Send a revised draft through the same form and it goes back into the ` +
       `queue.\n\n` +
-      `— Product Atlas\n`,
+      `— dirtool\n`,
   }
 }

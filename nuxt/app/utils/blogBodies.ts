@@ -3,7 +3,7 @@
  *
  * Bodies used to be inlined here because Nitro cannot load `?raw` markdown.
  * The old demo posts were removed. `loadLocalBody` returns null until a
- * real Product Atlas note is added. Old slugs 404 from the blog route.
+ * real dirtool note is added. Old slugs 404 from the blog route.
  */
 
 const BODIES: Record<string, Record<string, string>> = {}

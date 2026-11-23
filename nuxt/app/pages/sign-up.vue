@@ -40,7 +40,7 @@ onMounted(async () => {
 })
 
 useSeo({
-  title: computed(() => pick('注册 | Product Atlas', 'Create a free account | Product Atlas')),
+  title: computed(() => pick('注册 | dirtool', 'Create a free account | dirtool')),
   description: computed(() =>
     pick(
       '用 Google 免费建账号。这一页不需要银行卡。',

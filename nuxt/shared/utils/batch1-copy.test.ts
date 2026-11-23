@@ -65,19 +65,18 @@ test('listing checkout and the pay toast do not promise an email', () => {
   }
 })
 
-test('an unconfigured Billboard claim does not promise an email or an invoice', () => {
+test('a closed Billboard page does not promise an email or an invoice', () => {
   const page = read('../../app/pages/billboard.vue')
   const checkout = read('../../server/api/billboard/checkout.post.ts')
-  const sentence = 'Could not open the payment page — try again in a moment.'
-  const sentenceZh = '暂时打不开付款页面，请稍后再试。'
   for (const text of [page, checkout]) {
-    assert.equal(text.includes(sentence), true)
-    assert.equal(text.includes(sentenceZh), true)
     assert.equal(text.includes('we will email you how to pay'), false)
     assert.equal(text.includes('邮件告诉你付款方式'), false)
     assert.equal(text.includes('Request invoice'), false)
     assert.equal(text.includes('索取发票'), false)
   }
+  assert.match(page, /New bids are closed/)
+  assert.match(checkout, /billboard_closed/)
+  assert.match(checkout, /New Billboard bids are closed/)
   assert.equal(page.includes('Live the second you pay'), false)
   assert.equal(page.includes('付款即上线'), false)
   const pricing = read('../../shared/content/pricing.ts')
@@ -179,8 +178,8 @@ test('the blog is an empty state and the ShipAny posts are gone', () => {
   assert.equal(blog.includes('blocks-vs-components'), false)
   assert.equal(blog.includes('ShipAny TanStack'), false)
   assert.match(blog, /BLOG_POST_SLUGS = \[\]/)
-  assert.equal(page.includes('Blog · Product Atlas'), true)
-  assert.equal(page.includes('Notes from Product Atlas. New posts will show up here.'), true)
+  assert.equal(page.includes('Blog · dirtool'), true)
+  assert.equal(page.includes('Notes from dirtool. New posts will show up here.'), true)
   assert.equal(page.includes('No posts yet. Check back here for product notes and listing guides.'), true)
   assert.equal(bodies.includes('ShipAny'), false)
   assert.equal(read('../../app/pages/blog/[slug].vue').includes('statusCode: 404'), true)
@@ -189,7 +188,7 @@ test('the blog is an empty state and the ShipAny posts are gone', () => {
 test('submit opens on a URL draft and signs in only to save or pay', () => {
   const page = read('../../app/pages/submit.vue')
   const form = read('../../app/components/directory/SubmitForm.vue')
-  assert.equal(page.includes('Submit a product · Product Atlas'), true)
+  assert.equal(page.includes('Submit a product · dirtool'), true)
   assert.equal(
     page.includes('Paste your URL first. We draft the listing. Sign in only when you save it or pay.'),
     true,

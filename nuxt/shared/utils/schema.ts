@@ -18,7 +18,7 @@ export const SCHEMA_SITE = 'https://dirtool.com'
  * name in `og:site_name`, in `WebSite.name` and in the visible header have to
  * agree — Google reads all three when it decides what to print above a result.
  */
-export const SCHEMA_SITE_NAME = 'Product Atlas'
+export const SCHEMA_SITE_NAME = 'dirtool'
 
 export type SiteIdentity = {
   name: string

@@ -48,7 +48,7 @@ async function submit() {
 }
 
 useSeo({
-  title: computed(() => pick('重置密码 | Product Atlas', 'Reset password | Product Atlas')),
+  title: computed(() => pick('重置密码 | dirtool', 'Reset password | dirtool')),
   description: computed(() => pick('为你的账号设置新密码。', 'Choose a new password for your account.')),
 })
 </script>

@@ -53,7 +53,7 @@ export default defineEventHandler((event) => {
   // them belong in an index. /submit and /sign-in are crawlable but stay out of
   // the sitemap: they are transactional, not content.
   return [
-    '# robots.txt for Product Atlas (https://dirtool.com/)',
+    '# robots.txt for dirtool (https://dirtool.com/)',
     `# A map of the site for AI assistants: ${SITE}/llms.txt`,
     `# How AI systems may use and cite this content: ${SITE}/ai.txt`,
     '',

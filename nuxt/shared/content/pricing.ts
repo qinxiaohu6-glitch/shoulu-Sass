@@ -33,6 +33,11 @@ export interface PriceTier {
   features: PairList
   cta: Pair
   badge?: Pair
+  /**
+   * False: an old purchase can still be priced and fulfilled. The pricing
+   * page and the submit form do not offer it.
+   */
+  forSale?: boolean
 }
 
 export const tiers: PriceTier[] = [
@@ -40,8 +45,8 @@ export const tiers: PriceTier[] = [
     id: 'free',
     name: { en: 'Free', zh: '免费' },
     tagline: {
-      en: 'Get listed. Keep the page.',
-      zh: '先上线。页面留下。',
+      en: 'A permanent product page. The link is nofollow.',
+      zh: '一页永久产品页。链接为 nofollow。',
     },
     price: '$0',
     amountCents: 0,
@@ -66,8 +71,8 @@ export const tiers: PriceTier[] = [
     id: 'boost',
     name: { en: 'Boost', zh: '加速' },
     tagline: {
-      en: 'Verified badge and a gold row. No extra steps.',
-      zh: '金色认证和高亮行。无需额外步骤。',
+      en: 'A permanent dofollow backlink, a verified badge, and a highlighted row.',
+      zh: '永久 dofollow 反链、认证徽章，以及榜单高亮行。',
     },
     price: '$10',
     amountCents: 1000,
@@ -92,10 +97,11 @@ export const tiers: PriceTier[] = [
   },
   {
     id: 'standard',
+    forSale: false,
     name: { en: 'Standard', zh: '标准' },
     tagline: {
-      en: 'Skip the wait. Get a dofollow link.',
-      zh: '跳过等待。获得 dofollow 链接。',
+      en: 'Goes live when payment succeeds. Permanent dofollow backlink.',
+      zh: '付款成功后上线。永久 dofollow 反链。',
     },
     price: '$19',
     amountCents: 1900,
@@ -109,10 +115,11 @@ export const tiers: PriceTier[] = [
   },
   {
     id: 'featured',
+    forSale: false,
     name: { en: 'Featured', zh: '精选' },
     tagline: {
-      en: 'Skip the queue — and take the pin.',
-      zh: '跳过排队，并拿到置顶。',
+      en: 'Dofollow backlink, a 7-day category pin, and a homepage card.',
+      zh: 'dofollow 反链、分类置顶 7 天，以及首页卡片。',
     },
     price: '$39',
     amountCents: 3900,
@@ -136,10 +143,11 @@ export const tiers: PriceTier[] = [
   },
   {
     id: 'pro',
+    forSale: false,
     name: { en: 'Pro', zh: '专业' },
     tagline: {
-      en: 'Hold the category pin longer.',
-      zh: '分类置顶留得更久。',
+      en: 'Same as Featured, with a 90-day category pin and four copy edits a year.',
+      zh: '包含精选档，分类置顶 90 天，全年 4 次文案修改。',
     },
     price: '$69',
     amountCents: 6900,
@@ -159,7 +167,7 @@ export const tiers: PriceTier[] = [
 ]
 
 export interface AdPlan {
-  id: 'sidebar'
+  id: 'board' | 'sidebar'
   name: Pair
   price: string
   unit: Pair
@@ -187,6 +195,40 @@ export interface AdPlan {
 export const AD_WEEK_OPTIONS = [1, 4] as const
 
 export const adPlans: AdPlan[] = [
+  {
+    id: 'board',
+    name: { en: 'Launch board ad', zh: '发布榜广告' },
+    price: '$29',
+    weeklyCents: 2900,
+    bundleWeeks: 4,
+    bundleCents: 11600,
+    unit: { en: '/ week', zh: '/ 周' },
+    where: {
+      en: 'One sponsored banner on the launch board, under the top 3',
+      zh: '发布榜前三名下面的一条赞助横幅',
+    },
+    pitch: {
+      en: 'One brand per week. The banner runs Monday to Sunday.',
+      zh: '每周一个品牌。横幅从周一展示到周日。',
+    },
+    bullets: {
+      en: [
+        'Sponsored banner under the top 3',
+        'Shown on the launch board and the homepage',
+        'One brand per week',
+        'Your logo, name, headline and button',
+        'Monday to Sunday',
+      ],
+      zh: [
+        '前三名下面的赞助横幅',
+        '同时出现在发布榜和首页',
+        '每周只卖给一个品牌',
+        '包含 logo、名称、一句话和按钮',
+        '周一到周日',
+      ],
+    },
+    bundle: { en: 'Four weeks is four times the weekly price', zh: '连订 4 周按周价乘 4' },
+  },
   {
     id: 'sidebar',
     name: { en: 'Right sidebar ad', zh: '右栏广告' },
@@ -289,8 +331,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'Does Boost buy votes?', zh: '加速会买票吗？' },
     a: {
-      en: 'No. The top 3 is decided by upvotes only. Below the top 3, boosted launches are placed above standard launches, with a gold badge and a highlighted row so more people see them.',
-      zh: '不会。前三名只由投票决定。前三名以下，加速发布会排在标准收录之前，并带金色认证徽章和高亮行，让更多人看到。',
+      en: 'No. The top 3 is decided by upvotes only. Below the top 3, a Boost listing is placed above free listings, with a gold badge and a highlighted row.',
+      zh: '不会。前三名只由投票决定。前三名以下，Boost 排在免费收录之前，并带金色认证徽章和高亮行。',
     },
   },
   {
@@ -303,8 +345,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'How do I get a dofollow link?', zh: '怎样获得 dofollow 反链？' },
     a: {
-      en: 'Boost, Standard, Featured and Pro all include a permanent dofollow backlink. Free listings are nofollow. You do not need to display a badge to keep the link.',
-      zh: '加速、标准、精选和专业档都包含永久 dofollow 反链。免费收录是 nofollow。你不需要展示徽章，也不会因此失去链接。',
+      en: 'Boost includes a permanent dofollow backlink. A free listing is nofollow. You do not need to display a badge to keep the link. Standard, Featured and Pro are no longer sold; a listing already paid for keeps the link and any pin until that pin date ends.',
+      zh: 'Boost 包含永久 dofollow 反链。免费收录是 nofollow。不需要展示徽章来保留链接。标准、精选和专业档已停售；已经付款的收录保留链接，置顶保留到原定日期结束。',
     },
   },
   {
@@ -317,8 +359,8 @@ export const pricingFaq: { q: Pair; a: Pair }[] = [
   {
     q: { en: 'How do ad spots work?', zh: '广告位怎么运作？' },
     a: {
-      en: 'Billboard is a one-time name-your-price placement: the Top 5 is ranked by the total backed, and you can pay again for the same product to add to it. The sidebar is rented by the week, Monday to Sunday, with four separate slots.',
-      zh: 'Billboard 是一次性出价展示：Top 5 按累计金额排名，同一产品可再次付款累加。右栏按周租用，周一起算 7 天，共 4 个独立位置。',
+      en: 'The launch board ad is one banner under the top 3, one brand per week, Monday to Sunday. The sidebar is rented by the week on the same calendar. Nothing renews. Billboard name-your-price bids are closed; a bid already paid stays on the board.',
+      zh: '发布榜广告是前三名下面的一条横幅，每周一个品牌，周一到周日。右栏按同一周历租用。不会自动续费。Billboard 出价已停止；已经付款的出价仍留在榜上。',
     },
   },
   {
@@ -414,9 +456,6 @@ export function planSaleAmountCents(plan: string): number {
  * `slot` and `weeks`, never an amount; this is the only place that decides it.
  */
 export function adPriceCents(slot: string, weeks: number): number {
-  // The weekly board slot is retired. A zero price makes checkout refuse the
-  // charge instead of opening a session for a product we no longer sell.
-  if (slot === 'board') return 0
   if (!Number.isInteger(weeks) || !(AD_WEEK_OPTIONS as readonly number[]).includes(weeks)) return 0
   const plan = adPlans.find((a) => a.id === slot)
   if (!plan) return 0
@@ -425,7 +464,8 @@ export function adPriceCents(slot: string, weeks: number): number {
 
 /** Campaign price for a weekly ad slot, or the regular price when it has none. */
 export function adSalePriceCents(slot: string, weeks: number): number {
-  if (slot === 'board') return 0
+  // The launch-board ad has no campaign price. Checkout charges `weeklyCents`.
+  if (slot === 'board') return adPriceCents(slot, weeks)
   if (!Number.isInteger(weeks) || !(AD_WEEK_OPTIONS as readonly number[]).includes(weeks)) return 0
   const plan = adPlans.find((a) => a.id === slot)
   if (!plan) return 0

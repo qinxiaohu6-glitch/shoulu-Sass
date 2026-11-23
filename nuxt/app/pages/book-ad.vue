@@ -21,8 +21,9 @@
  * matching FAQPage markup. No bidding, no stackable payments and no "no review"
  * claim — this site keeps its conflict checks and its Acceptable Use Policy.
  */
-import { AD_WEEK_OPTIONS, adPlans } from '~~/shared/content/pricing'
-import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+import { AD_WEEK_OPTIONS, adPlans, adPriceCents } from '~~/shared/content/pricing'
+import { centsLabel } from '~~/shared/content/campaign'
+import { effectiveAdCents, effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { openAdWeeks } from '~/composables/useAds'
 
 const { pick, isZh } = useLang()
@@ -31,15 +32,14 @@ const route = useRoute()
 const requestFetch = useRequestFetch()
 const payment = await usePayment()
 
-type Slot = 'sidebar'
+type Slot = 'board' | 'sidebar'
 type Availability = {
   ok: boolean
   starts: string[]
   available: Record<string, boolean>
 }
 
-const boardRetired = computed(() => route.query.slot === 'board')
-const slot = ref<Slot>('sidebar')
+const slot = ref<Slot>(route.query.slot === 'board' ? 'board' : 'sidebar')
 const weeks = ref<number>(
   AD_WEEK_OPTIONS.includes(Number(route.query.weeks) as 1 | 4) ? Number(route.query.weeks) : 1,
 )
@@ -68,8 +68,20 @@ const starts = computed(() => data.value?.starts ?? [])
 const available = computed(() => data.value?.available ?? {})
 const openWeeks = computed(() => openAdWeeks(data.value))
 const plan = computed(() => adPlans.find((entry) => entry.id === slot.value) ?? adPlans[0]!)
-const quote = computed(() => effectiveQuote('sidebar', String(weeks.value)))
-const weekQuote = computed(() => effectiveQuote('sidebar', '1'))
+const quote = computed(() => {
+  if (slot.value === 'board') {
+    const amount = effectiveAdCents('board', weeks.value)
+    const label = centsLabel(amount)
+    return { amountCents: amount, priceLabel: label, strikeLabel: null as string | null }
+  }
+  return effectiveQuote('sidebar', String(weeks.value))
+})
+const sidebarWeekQuote = computed(() => effectiveQuote('sidebar', '1'))
+const weekQuote = computed(() =>
+  slot.value === 'board'
+    ? { priceLabel: centsLabel(adPriceCents('board', 1)), strikeLabel: null as string | null }
+    : effectiveQuote('sidebar', '1'),
+)
 const priceCents = computed(() => quote.value.amountCents)
 const price = computed(() => quote.value.priceLabel)
 
@@ -162,7 +174,7 @@ const canSubmit = computed(() =>
 )
 
 async function submit() {
-  if (boardRetired.value || slot.value !== 'sidebar') return
+  if (slot.value !== 'board' && slot.value !== 'sidebar') return
   if (!canSubmit.value) return
   busy.value = true
   error.value = ''
@@ -192,11 +204,11 @@ async function submit() {
 }
 
 useSeo({
-  title: computed(() => pick('预订周广告位 · Product Atlas', 'Book a weekly ad slot · Product Atlas')),
+  title: computed(() => pick('预订周广告位 · dirtool', 'Book a weekly ad slot · dirtool')),
   description: computed(() =>
     pick(
-      '按周预订右栏。Billboard 在自己的页面上。',
-      'Book the sidebar by the week. Billboard is on its own page.',
+      '按周预订发布榜广告或右栏。周一到周日，不自动续费。',
+      'Book the launch-board ad or the sidebar by the week. Monday to Sunday. Nothing renews.',
     ),
   ),
 })
@@ -208,35 +220,18 @@ useHead({
 
 <template>
   <div class="src-page mx-auto w-full max-w-[1080px] px-4 py-10 sm:px-6 sm:py-14">
-    <section v-if="boardRetired" class="max-w-xl rounded-2xl border border-dashed border-border p-8">
-      <p class="text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">BILLBOARD</p>
-      <h1 class="mt-3 font-serif text-3xl tracking-tight">
-        {{ pick('Billboard 在自己的页面上', 'Billboard is on its own page') }}
-      </h1>
-      <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
-        {{
-          pick(
-            '原来的榜单位现在是 Billboard，一次付款后自动上板。价格在 /billboard，和结账实付相同。',
-            'The old board slot is now Billboard. It goes live after one payment. The price is on /billboard and matches checkout.',
-          )
-        }}
-      </p>
-      <NuxtLink class="btn btn--primary mt-6" :to="`${localePath('/billboard')}#claim`">
-        {{ pick('去 Billboard 付款', 'Pay on Billboard') }}
-      </NuxtLink>
-    </section>
-    <header v-if="!boardRetired" class="mb-10 max-w-3xl">
+    <header class="mb-10 max-w-3xl">
       <p class="mb-3 text-xs font-semibold tracking-[0.18em] uppercase text-muted-foreground">
         {{ pick('周广告位', 'Weekly ad slots') }}
       </p>
       <h1 class="font-serif text-3xl font-normal tracking-tight sm:text-4xl">
-        {{ pick('预订右栏', 'Book the sidebar') }}
+        {{ pick('预订一周广告', 'Book a week') }}
       </h1>
       <p class="mt-3 text-sm leading-relaxed text-muted-foreground">
         {{
           pick(
-            '右栏按周出租，周一起算、到期下架，同一周不会卖两次。Billboard 不在这个表单里。',
-            'The sidebar is rented by the week, starting Monday, and comes down when the window ends. It is not sold twice for the same week. Billboard is not on this form.',
+            '发布榜广告每周一个品牌。右栏按周出租。都从周一开始，到期下架，不会自动续费。',
+            'The launch-board ad is one brand per week. The sidebar is rented by the week. Both start on Monday, come down when the week ends, and do not renew.',
           )
         }}
       </p>
@@ -253,7 +248,7 @@ useHead({
       </p>
     </header>
 
-    <form v-if="!boardRetired" class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" @submit.prevent="submit">
+    <form class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]" @submit.prevent="submit">
       <div class="space-y-8">
         <!-- position -->
         <section class="space-y-3">
@@ -274,8 +269,8 @@ useHead({
               <div class="flex items-baseline justify-between gap-2">
                 <span class="font-medium">{{ isZh ? entry.name.zh : entry.name.en }}</span>
                 <span class="font-serif text-xl tabular-nums">
-                  <s v-if="weekQuote.strikeLabel" class="mr-1 text-sm text-muted-foreground">{{ weekQuote.strikeLabel }}</s>
-                  {{ weekQuote.priceLabel }}<small class="ml-0.5 text-xs text-muted-foreground">{{ pick('/周', '/wk') }}</small>
+                  <s v-if="entry.id === 'sidebar' && sidebarWeekQuote.strikeLabel" class="mr-1 text-sm text-muted-foreground">{{ sidebarWeekQuote.strikeLabel }}</s>
+                  {{ entry.id === 'board' ? centsLabel(adPriceCents('board', 1)) : sidebarWeekQuote.priceLabel }}<small class="ml-0.5 text-xs text-muted-foreground">{{ pick('/周', '/wk') }}</small>
                 </span>
               </div>
               <p class="mt-1 text-xs text-muted-foreground">

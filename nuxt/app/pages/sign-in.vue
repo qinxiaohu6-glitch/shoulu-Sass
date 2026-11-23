@@ -69,7 +69,7 @@ const switchQuery = computed(() =>
 )
 
 useSeo({
-  title: computed(() => pick('登录 | Product Atlas', 'Sign in | Product Atlas')),
+  title: computed(() => pick('登录 | dirtool', 'Sign in | dirtool')),
   description: computed(() =>
     pick(
       '用 Google 登录。免费开始，这一页不需要银行卡。',

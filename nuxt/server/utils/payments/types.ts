@@ -47,8 +47,14 @@ export interface PaymentEvent {
   orderId: string
   providerRef: string
   status: PaymentEventStatus
-  /** What the provider says was charged. Compared against the order before publishing. */
+  /** What the provider says was charged, tax included. Compared against the order before publishing. */
   amountCents: number
+  /**
+   * Pre-tax goods price when the provider sent one (`listPrice.subtotal`).
+   * This is the number that has to match the page. Absent when the event has
+   * no price breakdown; the caller then treats only a small excess as tax.
+   */
+  goodsCents?: number | null
   currency: string
   email: string
   raw: unknown

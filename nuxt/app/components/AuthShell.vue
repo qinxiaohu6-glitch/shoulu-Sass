@@ -30,15 +30,15 @@ const points = computed(() => [
   {
     title: pick('付费位置一次付清', 'Paid placement is one payment'),
     body: pick(
-      '付费收录和 Billboard 都是一次性的，不会自动续费。',
-      'Paid listings and Billboard are one-time. Nothing renews by itself.',
+      'Boost 是一次付清。周广告到期即下架，不会自动续费。',
+      'Boost is one payment. A weekly ad comes down when its week ends and does not renew.',
     ),
   },
   {
     title: pick('付款成功后自动上线', 'When payment succeeds'),
     body: pick(
-      '付款成功后，付费目录收录或 Billboard 展示位会自动上线。',
-      'When payment succeeds, a paid directory listing or a Billboard slot goes live automatically.',
+      '付款成功后，Boost 收录或周广告会自动上线。',
+      'When payment succeeds, a Boost listing or a weekly ad goes live automatically.',
     ),
   },
 ])
@@ -95,8 +95,8 @@ const points = computed(() => [
     <div class="flex w-full max-w-sm flex-col gap-6">
       <NuxtLink :to="localePath('/')" class="self-center">
         <span class="flex items-center gap-2">
-          <img src="/assets/img/brand/logo.png" alt="Product Atlas" width="28" height="28">
-          <span class="text-lg font-semibold tracking-tight">Product Atlas</span>
+          <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28">
+          <span class="text-lg font-semibold tracking-tight">dirtool</span>
         </span>
       </NuxtLink>
 

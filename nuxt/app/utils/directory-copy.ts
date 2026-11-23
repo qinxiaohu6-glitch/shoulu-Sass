@@ -11,7 +11,7 @@
  * Placeholders keep paraglide's `{name}` syntax; `useDirectoryCopy()` fills them.
  *
  * One key is overridden: `directory.brand_name` is the source's demo brand
- * ("ShipAny Dir"). This build is Product Atlas, and the brand appears inside page
+ * ("ShipAny Dir"). This build is dirtool, and the brand appears inside page
  * titles and `{brand}` templates, so it is replaced rather than ported.
  */
 
@@ -42,16 +42,16 @@ export const DIRECTORY_COPY = {
   'directory.categories.tools_count': { en: '{count} tools', zh: '{count} 个工具' },
   'directory.heading.category_tools': { en: '{name} Tools', zh: '{name}工具' },
   'directory.category_named_count': { en: '{count} {name} tools', zh: '{count} 款{name}工具' },
-  'directory.category.meta_title': { en: '{name} · Product Atlas', zh: '{name} · Product Atlas' },
+  'directory.category.meta_title': { en: '{name} · dirtool', zh: '{name} · dirtool' },
   'directory.category.meta_desc': { en: 'Listings in {name}.', zh: '{name}分类下的收录。' },
   'directory.tags': { en: 'Tags', zh: '标签' },
   'directory.tags.title': { en: 'Tags', zh: '标签' },
   'directory.tags.subtitle': { en: 'Browse listings by tag. Tags with no listings are hidden.', zh: '按标签浏览收录。没有收录的标签不显示。' },
   'directory.heading.tag_tools': { en: '{name}', zh: '{name}' },
   'directory.tag_named_count': { en: '{count} {name} listings', zh: '{count} 条{name}收录' },
-  'directory.tag.meta_title': { en: '{name} · Product Atlas', zh: '{name} · Product Atlas' },
+  'directory.tag.meta_title': { en: '{name} · dirtool', zh: '{name} · dirtool' },
   'directory.tag.meta_desc': { en: 'Listings tagged {name}.', zh: '带有{name}标签的收录。' },
-  'directory.brand_name': { en: 'Product Atlas', zh: 'Product Atlas' },
+  'directory.brand_name': { en: 'dirtool', zh: 'dirtool' },
   'directory.meta.with_brand': { en: '{title} | {brand}', zh: '{title} | {brand}' },
   'directory.meta.tools': { en: 'All {count} products · {brand}', zh: '全部 {count} 款产品 · {brand}' },
   'directory.meta.categories': { en: 'Categories · {brand}', zh: '分类 · {brand}' },
@@ -137,15 +137,15 @@ export const DIRECTORY_COPY = {
   'dir.submit.plan_free_f1': { en: 'Reviewed by the editors, usually within a week', zh: '由编辑逐条人工审核，通常一周内完成' },
   'dir.submit.plan_free_f2': { en: 'Listed once approved', zh: '通过后上线' },
   'dir.submit.plan_premium_f1': { en: 'Goes live right away, no review queue', zh: '付款成功后立即上线，不用排队审核' },
-  'dir.submit.plan_premium_f2': { en: 'Featured for 30 days', zh: '精选推荐 30 天' },
+  'dir.submit.plan_premium_f2': { en: 'Gold badge and a highlighted row above free listings', zh: '金色徽章，以及排在免费收录之前的高亮行' },
   'dir.submit.plan_premium_f3': { en: 'Dofollow backlink to your site', zh: '指向你网站的 dofollow 外链' },
   'dir.submit.faq_title': { en: 'Submission FAQ', zh: '提交常见问题' },
   'dir.submit.faq_q1': { en: 'Is submitting a tool free?', zh: '提交工具免费吗？' },
   'dir.submit.faq_a1': { en: 'Yes. Free submissions go into the review queue, and an editor checks each one, usually within a week. It goes live once approved.', zh: '免费。免费提交会进入审核队列，由编辑逐条人工审核，通常一周内完成，通过后上线。' },
   'dir.submit.faq_q2': { en: 'What do I get with a paid plan?', zh: '付费方案有什么好处？' },
-  'dir.submit.faq_a2': { en: 'Every paid plan is a one-time payment, and your listing goes live as soon as the payment succeeds — no review queue. All paid plans carry a permanent dofollow backlink. The pin length is the only thing that changes: Featured holds the directory and category pin for 7 days, Pro for 90. The amount is shown next to each plan above, and the checkout page charges exactly that amount.', zh: '付费方案都是一次性付款，付款成功后立即上线，不用排队审核。所有付费方案都带永久 dofollow 反链。差别只在置顶时长：精选在目录页和分类页置顶 7 天，专业 90 天。金额就在上面的方案卡里，结账页按该金额收款。' },
+  'dir.submit.faq_a2': { en: 'Boost is a one-time payment. The listing goes live when payment succeeds, with a permanent dofollow backlink, a gold badge, and a highlighted row above free listings. Standard, Featured, and Pro are no longer sold. A pin already paid for stays until its end date. Checkout charges the amount shown on the plan.', zh: 'Boost 是一次性付款。付款成功后上线，包含永久 dofollow 反链、金色徽章，以及排在免费收录之前的高亮行。标准、精选和专业档已停售。已经付款的置顶留到原定日期结束。结账页按方案上显示的金额收款。' },
   'dir.submit.faq_q3': { en: 'Are the links on my listing dofollow?', zh: '收录页上的链接是 dofollow 吗？' },
-  'dir.submit.faq_a3': { en: 'Links on free listings are nofollow. Every paid listing plan and every paid ad gets a followed link. Every outbound link carries UTM tags, so you can see the traffic we send in your analytics.', zh: '免费收录的链接是 nofollow，所有付费方案和付费广告的链接都是 dofollow。所有外链都带 UTM 参数，你可以在自己的统计工具里看到我们带来的流量。' },
+  'dir.submit.faq_a3': { en: 'Free listings are nofollow. Boost is a permanent dofollow link, and you do not have to display a badge to keep it. Ad links use rel="sponsored nofollow" and pass no authority.', zh: '免费收录是 nofollow。Boost 是永久 dofollow，不展示徽章也不会失去这条链接。广告链接使用 rel="sponsored nofollow"，不传递权重。' },
   'dir.submit.faq_q4': { en: 'Can I edit my listing after submitting?', zh: '提交后还能修改吗？' },
   'dir.submit.faq_a4': { en: 'Editing an existing submission is not available yet. If it was rejected, submit a new listing or contact support. You can preview published tools from Settings → My Submissions.', zh: '目前暂不支持直接修改已有提交。若被拒绝，请重新提交或联系支持。已发布的工具可在「设置 → 我的提交」中查看。' },
   'dir.submit.faq_q5': { en: 'What if my submission is rejected?', zh: '审核没通过怎么办？' },

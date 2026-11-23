@@ -24,7 +24,7 @@ const facts = computed(() => [
 ])
 
 useSeo({
-  title: computed(() => pick('提交之后会发生什么 · Product Atlas', 'How it works · Product Atlas')),
+  title: computed(() => pick('提交之后会发生什么 · dirtool', 'How it works · dirtool')),
   description: computed(() => pick(L2_ZH, L2)),
 })
 </script>

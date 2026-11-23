@@ -88,14 +88,14 @@ const localePath = useLocalePath()
       <h2 id="featured-col-title" class="home-cols__title">{{ pick('精选', 'Featured') }}</h2>
       <div class="feat-promo">
         <span class="launch-row__badge">FEATURED</span>
-        <h3>{{ pick('排在目录前面', 'Pinned in the directory') }}</h3>
-        <p>{{ pick('精选是收录档，不是订阅。', 'Featured is a listing tier, not a subscription.') }}</p>
+        <h3>{{ pick('排在免费收录之前', 'Above free listings') }}</h3>
+        <p>{{ pick('Boost 是一次付费的收录，不是订阅。', 'Boost is a one-time listing, not a subscription.') }}</p>
         <p class="feat-promo__price">
           <b>{{ featuredPrice }}</b>
           <span>{{ pick('一次性', 'one-time') }}</span>
         </p>
-        <NuxtLink class="btn btn--primary btn--block" :to="localePath({ path: '/submit', query: { plan: 'featured' } })">
-          {{ pick('看精选档', 'See Featured') }}
+        <NuxtLink class="btn btn--primary btn--block" :to="localePath({ path: '/submit', query: { plan: 'boost' } })">
+          {{ pick('看 Boost', 'See Boost') }}
         </NuxtLink>
       </div>
       <ul class="feat-list">

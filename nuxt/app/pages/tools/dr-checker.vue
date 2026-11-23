@@ -6,7 +6,7 @@ const { pick } = useLang()
 const localePath = useLocalePath()
 
 useSeo({
-  title: computed(() => pick('Domain Rating（DR4）· Product Atlas', 'Domain Rating (DR4) · Product Atlas')),
+  title: computed(() => pick('Domain Rating（DR4）· dirtool', 'Domain Rating (DR4) · dirtool')),
   description: computed(() =>
     pick(
       '用 Ahrefs 官方免费接口查询 DR4。输入、查询和结果都留在本页。不是 Google 排名。',

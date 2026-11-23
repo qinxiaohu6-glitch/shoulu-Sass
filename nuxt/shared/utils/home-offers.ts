@@ -6,15 +6,12 @@
  *  * Category cards show real logos (catalogue and community) and never pad
  *    the thumbnail grid with empty squares. A category with no products
  *    becomes a recruit card instead of a fake listing.
- *  * The old "what you get" block is four bookable spots. Prices are read
- *    from the existing tier and ad tables. A spot shows a product only when
- *    that product is a paid community order or a live ad booking — catalogue
- *    seed rows are not orders, and an empty spot stays a recruit card.
+ *  * The bookable spots are the two weekly ads. Prices are read from the ad
+ *    table. A spot shows a live ad, and an empty spot stays a recruit card.
  */
 
 import { centsLabel } from '../content/campaign.ts'
-import { adPlans, tiers, type Pair } from '../content/pricing.ts'
-import { BILLBOARD_FLOOR_CENTS } from './billboard-bid.ts'
+import { adPlans, type Pair } from '../content/pricing.ts'
 import { effectiveQuote } from './pricing-effective.ts'
 
 export type BrowseTool = {
@@ -126,9 +123,9 @@ export type OfferAd = {
 } | null
 
 export type HomeOfferSlot = {
-  id: 'featured' | 'pro' | 'billboard' | 'sidebar'
+  id: 'board' | 'sidebar'
   /** Paid placements are labeled. The weekly vote board is a different list. */
-  flag: 'FEATURED' | 'PRO' | 'BILLBOARD' | 'SIDEBAR'
+  flag: 'BOARD' | 'SIDEBAR'
   price: string
   unit: Pair
   name: Pair
@@ -154,20 +151,6 @@ export function offerSpotLine(slot: Pick<HomeOfferSlot, 'name' | 'price' | 'unit
   return `${name} ${slot.price} ${unit}`
 }
 
-function paidListing(listings: OfferListing[], plan: 'featured' | 'pro'): OfferListing | undefined {
-  return listings.find((tool) => tool.plan === plan && tool.is_paid && tool.slug && tool.name)
-}
-
-function listingOccupant(tool: OfferListing): OfferOccupant {
-  return {
-    name: tool.name,
-    line: tool.short,
-    logo: tool.logo,
-    href: `/products/${tool.slug}`,
-    external: false,
-  }
-}
-
 function adOccupant(ad: OfferAd): OfferOccupant | null {
   if (!ad?.name || !ad.url) return null
   return {
@@ -180,66 +163,34 @@ function adOccupant(ad: OfferAd): OfferOccupant | null {
 }
 
 /**
- * The four spots that replaced the benefit cards.
+ * The two weekly ads.
  *
- * Names come from `tiers` / `adPlans`; prices come from `effectiveQuote`, the
- * same function checkout uses, so a slot can never advertise the regular price
- * while the campaign price is what gets charged.
- * Passing a catalogue row that is merely flagged paid does nothing unless
- * `plan` is `featured` or `pro` — seed products do not count as orders.
+ * Names come from `adPlans`. The sidebar price comes from `effectiveQuote`.
+ * The launch-board ad uses its weekly price and is not discounted.
  */
 export function homeOfferSlots(input: {
-  listings: OfferListing[]
-  /** A confirmed Billboard placement. A weekly board ad is not one of these. */
+  listings?: OfferListing[]
+  /** A live launch-board ad, or a Billboard placement already paid for. */
   billboard?: OfferAd
   sidebar?: OfferAd
 }): HomeOfferSlot[] {
-  const featuredTier = tiers.find((tier) => tier.id === 'featured')
-  const proTier = tiers.find((tier) => tier.id === 'pro')
+  const boardPlan = adPlans.find((plan) => plan.id === 'board')
   const sidebarPlan = adPlans.find((plan) => plan.id === 'sidebar')
-  if (!featuredTier || !proTier || !sidebarPlan) {
+  if (!boardPlan || !sidebarPlan) {
     throw new Error('homepage offer slots are missing a row in the pricing tables')
   }
-  const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
-  const featuredPrice = effectiveQuote('listing', 'featured').priceLabel
-  const proPrice = effectiveQuote('listing', 'pro').priceLabel
+  const boardPrice = centsLabel(boardPlan.weeklyCents)
   const sidebarPrice = effectiveQuote('sidebar', '1').priceLabel
-
-  const featured = paidListing(input.listings, 'featured')
-  const pro = paidListing(input.listings, 'pro')
 
   return [
     {
-      id: 'featured',
-      flag: 'FEATURED',
-      price: featuredPrice,
-      unit: featuredTier.unit,
-      name: featuredTier.name,
-      detail: { zh: '7 天置顶 + 首页卡', en: '7-day pin + homepage card' },
-      href: { path: '/submit', query: { plan: 'featured' } },
-      occupant: featured ? listingOccupant(featured) : null,
-    },
-    {
-      id: 'pro',
-      flag: 'PRO',
-      price: proPrice,
-      unit: proTier.unit,
-      name: proTier.name,
-      detail: { zh: '分类置顶 90 天', en: 'Category pin for 90 days' },
-      href: { path: '/submit', query: { plan: 'pro' } },
-      occupant: pro ? listingOccupant(pro) : null,
-    },
-    {
-      id: 'billboard',
-      flag: 'BILLBOARD',
-      price: `from ${floorLabel}`,
-      unit: { en: 'one-time', zh: '一次性' },
-      name: { en: 'Billboard', zh: 'Billboard' },
-      detail: {
-        zh: `自己出价，从 ${floorLabel} 起。此前从 $15 起。`,
-        en: `Name your price, from ${floorLabel}. Was from $15.`,
-      },
-      href: { path: '/billboard', hash: '#claim' },
+      id: 'board',
+      flag: 'BOARD',
+      price: boardPrice,
+      unit: boardPlan.unit,
+      name: boardPlan.name,
+      detail: boardPlan.where,
+      href: { path: '/book-ad', query: { slot: 'board', weeks: '1' } },
       occupant: adOccupant(input.billboard ?? null),
     },
     {

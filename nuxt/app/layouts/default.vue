@@ -284,8 +284,8 @@ watch(() => route.fullPath, () => {
     <aside class="sidebar">
       <div class="sidebar__brand">
         <NuxtLink class="brand" :to="localePath('/')">
-          <img src="/assets/img/brand/logo.png" alt="Product Atlas" width="28" height="28" >
-          <span>Product Atlas</span>
+          <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
+          <span>dirtool</span>
         </NuxtLink>
       </div>
 
@@ -336,8 +336,8 @@ watch(() => route.fullPath, () => {
 
           <div class="topbar__logo">
             <NuxtLink class="brand" :to="localePath('/')">
-              <img src="/assets/img/brand/logo.png" alt="Product Atlas" width="28" height="28" >
-              <span>Product Atlas</span>
+              <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
+              <span>dirtool</span>
             </NuxtLink>
           </div>
 
@@ -464,7 +464,7 @@ watch(() => route.fullPath, () => {
                service in the shared footer puts the correction on every page a
                reviewer (or crawler) can open, without touching the catalogue. -->
           <p style="margin: 6px 0 0; font-size: 12px; line-height: 1.6; opacity: .72">
-            {{ pick('Product Atlas 是第三方工具目录站，不提供任何内容生成功能，也不调用底层 AI 模型；站内「图像生成」「语音合成」「视频生成」等词均为第三方产品的分类标签。', 'Product Atlas is a directory of third-party tools. We provide no generation features and call no underlying AI model; labels such as "Image Generation", "Text to Speech" and "Video Generation" are third-party product categories, not features of this site.') }}
+            {{ pick('dirtool 是第三方工具目录站，不提供任何内容生成功能，也不调用底层 AI 模型；站内「图像生成」「语音合成」「视频生成」等词均为第三方产品的分类标签。', 'dirtool is a directory of third-party tools. We provide no generation features and call no underlying AI model; labels such as "Image Generation", "Text to Speech" and "Video Generation" are third-party product categories, not features of this site.') }}
           </p>
           <div class="footer__cols">
             <nav v-for="col in footerCols" :key="col.title" :aria-label="col.title">
@@ -479,7 +479,7 @@ watch(() => route.fullPath, () => {
         </div>
         <div class="footer__bottom">
           <div class="footer__bottom-inner">
-            <span>{{ pick('© 2026 Product Atlas 保留所有权利。', '© 2026 Product Atlas. All rights reserved.') }}</span>
+            <span>{{ pick('© 2026 dirtool 保留所有权利。', '© 2026 dirtool. All rights reserved.') }}</span>
             <!-- Both channels are independent: clearing the mailbox must not
                  silently remove the X contact from the footer as well. -->
             <span v-if="contactMail || socialXUrl">
@@ -517,8 +517,8 @@ watch(() => route.fullPath, () => {
       <div class="drawer">
         <div class="sidebar__brand">
           <NuxtLink class="brand" :to="localePath('/')">
-            <img src="/assets/img/brand/logo.png" alt="Product Atlas" width="28" height="28" >
-            <span>Product Atlas</span>
+            <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
+            <span>dirtool</span>
           </NuxtLink>
         </div>
         <nav class="sidebar__nav">

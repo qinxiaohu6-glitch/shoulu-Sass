@@ -67,7 +67,7 @@ const statCards = computed(
 const hasRecent = computed(() => FEATURES.payments || FEATURES.credits)
 
 useHead({
-  title: computed(() => `${t('settings.nav.overview')} · Product Atlas`),
+  title: computed(() => `${t('settings.nav.overview')} · dirtool`),
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

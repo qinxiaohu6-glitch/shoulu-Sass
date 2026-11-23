@@ -99,7 +99,7 @@ function categoryName(slug: string): string | null {
 useSeo({
   // `directory.meta.feed`: "New AI tools — latest additions | {brand}".
   title: computed(() =>
-    pick('新收录 · Product Atlas', 'New listings · Product Atlas'),
+    pick('新收录 · dirtool', 'New listings · dirtool'),
   ),
   description: computed(() =>
     pick(

@@ -59,20 +59,20 @@ export function communityCountLineZh(makers: number, products: number): string {
 }
 
 export function makersDirectoryMeta(makers: number, products: number): string {
-  return `${makers} ${englishCount(makers, 'maker')} behind ${products} ${englishCount(products, 'product')} in the Product Atlas directory.`
+  return `${makers} ${englishCount(makers, 'maker')} behind ${products} ${englishCount(products, 'product')} in the dirtool directory.`
 }
 
 export function makersDirectoryMetaZh(makers: number, products: number): string {
-  return `Product Atlas 目录里有 ${makers} 位创客，共 ${products} 款产品。`
+  return `dirtool 目录里有 ${makers} 位创客，共 ${products} 款产品。`
 }
 
-/** `{Name} has {n} live product(s) on Product Atlas.` */
+/** `{Name} has {n} live product(s) on dirtool.` */
 export function makerLiveIntro(name: string, count: number): string {
-  return `${name} has ${count} live ${englishCount(count, 'product')} on Product Atlas.`
+  return `${name} has ${count} live ${englishCount(count, 'product')} on dirtool.`
 }
 
 export function makerLiveIntroZh(name: string, count: number): string {
-  return `${name} 在 Product Atlas 有 ${count} 款在架产品。`
+  return `${name} 在 dirtool 有 ${count} 款在架产品。`
 }
 
 /** `YYYY-MM-DD` from a catalogue date. Anything else is not a listing date. */

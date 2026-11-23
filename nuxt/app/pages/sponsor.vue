@@ -1,28 +1,24 @@
 <script setup lang="ts">
 /**
- * /sponsor — the advertising page, ported from the competitor's /sponsor.
+ * /sponsor — the two weekly ads checkout actually charges.
  *
- * Two placements, with the same numbers checkout charges:
- *   - Billboard: the one big placement on the homepage, ranked by total
- *     backed, one-time from the bid floor.
- *   - Right sidebar: a card on every page, four slots, weekly rental.
+ *   - Launch board ad: one banner under the top 3, one brand per week.
+ *   - Right sidebar: a card on the homepage and the just-added feed.
  *
- * We do not invent a fixed weekly price for Billboard, because it is
- * pay-what-you-want here and the charge is the bid. The price shown is the
- * real floor, so the page can never quote an amount checkout will not honour.
+ * Prices come from the same helpers as checkout. The board ad is not
+ * discounted. The sidebar follows the campaign clock.
  */
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { centsLabel } from '~~/shared/content/campaign'
-import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
 
 const { pick } = useLang()
 const localePath = useLocalePath()
 const requestFetch = useRequestFetch()
 
-const floor = effectiveQuote('billboard', 'floor')
+const boardLabel = centsLabel(adPriceCents('board', 1))
 const sidebar = effectiveQuote('sidebar', '1')
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
 const { data: availability } = await useAsyncData<AdAvailability>(
   'sponsor-sidebar-availability',
@@ -43,25 +39,25 @@ const { data: availability } = await useAsyncData<AdAvailability>(
 const openWeeks = computed(() => openAdWeeks(availability.value))
 
 const checks = computed(() => [
-  pick('Billboard 一次付清；右栏按周租', 'Billboard is one-time; the sidebar is weekly'),
+  pick('两个位置都按周租，周一起算', 'Both spots are rented by the week, starting Monday'),
   pick('付款成功后自动上线或排期', 'Live or scheduled when payment succeeds'),
   pick('不自动续费', 'Nothing renews automatically'),
 ])
 
 const spots = computed(() => [
   {
-    id: 'billboard',
-    kicker: pick('首页最大曝光', 'Best reach'),
-    title: 'Billboard',
-    place: pick('首页榜单 Top 5', 'The Billboard Top 5'),
+    id: 'board',
+    kicker: pick('每周一个品牌', 'One brand a week'),
+    title: pick('发布榜广告', 'Launch board ad'),
+    place: pick('发布榜前三名下面', 'Under the top 3 on the launch board'),
     pitch: pick(
-      '首页最大的一个广告位。一次出价、长期展示，按累计金额排进前 10 即同步首页。同一产品可再次付款累加。',
-      'The one big ad on the homepage. One bid, a permanent spot, and reaching the top 10 puts you on the homepage. Pay again for the same product to add to it.',
+      '一条赞助横幅，logo、名称、一句话和按钮。每周只卖给一个品牌，周一到周日。',
+      'One sponsored banner with your logo, name, one line, and a button. One brand per week, Monday to Sunday.',
     ),
-    price: pick(`从 ${floorLabel} 起 · 一次`, `From ${floorLabel} · one-time`),
-    availability: pick('前 5 名 · 位置长期保留', 'Top 5 · the spot stays'),
-    to: `${localePath('/billboard')}#claim`,
-    cta: pick('认领 Billboard', 'Claim Billboard'),
+    price: `${boardLabel}${pick('/周', '/ week')}`,
+    availability: pick('每周一个品牌', 'One brand per week'),
+    to: `${localePath('/book-ad')}?slot=board&weeks=1`,
+    cta: pick('预订一周', 'Book a week'),
   },
   {
     id: 'sidebar',
@@ -80,7 +76,7 @@ const spots = computed(() => [
 ])
 
 useSeo({
-  title: computed(() => pick('投放赞助 · Product Atlas', 'Advertise to indie makers · Product Atlas')),
+  title: computed(() => pick('投放赞助 · dirtool', 'Advertise to indie makers · dirtool')),
   description: computed(() =>
     pick(
       '把你的产品放到开发者、创始人和早期用户面前。选位置、选周次，一次付清。',
@@ -125,8 +121,8 @@ useSeo({
     <p class="sponsor-note">
       {{
         pick(
-          '价格以结账页实付为准。不承诺排名、流量或域名权重。Billboard 一次付清，右栏按周；收录方案另计。',
-          'The price at checkout is what you pay. No promise of rank, traffic or domain authority. Billboard is one-time, the sidebar is weekly; listing plans are separate.',
+          '价格以结账页实付为准。不承诺排名、流量或域名权重。两个广告位都按周租；收录方案另计。已经付款的 Billboard 仍留在 Billboard 页。',
+          'The price at checkout is what you pay. No promise of rank, traffic or domain authority. Both ads are weekly. Listing plans are separate. A Billboard placement already paid for stays on the Billboard page.',
         )
       }}
     </p>

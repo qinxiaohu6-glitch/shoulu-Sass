@@ -33,7 +33,7 @@ const props = withDefaults(
     /** Set by the mobile sheet so a tap closes the drawer. */
     mobile?: boolean
   }>(),
-  { brandHref: '/', footerNavItems: () => [], brandLabel: 'Product Atlas' },
+  { brandHref: '/', footerNavItems: () => [], brandLabel: 'dirtool' },
 )
 
 const emit = defineEmits<{ navigate: [] }>()

@@ -121,7 +121,7 @@ const more = computed(() =>
 )
 
 useHead({
-  title: `${spotlight.productName} spotlight: ${spotlight.tagline} · Product Atlas`,
+  title: `${spotlight.productName} spotlight: ${spotlight.tagline} · dirtool`,
   meta: [
     { name: 'description', content: spotlight.tagline },
     { property: 'og:title', content: `${spotlight.productName} spotlight: ${spotlight.tagline}` },
@@ -150,7 +150,7 @@ useHead({
           author: { '@type': 'Person', name: spotlight.author },
           publisher: {
             '@type': 'Organization',
-            name: 'Product Atlas',
+            name: 'dirtool',
             url: 'https://dirtool.com/',
           },
           // What the article is about, so the product and the article are
@@ -260,7 +260,7 @@ useHead({
             listing
               ? pick(
                   '本文随付费收录一起提供。产品官网链接是 dofollow，正文其它外链一律 nofollow；内容不因付费而改写。',
-                  'This article accompanies a paid listing on Product Atlas. The product\'s own link is dofollow; all other outbound links in the body are nofollow. Nothing here was written to order by the product\'s team.',
+                  'This article accompanies a paid listing on dirtool. The product\'s own link is dofollow; all other outbound links in the body are nofollow. Nothing here was written to order by the product\'s team.',
                 )
               : pick(
                   '这篇聚光灯原先随付费收录一起提供，那条收录目前不在目录里，因此官网链接暂时改为 nofollow。正文内容没有改动。',

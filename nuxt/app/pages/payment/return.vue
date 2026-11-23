@@ -176,7 +176,7 @@ const lead = computed(() => {
 })
 
 useHead({
-  title: computed(() => `${heading.value} · Product Atlas`),
+  title: computed(() => `${heading.value} · dirtool`),
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

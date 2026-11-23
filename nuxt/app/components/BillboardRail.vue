@@ -13,9 +13,8 @@
  * reaches the page: a row with no stored screenshot falls back to its logo and
  * never to an invented image.
  */
-import { BILLBOARD_FLOOR_CENTS, backingLabel, faviconForUrl } from '~~/shared/utils/billboard-bid'
+import { backingLabel, faviconForUrl } from '~~/shared/utils/billboard-bid'
 import { BILLBOARD_TOP_N } from '~~/shared/content/billboard'
-import { centsLabel } from '~~/shared/content/campaign'
 import { screenshotSrc } from '~~/shared/utils/screenshot'
 import type { BillboardCell, BillboardRow } from '~~/shared/utils/billboard'
 
@@ -33,9 +32,8 @@ const props = defineProps<{
 
 const { pick } = useLang()
 const localePath = useLocalePath()
-const claimTo = computed(() => `${localePath('/billboard')}#claim`)
+const claimTo = computed(() => `${localePath('/book-ad')}?slot=board&weeks=1`)
 const boardTo = computed(() => localePath('/billboard'))
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 const topLabel = `TOP ${BILLBOARD_TOP_N}`
 const brokenShots = ref<Record<string, true>>({})
 const rootEl = ref<HTMLElement | null>(null)
@@ -167,9 +165,9 @@ function slugOf(row: BillboardRow): string {
         <span class="bb-slot__shot bb-slot__shot--empty" aria-hidden="true">+</span>
         <span class="bb-slot__body">
           <strong class="bb-slot__name">{{ pick('空位', 'Open spot') }}</strong>
-          <span class="bb-slot__sub">{{ pick(`从 ${floorLabel} 起`, `From ${floorLabel}`) }}</span>
+          <span class="bb-slot__sub">{{ pick('按周预订', 'Book a week') }}</span>
         </span>
-        <span class="bb-slot__claim">{{ pick('认领 →', 'Claim →') }}</span>
+        <span class="bb-slot__claim">{{ pick('预订 →', 'Book →') }}</span>
       </NuxtLink>
     </template>
   </section>

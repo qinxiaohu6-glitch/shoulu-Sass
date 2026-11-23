@@ -16,7 +16,7 @@
  *    loader — so only the metadata that the sitemap needs stays here.
  *
  * The two ShipAny demo posts were removed. The blog stays up as an empty
- * state until a real Product Atlas note is written. Old slugs 404.
+ * state until a real dirtool note is written. Old slugs 404.
  */
 
 /** Register every local post slug here — it drives loading and the sitemap. */

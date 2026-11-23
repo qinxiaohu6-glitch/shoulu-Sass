@@ -81,8 +81,8 @@ const siteHost = (() => {
 
 useSeo({
   title: computed(() => {
-    if (outline.value) return `${outline.value.title} · outline · Product Atlas`
-    return post.value ? `${post.value.title} | Product Atlas` : 'Product Atlas'
+    if (outline.value) return `${outline.value.title} · outline · dirtool`
+    return post.value ? `${post.value.title} | dirtool` : 'dirtool'
   }),
   description: computed(() => {
     if (outline.value) return pick(outline.value.direction_zh, outline.value.direction_en)

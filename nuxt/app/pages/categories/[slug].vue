@@ -77,7 +77,7 @@ const countText = computed(() => {
   return `${total.value} ${category.value.name} ${total.value === 1 ? 'tool' : 'tools'}`
 })
 
-const metaTitle = computed(() => `${category.value.name} · Product Atlas`)
+const metaTitle = computed(() => `${category.value.name} · dirtool`)
 const metaDescription = computed(
   () =>
     category.value.desc ||

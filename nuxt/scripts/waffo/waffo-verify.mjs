@@ -1,65 +1,68 @@
 /**
- * Proves every SKU can open a checkout at the amount the site would charge.
+ * Read every dirtool charge product and compare its stored USD price to the
+ * page. Creating a checkout session is not a check: the session response does
+ * not include the amount.
  *
- * Each call creates a real hosted session (no charge, no email — anonymous) and
- * sends the campaign amount through `priceSnapshot`, which is exactly what
- * `server/utils/payments/waffo.ts` does. If a product id or a price were wrong,
- * Waffo would answer with an error here instead of at a customer's checkout.
- *
- *   node waffo-verify.mjs
+ *   node scripts/waffo/waffo-verify.mjs
  */
 import { readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { WaffoPancake } from '@waffo/pancake-ts'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const NUXT = join(HERE, '../..')
+const STORE = 'STO_6MBLArB4FXmrUHHjkyXxoV'
+
+function loadCatalogue() {
+  const res = spawnSync(process.execPath, [
+    '--experimental-strip-types',
+    '--input-type=module',
+    '-e',
+    `import { waffoChargeProducts } from './shared/payments/waffo-amount.ts'; process.stdout.write(JSON.stringify(waffoChargeProducts()))`,
+  ], { cwd: NUXT, encoding: 'utf8' })
+  if (res.status !== 0) throw new Error(res.stderr || 'could not load catalogue')
+  return JSON.parse(res.stdout)
+}
+
+function loadIds() {
+  const source = readFileSync(join(NUXT, 'shared/payments/waffo-product-ids.ts'), 'utf8')
+  const match = source.match(/WAFFO_PRODUCT_IDS: Record<string, string> = (\{[\s\S]*\})/)
+  if (!match) return {}
+  return JSON.parse(match[1])
+}
 
 const client = new WaffoPancake({
   merchantId: process.env.WAFFO_MERCHANT_ID || 'MER_4wGnd956hsqBbRs2EZPx5b',
   privateKey: readFileSync(process.env.WAFFO_KEY_PATH || '/Users/mac/waffo-prod.pem', 'utf8'),
 })
 
-const IDS = {
-  boost: 'PROD_4eD1iGfl1bqdhaGul01hor',
-  standard: 'PROD_421o8REQUoFO0L0PlvWhXx',
-  featured: 'PROD_5HQOX0laZm15SKWQTSgYEB',
-  pro: 'PROD_6RYnnSdwxk4IRXMEkETtqd',
-  billboard: 'PROD_76I8otMCarp0AiIoKtdYLf',
-  ad: 'PROD_44caej1VRQG0QqYBWuvrBh',
+const catalogue = loadCatalogue()
+const ids = loadIds()
+const listed = await client.graphql.query({
+  query: `query { onetimeProducts(storeId: "${STORE}", limit: 100) { id name status prices { currency priceInfo { amount } } } }`,
+})
+const products = listed.data?.onetimeProducts ?? []
+
+let failed = 0
+for (const entry of catalogue) {
+  const id = ids[entry.key]
+  const product = products.find((row) => row.id === id)
+  const amount = product?.prices?.find((price) => price.currency === 'USD')?.priceInfo?.amount
+  const ok = Boolean(id) && amount === entry.amount
+  if (!ok) failed += 1
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${entry.key.padEnd(16)} page $${entry.amount}  stored $${amount ?? '?'}  ${id ?? 'no product id'}`)
 }
 
-/** Charged now (campaign open) and after CAMPAIGN.endsAt — from pricing.ts. */
-const CASES = [
-  { sku: 'boost', now: '4.99', after: '10.00' },
-  { sku: 'standard', now: '9.00', after: '19.00' },
-  { sku: 'featured', now: '19.00', after: '39.00' },
-  { sku: 'pro', now: '29.00', after: '69.00' },
-  { sku: 'billboard', now: '10.00', after: '10.00' },
-  { sku: 'ad', now: '9.00', after: '19.00' },
-]
-
-let pass = 0
-let fail = 0
-
-for (const item of CASES) {
-  for (const [phase, amount] of [
-    ['campaign', item.now],
-    ['regular', item.after],
-  ]) {
-    try {
-      const session = await client.checkout.createSession({
-        productId: IDS[item.sku],
-        currency: 'USD',
-        priceSnapshot: { amount, taxCategory: 'digital_goods' },
-        successUrl: 'https://dirtool.com/payment/success',
-        orderMerchantExternalId: `probe-${item.sku}-${phase}-${Date.now()}`,
-        metadata: { probe: 'true', sku: item.sku, phase },
-      })
-      console.log(`ok   ${item.sku.padEnd(10)} ${phase.padEnd(9)} $${amount}  ${session.sessionId}`)
-      pass += 1
-    } catch (err) {
-      console.log(`FAIL ${item.sku.padEnd(10)} ${phase.padEnd(9)} $${amount}  ${err.message}`)
-      fail += 1
-    }
-  }
+const orders = await client.graphql.query({
+  query: `query { onetimeOrders(storeId: "${STORE}", limit: 8) { id status currency priceSnapshot { subtotal taxAmount total } createdAt } }`,
+})
+console.log('\nrecent orders (subtotal is the goods price, total includes tax):')
+for (const order of orders.data?.onetimeOrders ?? []) {
+  const snap = order.priceSnapshot
+  console.log(`  ${order.id}  ${order.status}  subtotal ${snap?.subtotal ?? '?'}  tax ${snap?.taxAmount ?? '?'}  total ${snap?.total ?? '?'}  ${order.createdAt ?? ''}`)
 }
 
-console.log(`\n${pass} ok, ${fail} failed`)
-process.exit(fail ? 1 : 0)
+console.log(`\n${catalogue.length - failed} matched, ${failed} failed`)
+process.exit(failed ? 1 : 0)

@@ -1,5 +1,6 @@
 import { categories } from '~~/shared/utils/catalog'
-import { campaignActive, campaignDeadlineShanghai } from '~~/shared/content/campaign'
+import { campaignActive, campaignDeadlineShanghai, centsLabel } from '~~/shared/content/campaign'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { englishCount } from '~~/shared/utils/english-count'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 import { shanghaiDay } from '~~/shared/utils/shanghai-day'
@@ -18,10 +19,7 @@ export default defineEventHandler(async (event) => {
 
   const counted = shanghaiDay()
   const boost = effectiveQuote('listing', 'boost')
-  const standard = effectiveQuote('listing', 'standard')
-  const featured = effectiveQuote('listing', 'featured')
-  const pro = effectiveQuote('listing', 'pro')
-  const entry = effectiveQuote('billboard', 'floor')
+  const board = centsLabel(adPriceCents('board', 1))
   const week = effectiveQuote('sidebar', '1')
   const month = effectiveQuote('sidebar', '4')
   const saleNote = campaignActive()
@@ -48,11 +46,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const sizeLine = countedLive
-    ? `Product Atlas lists ${productCount} products across ${categoryCount} categories (count as of ${counted}).`
+    ? `dirtool lists ${productCount} products across ${categoryCount} categories (count as of ${counted}).`
     : `Browse ${SITE}/products for the live directory. This file does not invent a count when that read fails.`
 
   const lines: string[] = [
-    '# Product Atlas',
+    '# dirtool',
     '',
     '> A directory of software products. Every listing has its own page with what the product does, its category, and its maker.',
     '',
@@ -66,10 +64,10 @@ export default defineEventHandler(async (event) => {
     '',
     `- ${sizeLine} ([all products](${SITE}/products))`,
     `- Free listings are reviewed by hand and carry nofollow. Paid listings go live when payment succeeds and carry a permanent dofollow link. ([pricing](${SITE}/pricing))`,
-    `- Listing plans on Product Atlas are one-time, not subscriptions: free, Boost ${boost.priceLabel}, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel}. Boost adds a verified badge and a highlighted row.${saleNote} ([pricing](${SITE}/pricing))`,
-    `- Billboard on Product Atlas is a one-time name-your-price placement from ${entry.priceLabel}, ranked by total backed. Bids start at ${entry.priceLabel}; it was from $15. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. A placement goes live when payment succeeds. ([billboard](${SITE}/billboard))`,
-    `- The Product Atlas weekly board resets every Monday and records one vote per signed-in person per product per week; a vote is not a rating. ([weekly board](${SITE}/weekly))`,
-    `- Paid placement on Product Atlas never changes a product's rank on the weekly board. ([ranking rules](${SITE}/rules))`,
+    `- Listing plans on dirtool are one-time, not subscriptions: free, and Boost ${boost.priceLabel}. Boost adds a verified badge, a highlighted row above free listings, and a permanent dofollow link. Standard, Featured and Pro are no longer sold; a pin already paid for stays until its end date.${saleNote} ([pricing](${SITE}/pricing))`,
+    `- The launch-board ad is ${board} a week, one brand, Monday to Sunday. The sidebar is ${week.priceLabel} a week, or ${month.priceLabel} for four weeks. New Billboard bids are closed. A bid already paid stays on the board. ([pricing](${SITE}/pricing))`,
+    `- The dirtool weekly board resets every Monday and records one vote per signed-in person per product per week; a vote is not a rating. ([weekly board](${SITE}/weekly))`,
+    `- Paid placement on dirtool never changes a product's rank on the weekly board. ([ranking rules](${SITE}/rules))`,
     '',
     '## Products',
     '',
@@ -110,8 +108,8 @@ export default defineEventHandler(async (event) => {
     `- [Ranking rules](${SITE}/rules): how the board, votes and links work, in full`,
     `- [Alternatives](${SITE}/alternatives): how launch platforms compare, and a multi-site launch plan`,
     `- [Questions](${SITE}/faq): how listing, votes, links, pricing and ad slots work, in short answers`,
-    `- [Billboard](${SITE}/billboard): one-time name-your-price from ${entry.priceLabel}, same Top 5 as the homepage`,
-    `- [Pricing](${SITE}/pricing): free, Boost ${boost.priceLabel}, ${standard.priceLabel}, ${featured.priceLabel} and ${pro.priceLabel} one-time tiers, plus Billboard and a weekly sidebar`,
+    `- [Billboard](${SITE}/billboard): placements already paid for. New bids are closed`,
+    `- [Pricing](${SITE}/pricing): free and Boost ${boost.priceLabel}, plus a weekly launch-board ad at ${board} and a weekly sidebar`,
     `- [Advertise](${SITE}/advertise): where Billboard, the sidebar, a written review and a featured listing are described`,
     `- [Sponsor a week](${SITE}/sponsor): weekly advertising — the featured spot and four sidebar slots`,
     `- [Privacy policy](${SITE}/privacy-policy)`,

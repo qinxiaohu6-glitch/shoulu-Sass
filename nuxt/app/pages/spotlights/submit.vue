@@ -46,11 +46,11 @@ const { user, ensure: ensureSession } = useSession()
 await ensureSession()
 
 useSeo({
-  title: computed(() => pick('提交产品聚光灯草稿 · Product Atlas', 'Submit a Product Spotlight draft · Product Atlas')),
+  title: computed(() => pick('提交产品聚光灯草稿 · dirtool', 'Submit a Product Spotlight draft · dirtool')),
   description: computed(() =>
     pick(
-      '提交一篇产品聚光灯草稿等待审核：选定收录页，按八个小节写完，800 到 1,500 字。包含在精选与专业两档权益里。',
-      'Submit a Product Spotlight draft for review. Pick your listing, fill in the eight sections, and 800 to 1,500 words. Included with the Featured and Pro plans.',
+      '提交一篇产品聚光灯草稿等待审核：选定收录页，按八个小节写完，800 到 1,500 字。已经付款的精选和专业档仍包含这篇。这两档已停售。',
+      'Submit a Product Spotlight draft for review. Pick your listing, fill in the eight sections, and 800 to 1,500 words. A Featured or Pro listing already paid for still includes one. Those plans are no longer sold.',
     ),
   ),
 })
@@ -176,9 +176,9 @@ async function submit() {
           ) }}
         </p>
         <p class="sb-note">
-          {{ pick('包含在', 'Included with the') }} <strong>{{ pick('精选', 'Featured') }}</strong>
-          {{ pick('和', 'and') }} <strong>{{ pick('专业', 'Pro') }}</strong>
-          {{ pick('两档收录权益里。一个产品一篇。没读过之前不会发布任何内容。', 'listings. One article per product. Nothing is published until it has been read.') }}
+          {{ pick('已经付款的', 'A') }} <strong>{{ pick('精选', 'Featured') }}</strong>
+          {{ pick('或', 'or') }} <strong>{{ pick('专业', 'Pro') }}</strong>
+          {{ pick('收录仍包含一篇。这两档已停售。一个产品一篇。没读过之前不会发布任何内容。', 'listing already paid for still includes one. Those plans are no longer sold. One article per product. Nothing is published until it has been read.') }}
         </p>
       </header>
 

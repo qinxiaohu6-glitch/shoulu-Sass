@@ -96,7 +96,7 @@ onBeforeUnmount(() => {
 })
 
 useSeo({
-  title: computed(() => pick('请查收邮件 | Product Atlas', 'Check your email | Product Atlas')),
+  title: computed(() => pick('请查收邮件 | dirtool', 'Check your email | dirtool')),
   description: computed(() => pick('继续操作前，请点击发送到以下邮箱的验证链接：', 'To continue, click the link sent to')),
 })
 </script>

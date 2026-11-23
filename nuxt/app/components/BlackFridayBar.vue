@@ -1,11 +1,10 @@
 <script setup lang="ts">
 /**
- * Dark promo bar. Black Friday: Featured at the live charge, and Billboard
- * from the bid minimum. No Prime pair, and no percent-off line.
+ * Dark promo bar. The campaign prices Boost and the sidebar.
+ * The launch-board ad is not in the campaign.
  */
-import { CAMPAIGN, campaignActive, centsLabel } from '~~/shared/content/campaign'
+import { CAMPAIGN, campaignActive } from '~~/shared/content/campaign'
 import { remainingDayHour } from '~~/shared/utils/directory-window'
-import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
@@ -15,8 +14,8 @@ let timer: ReturnType<typeof setInterval> | undefined
 
 const active = computed(() => campaignActive(now.value))
 const left = computed(() => remainingDayHour(Date.parse(CAMPAIGN.endsAt), now.value))
-const featured = computed(() => effectiveQuote('listing', 'featured', now.value))
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const boost = computed(() => effectiveQuote('listing', 'boost', now.value))
+const sidebar = computed(() => effectiveQuote('sidebar', '1', now.value))
 const href = computed(() => `${localePath('/pricing')}#black-friday`)
 
 onMounted(() => {
@@ -34,10 +33,12 @@ onBeforeUnmount(() => {
     <span class="bf-bar__pill">{{ pick('黑五', 'BLACK FRIDAY') }}</span>
     <span class="bf-bar__copy">
       {{ pick('黑五', 'Black Friday') }}
-      · {{ pick('精选', 'Featured') }}
-      {{ featured.priceLabel }}
-      <template v-if="featured.strikeLabel">({{ pick('原价', 'was') }} {{ featured.strikeLabel }})</template>
-      · {{ pick(`Billboard 从 ${floorLabel} 起`, `Billboard from ${floorLabel}`) }}
+      · Boost
+      {{ boost.priceLabel }}
+      <template v-if="boost.strikeLabel">({{ pick('原价', 'was') }} {{ boost.strikeLabel }})</template>
+      · {{ pick('右栏', 'Sidebar') }}
+      {{ sidebar.priceLabel }}{{ pick('/周', '/wk') }}
+      <template v-if="sidebar.strikeLabel">({{ pick('原价', 'was') }} {{ sidebar.strikeLabel }})</template>
       · {{ pick(`剩余 ${left.d}天 ${left.h}小时`, `ends in ${left.d}d ${left.h}h`) }}
     </span>
     <span class="bf-bar__go" aria-hidden="true">→</span>

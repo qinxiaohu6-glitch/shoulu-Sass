@@ -68,7 +68,7 @@ export const AGENT_LOGS_ALL = '__all__'
  * of the skill prompt, and the localhost branch of `projectSlug`. This build has
  * no `app_name` config — the wordmark in `useSeo` is the site name.
  */
-export const AGENT_APP_NAME = 'Product Atlas'
+export const AGENT_APP_NAME = 'dirtool'
 
 /**
  * A stable, unique-per-site project name. App names can repeat across projects

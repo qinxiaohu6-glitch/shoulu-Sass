@@ -13,10 +13,11 @@
  * Prices still come from `effectiveQuote`, the same source checkout uses.
  */
 import { EMPTY_AD_AVAILABILITY, openAdWeeks, type AdAvailability } from '~/composables/useAds'
-import { campaignDeadlineShanghai } from '~~/shared/content/billboard'
+import { campaignDeadlineShanghai, centsLabel } from '~~/shared/content/billboard'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { effectiveQuote, type EffectiveQuote } from '~~/shared/utils/pricing-effective'
 import { liveRankingRows } from '~~/shared/utils/archive-rows'
-import { pricingFaq, tiers } from '~~/shared/content/pricing'
+import { pricingFaq } from '~~/shared/content/pricing'
 import { tools } from '~~/shared/utils/catalog'
 import type { Week } from '~~/shared/types/catalog'
 
@@ -45,9 +46,10 @@ const lead = computed(() =>
 const metaDescription = computed(() => {
   const price = (id: string) => effectiveQuote('listing', id).priceLabel
   const week = effectiveQuote('sidebar', '1').priceLabel
+  const board = centsLabel(adPriceCents('board', 1))
   return pick(
-    `免费发布，或一次付费上线：加速 ${price('boost')}、标准 ${price('standard')}、精选 ${price('featured')}、专业 ${price('pro')}。广告位每周 ${week} 起。无订阅，不自动续费。`,
-    `Launch free, or pay once to go live: Boost ${price('boost')}, Standard ${price('standard')}, Featured ${price('featured')}, Pro ${price('pro')}. Ads from ${week} a week. No subscription, nothing renews.`,
+    `免费发布，或一次付费 Boost ${price('boost')}。发布榜广告每周 ${board}，右栏每周 ${week}。无订阅，不自动续费。`,
+    `Launch free, or pay once for Boost at ${price('boost')}. Launch-board ad ${board} a week. Sidebar ${week} a week. No subscription, nothing renews.`,
   )
 })
 const promises = computed(() => [
@@ -81,7 +83,7 @@ const freePlan = computed<PlanView>(() => ({
   id: 'free',
   n: '1',
   name: pick('免费发布', 'Free launch'),
-  description: pick('先上线，不需要信用卡。', 'Everything to go live, no card required.'),
+  description: pick('一页公开产品页。不需要付款。', 'A public product page. No payment required.'),
   price: effectiveQuote('listing', 'free').priceLabel,
   unit: pick('永久', 'forever'),
   features: pick(
@@ -111,7 +113,7 @@ const boostPlan = computed<PlanView>(() => {
     n: '2',
     name: pick('加速发布', 'Boost launch'),
     badge: pick('最多人选', 'Most popular'),
-    description: pick('无需额外步骤，整周都更显眼。', 'No extra steps, and you stand out all week.'),
+    description: pick('永久 dofollow 反链，以及每周榜上的高亮行。', 'A permanent dofollow backlink and a highlighted row on the weekly board.'),
     price: quote.priceLabel,
     unit: pick('一次性', 'one-time'),
     original: quote.strikeLabel ?? undefined,
@@ -127,11 +129,11 @@ const boostPlan = computed<PlanView>(() => {
       ],
       [
         'Everything in Free launch',
-        'No free-spot wait — live when payment succeeds',
+        'Live when payment succeeds',
         'Gold verified badge on the board and product page',
         'Highlighted gold row on the launch board',
-        'Placed above standard launches',
-        'Always dofollow backlink to your website',
+        'Placed above free listings',
+        'Permanent dofollow backlink to your website',
       ],
     ),
     cta: pick(`加速 · ${quote.priceLabel} ↗`, `Boost for ${quote.priceLabel} ↗`),
@@ -140,62 +142,42 @@ const boostPlan = computed<PlanView>(() => {
   }
 })
 
-const extraPlans = computed<PlanView[]>(() =>
-  ['standard', 'featured', 'pro'].map((id, index) => {
-    const tier = tiers.find((item) => item.id === id)!
-    const quote = effectiveQuote('listing', id)
-    return {
-      id,
-      n: String(index + 3),
-      name: t(tier.name),
-      badge: tier.badge ? t(tier.badge) : undefined,
-      description: t(tier.tagline),
-      price: quote.priceLabel,
-      unit: t(tier.unit),
-      original: quote.strikeLabel ?? undefined,
-      features: tl(tier.features).slice(0, 4),
-      cta: pick(`选择 ${t(tier.name)} ↗`, `Choose ${t(tier.name)} ↗`),
-      to: submitTo(id),
-    }
-  }),
-)
-
 const adPlans = computed<PlanView[]>(() => {
-  const floor = effectiveQuote('billboard', 'floor')
+  const boardCents = adPriceCents('board', 1)
+  const boardLabel = centsLabel(boardCents)
   const sidebar = effectiveQuote('sidebar', '1')
   return [
     {
-      id: 'billboard',
-      n: 'A',
-      name: 'Billboard',
-      badge: pick('Top 5', 'Top 5'),
-      description: pick('发布榜上的那一块大广告位。', 'The one big ad on the launch board.'),
-      pricePrefix: pick('起', 'from'),
-      price: floor.priceLabel,
-      unit: pick('一次性', 'one-time'),
+      id: 'board',
+      n: '3',
+      name: pick('发布榜广告', 'Launch board ad'),
+      badge: pick('每周 1 个', '1 slot'),
+      description: pick('前三名下面的一条赞助横幅，每周一个品牌。', 'A sponsored banner under the top 3. One brand per week.'),
+      price: boardLabel,
+      unit: pick('/ 周', '/ week'),
       features: pick(
         [
-          'Billboard Top 5 中的赞助横幅',
-          '同时出现在发布榜与首页',
-          '一次付清，同一产品可追加金额',
-          '包含 logo、名称、标语与按钮',
-          '付款成功后进入排名',
+          '前三名下面的赞助横幅',
+          '同时出现在发布榜和首页',
+          '每周只卖给一个品牌',
+          '包含 logo、名称、一句话和按钮',
+          '周一到周日，不自动续费',
         ],
         [
-          'Sponsored banner in the Billboard Top 5',
+          'Sponsored banner under the top 3',
           'Shown on the launch board and the homepage',
-          'Pay once; bids stack for the same product',
+          'One brand per week',
           'Your logo, name, headline and button',
-          'It goes live when payment succeeds',
+          'Monday to Sunday, no renewal',
         ],
       ),
-      cta: pick(`认领 Billboard · ${floor.priceLabel} 起 ↗`, `Claim Billboard · from ${floor.priceLabel} ↗`),
-      to: `${localePath('/billboard')}#claim`,
+      cta: pick(`预订发布榜 · ${boardLabel} ↗`, `Book the board · ${boardLabel} ↗`),
+      to: `${localePath('/book-ad')}?slot=board&weeks=1`,
       featured: true,
     },
     {
       id: 'sidebar',
-      n: 'B',
+      n: '4',
       name: pick('右栏广告', 'Right sidebar ad'),
       badge: pick('4 个位置', '4 slots'),
       description: pick('网站每个页面旁边的一张卡片。', 'A card beside every page of the site.'),
@@ -226,9 +208,9 @@ const adPlans = computed<PlanView[]>(() => {
 
 const whereItems = computed(() => [
   { n: '1', title: pick('免费发布', 'Free launch'), body: pick('发布周榜单中的普通一行，按投票排序。', "A regular row in your launch week's board, ranked by upvotes."), spot: '1' },
-  { n: '2', title: pick('加速发布', 'Boost launch'), body: pick('金色高亮行，带认证徽章，排在标准收录之前。', 'A highlighted gold row with a verified badge, above standard launches.'), spot: '2' },
-  { n: 'A', title: 'Billboard', body: pick('发布榜 Top 5 中的赞助横幅。', 'Sponsored banner in the Billboard Top 5.'), spot: 'A' },
-  { n: 'B', title: pick('右栏广告', 'Right sidebar ad'), body: pick('首页右栏，以及小屏时的榜单下方。', 'Right sidebar on the homepage, under the board on smaller screens.'), spot: 'B' },
+  { n: '2', title: pick('加速发布', 'Boost launch'), body: pick('金色高亮行，带认证徽章，排在免费收录之前。', 'A highlighted gold row with a verified badge, above free listings.'), spot: '2' },
+  { n: '3', title: pick('发布榜广告', 'Launch board ad'), body: pick('前三名下面的一条赞助横幅，每周一个品牌。', 'A sponsored banner under the top 3. One brand per week.'), spot: '3' },
+  { n: '4', title: pick('右栏广告', 'Right sidebar ad'), body: pick('首页右栏，以及小屏时的榜单下方。', 'Right sidebar on the homepage, under the board on smaller screens.'), spot: '4' },
 ])
 
 const hoverSpot = ref('')
@@ -241,12 +223,12 @@ function blur() {
 
 const compareRows = computed(() => [
   { label: pick('价格', 'Price'), free: freePlan.value.price, boost: `${boostPlan.value.price} ${boostPlan.value.unit}` },
-  { label: pick('如何解锁', 'How to unlock'), free: pick('人工审核', 'Reviewed by hand'), boost: pick('付款即可', 'Nothing to do') },
+  { label: pick('何时上线', 'Goes live'), free: pick('人工审核', 'Reviewed by hand'), boost: pick('付款成功后', 'When payment succeeds') },
   { label: pick('发布周', 'Launch week'), free: pick('任意开放周', 'Any open week'), boost: pick('任意开放周', 'Any open week') },
   { label: pick('进入每周发布榜', 'Listed on the weekly board'), free: '✓', boost: '✓' },
   { label: pick('前三名冠军徽章', 'Winner badge for the top 3'), free: '✓', boost: '✓' },
   { label: pick('金色认证徽章', 'Gold verified badge'), free: '—', boost: '✓' },
-  { label: pick('排在标准收录之前', 'Placed above standard launches'), free: '—', boost: '✓' },
+  { label: pick('排在免费收录之前', 'Placed above free listings'), free: '—', boost: '✓' },
   { label: pick('金色高亮行', 'Highlighted gold row'), free: '—', boost: '✓' },
   { label: pick('反链', 'Backlink'), free: 'nofollow', boost: pick('始终 dofollow', 'always dofollow') },
 ])
@@ -330,7 +312,7 @@ const faqSchema = computed(() =>
 
 useSeo({
   title: computed(() =>
-    pick('定价：免费发布或付费加速 · Product Atlas', 'Pricing: launch free or boost your launch · Product Atlas'),
+    pick('定价：免费发布或付费加速 · dirtool', 'Pricing: launch free or boost your launch · dirtool'),
   ),
   description: metaDescription,
 })
@@ -386,9 +368,6 @@ useHead({
             <DirectoryPricingPlanCard :plan="freePlan" />
             <DirectoryPricingPlanCard :plan="boostPlan" />
           </div>
-          <div class="pb-card-grid pb-card-grid--three">
-            <DirectoryPricingPlanCard v-for="plan in extraPlans" :key="plan.id" :plan="plan" compact />
-          </div>
         </section>
 
         <section id="ads" class="pb-section" aria-labelledby="pb-ads-title">
@@ -426,7 +405,7 @@ useHead({
               </li>
             </ol>
             <div class="pb-mock" aria-hidden="true">
-              <div class="pb-mock__bar"><span>Product Atlas</span><span>W47</span></div>
+              <div class="pb-mock__bar"><span>dirtool</span><span>W47</span></div>
               <div class="pb-mock__body">
                 <div class="pb-mock__main">
                   <div class="pb-mock__row" :class="{ 'is-focus': hoverSpot === '1' }"><b>1</b><span>Launch A</span><em>12</em></div>
@@ -534,7 +513,7 @@ useHead({
         </section>
 
         <p class="pb-right-foot">
-          © 2026 Product Atlas ·
+          © 2026 dirtool ·
           <NuxtLink :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink> ·
           <NuxtLink :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink> ·
           <NuxtLink :to="localePath('/submit')">{{ pick('提交', 'Submit') }}</NuxtLink>

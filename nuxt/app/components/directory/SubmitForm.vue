@@ -68,15 +68,14 @@ const { categories: liveCategories, tags: liveTags } = useDirectoryMeta()
 const payment = await usePayment()
 
 /**
- * The four one-time listing tiers `/pricing` can preselect (Boost, standard,
- * featured, pro). `ad` is deliberately not here: those weekly slots are sold
- * on `/book-ad` with their own week picker, and `planAmountCents('ad')` is the
- * legacy Billboard Standard label, not a sidebar week.
+ * The only paid listing `/pricing` can preselect. Standard, Featured and Pro
+ * stay in the price table so an old unpaid submission can still be charged,
+ * and they are not offered here.
  */
-const PAYABLE_PLANS = ['boost', 'standard', 'featured', 'pro'] as const
+const PAYABLE_PLANS = ['boost'] as const
 
-/** Featured. Every new submission starts here unless the URL says otherwise. */
-const DEFAULT_PLAN = 'featured'
+/** A new submission is free unless the URL asks for Boost. */
+const DEFAULT_PLAN = 'free'
 
 function planFromQuery(raw: unknown): string {
   const value = String(Array.isArray(raw) ? raw[0] ?? '' : raw ?? '').trim().toLowerCase()
@@ -279,13 +278,12 @@ const currentCategoryLabel = computed(
 const selectedPlan = computed(() => plan.value)
 
 /**
- * Every tier is shown, not just the two the source shipped. A buyer who lands
- * on `/submit` should be able to pick Standard, Featured, Pro (or free) without going
- * back to `/pricing` — and the price on each card comes from `tiers`, so the
- * button can never quote an amount the server will not charge.
+ * Free and Boost are the listing plans for sale. Standard, Featured and Pro
+ * stay in the price table for an old unpaid row, and they are not offered here.
+ * The price on each card comes from `effectiveQuote`, the same charge checkout uses.
  */
 const planOptions = computed(() =>
-  tiers.map((entry) => {
+  tiers.filter((entry) => entry.forSale !== false).map((entry) => {
     const quote = effectiveQuote('listing', entry.id)
     const name = isZh.value ? entry.name.zh : entry.name.en
     const label =
@@ -364,6 +362,8 @@ function mapError(code?: string): string {
       '视频分类必须包含「视频生成」「视频聊天」或「转录」之一。',
       'Video listings must include Video generation, Video chat, or Transcripts.',
     )
+  if (code === 'plan_retired')
+    return pick('这个方案已停售。请选免费或 Boost。', 'That plan is no longer sold. Choose Free or Boost.')
   return t('dir.submit.error_failed')
 }
 

@@ -4,7 +4,7 @@
  * of those facts and are listed in the review PR.
  */
 export const ASK_PROMPT =
-  'Read https://dirtool.com/llms.txt and the Product Atlas page I care about. Summarize only what that page states. Do not invent traffic, rankings, or prices. If a number can change, say when you read it.'
+  'Read https://dirtool.com/llms.txt and the dirtool page I care about. Summarize only what that page states. Do not invent traffic, rankings, or prices. If a number can change, say when you read it.'
 
 export const LLMS_URL = 'https://dirtool.com/llms.txt'
 
@@ -22,7 +22,7 @@ export const L2_ZH =
 export const L3 =
   'A directory of software products. Each listing has a page with what the product does, its category, and its maker. Paid listings carry a permanent dofollow link; free listings are nofollow and are reviewed by a person.'
 export const L4 =
-  'Standard, Featured, and Pro go live automatically when payment succeeds. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.'
+  'Boost goes live when payment succeeds. Standard, Featured, and Pro are no longer sold; a listing already paid for stays until its pin date ends. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.'
 export const L5 =
   'Four ways to show up. Listed prices where we have them; a written review is quoted by an editor.'
 export const WRITTEN_REVIEW_HONEST =
@@ -34,15 +34,15 @@ export const LIVE_NUMBERS =
 export const BADGE_OPTIONAL =
   'A listing badge is optional. Paid listings already include a dofollow link; you do not need to display the badge to keep it.'
 export const LOGIN_GO_LIVE =
-  'When payment succeeds, a paid directory listing or a Billboard slot goes live automatically.'
+  'When payment succeeds, a Boost listing or a weekly ad goes live automatically.'
 export const REFUND_FAQ =
   'If we do not deliver the placement, or we charge you in error, we refund it. After the listing or placement is live, we do not refund a change of mind or weak results. Full terms are in the billing section.'
 export const BILLBOARD_PAY_AGAIN =
-  'If you want a higher rank, pay again for the same product. The amounts add up.'
+  'New Billboard bids are closed. Placements already paid for stay on the board.'
 export const CATEGORIES_INTRO_EIGHT = 'Every listing sits in one of these eight categories.'
 export const TAGS_INTRO = 'Browse listings by tag. Tags with no listings are hidden.'
 export const PRODUCTS_H1 = 'All products'
-export const GUEST_POST_TITLE = 'Written review · Product Atlas'
+export const GUEST_POST_TITLE = 'Written review · dirtool'
 
 export const HOW_FREE_LINK = 'Free listings are nofollow. Paid listings carry a permanent dofollow link.'
 export const HOW_WEEKLY = 'A paid listing does not change the weekly board. The board is ranked by votes.'

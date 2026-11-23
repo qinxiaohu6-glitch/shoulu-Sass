@@ -29,7 +29,7 @@ const localePath = useLocalePath()
 const items: SponsorAdRow[] = []
 
 useHead({
-  title: computed(() => `${t('directory.settings_ads_title')} · Product Atlas`),
+  title: computed(() => `${t('directory.settings_ads_title')} · dirtool`),
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

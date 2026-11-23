@@ -22,6 +22,7 @@ import { confirmPayment, getSubmission } from '../../utils/submissions'
 import { activateAdBooking, setAdBookingStatus, stopAdBooking } from '../../utils/ad-bookings'
 import { activateBillboardPlacement, deactivateBillboardPlacement } from '../../utils/billboard-fulfilment'
 import { useDb } from '../../utils/db'
+import { classifyCharge } from '~~/shared/payments/waffo-amount'
 import { getPaymentProvider } from '../../utils/payments'
 import { findOrderByRef, getOrder, setOrderStatus, settleOrder } from '../../utils/payments/orders'
 
@@ -83,22 +84,24 @@ export default defineEventHandler(async (event) => {
   }
 
   /**
-   * A shortfall is a mismatch; an excess is tax.
-   *
-   * `priceSnapshot` carries the listing price, and the payment channel adds the
-   * buyer's local tax on top, so `chargedAmount` can legitimately exceed the
-   * order row. Refusing that would take the money and never publish the
-   * listing — the worst possible outcome. Paying *less* than asked is the only
-   * thing worth rejecting. The difference is written to the order's note so a
-   * refund of the tax portion can be reconciled later.
+   * The goods price has to be the order price. Tax may add a small amount on
+   * top. A charge at the catalogue price (the page said $4.99 and the card
+   * paid $10) is not tax, and the listing or the ad is not published. The
+   * card may already have been charged; the note says to refund it.
    */
-  const overpaidCents = parsed.amountCents - order.amount_cents
-  if (overpaidCents < 0 || parsed.currency !== order.currency) {
+  const verdict = classifyCharge({
+    orderCents: order.amount_cents,
+    chargedCents: parsed.amountCents,
+    currency: parsed.currency,
+    orderCurrency: order.currency,
+    goodsCents: parsed.goodsCents ?? null,
+  })
+  if (!verdict.ok) {
     await setOrderStatus(db, order.id, 'failed', {
       raw,
-      note: `amount mismatch: paid ${parsed.amountCents} ${parsed.currency}, expected ${order.amount_cents} ${order.currency}`,
+      note: `amount mismatch (${verdict.reason}): paid ${parsed.amountCents} ${parsed.currency}, expected ${order.amount_cents} ${order.currency}${parsed.goodsCents != null ? `, goods ${parsed.goodsCents}` : ''}. Do not fulfill. Refund the card if it was charged.`,
     })
-    console.error('[payments] amount mismatch', order.id, parsed.amountCents, order.amount_cents)
+    console.error('[payments] amount mismatch', order.id, verdict.reason, parsed.amountCents, order.amount_cents)
     // The charge did not clear at the right price, so the held week goes back
     // on sale now rather than after the reservation timeout.
     if (order.plan === 'ad') {
@@ -113,9 +116,7 @@ export default defineEventHandler(async (event) => {
     db,
     order.id,
     raw,
-    overpaidCents > 0
-      ? `tax/overpayment: charged ${parsed.amountCents} ${parsed.currency}, listing ${order.amount_cents}`
-      : undefined,
+    verdict.note,
   )
   if (!settled) {
     return { ok: true, ignored: 'missing_after_settle' }

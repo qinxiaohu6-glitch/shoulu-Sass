@@ -45,7 +45,7 @@ function listedWhen(createdAt: string) {
 const popularTags = computed(() => liveTags.value.filter((tag) => tag.count > 0).slice(0, 15))
 
 useSeo({
-  title: computed(() => `${title.value} · Product Atlas`),
+  title: computed(() => `${title.value} · dirtool`),
   description: lead,
 })
 </script>

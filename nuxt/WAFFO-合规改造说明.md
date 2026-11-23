@@ -201,7 +201,7 @@ Waffo 的 `Terms of Service Template` 原文明确：
 
 > 🔴 **当前唯一卡点是「新版没上线」**，不是文案没写好：22:11 自检抓的是线上旧版，重跑还会是同样 4 条。在你明确点头之前我不会构建或部署。确认后我按「一次一步」把终端命令发给你，由你在终端执行；上线后再把第 10 节的英文说明交给 Waffo。
 
-1. **法定经营主体名称**（硬缺）。`LEGAL_NAME = 'Product Atlas (Dirtool)'` 只是品牌占位；Waffo 🔴 要求公司全称+注册地址，或个人经营者法定姓名。代码里刻意没编造。给我准确名称（个人经营者不需要地址）。
+1. **法定经营主体名称**（硬缺）。`LEGAL_NAME = 'dirtool (Dirtool)'` 只是品牌占位；Waffo 🔴 要求公司全称+注册地址，或个人经营者法定姓名。代码里刻意没编造。给我准确名称（个人经营者不需要地址）。
 2. **退款规则请定稿**。现条款首次购买者 7 天内全额退款（Waffo 最低要求），但 `/pricing` FAQ 仍写「上线后不退」。二选一：**A** 改 FAQ 与条款一致（推荐，过审更稳）；**B** 告诉我你的真实退款做法，我改条款。
 3. **`/advertise` 的月度订阅文案**怎么处理：按第 3 节二选一（改成真实周租 / 暂时加 noindex + 说明）。
 4. **争议解决法域**。现写「适用经营者设立地法律，先协商，不成提交设立地有管辖权法院」。要写具体国家/地区或仲裁机构就给我准确表述。
@@ -226,15 +226,15 @@ Waffo 的 `Terms of Service Template` 原文明确：
 用于备注栏、申诉或人工复核对接。里面引用的页内锚点在部署后才生效。
 
 ```text
-Subject: Site review clarification - Product Atlas (dirtool.com) is a directory, not an AIGC product
+Subject: Site review clarification - dirtool (dirtool.com) is a directory, not an AIGC product
 
 Hello Waffo review team,
 
-We would like to clarify the business model of https://dirtool.com (Product Atlas)
+We would like to clarify the business model of https://dirtool.com (dirtool)
 in response to the automated site check.
 
 1. Nature of the service
-Product Atlas is an editorial directory / catalogue of third-party software. We
+dirtool is an editorial directory / catalogue of third-party software. We
 publish listings, categories, tags and weekly rankings, and sell one-time listing
 placements, a permanent dofollow outbound link, 7/90-day pinned positions and
 fixed 7-day or four-week advertising slots. We do not operate a content-generation

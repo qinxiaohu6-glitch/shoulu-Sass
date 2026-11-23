@@ -11,7 +11,7 @@ import { test } from 'node:test'
 import { AuditError, audit, isOwnAuditHost, type OwnSiteFetch } from './audit.ts'
 
 const PAGE = `<!doctype html><html lang="zh"><head>
-<title>Product Atlas 收录站首页标题</title>
+<title>dirtool 收录站首页标题</title>
 <meta name="description" content="${'这是一段足够长的描述，用来通过描述长度检查。'.repeat(3)}">
 </head><body><main>
 <h1>Dirtool 是什么？</h1>

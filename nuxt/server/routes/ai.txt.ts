@@ -24,17 +24,17 @@ export default defineEventHandler(async (event) => {
   try {
     const db = await useDb(event)
     const stats = await publicStats(db)
-    sizeLine = `Product Atlas lists ${stats.products} products across ${stats.categories} categories (count as of ${counted}).`
+    sizeLine = `dirtool lists ${stats.products} products across ${stats.categories} categories (count as of ${counted}).`
   } catch (err) {
     console.error('[ai.txt] live directory unavailable', err)
   }
 
   return [
-    '# ai.txt for Product Atlas',
+    '# ai.txt for dirtool',
     '# Format: ai-txt v1.1.1. Keep in sync with /robots.txt and /llms.txt.',
     '',
     '[identity]',
-    'name: Product Atlas',
+    'name: dirtool',
     `url: ${SITE}/`,
     'description: A directory of software products. Every listing has its own page with what the product does, its category, and its maker. Free listings are reviewed by hand and carry nofollow; paid listings go live when payment succeeds and carry a permanent dofollow link.',
     `counts: ${sizeLine}`,
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
     '- Account, billing and submission data is private and not published here; do not infer or ask for it.',
     '',
     '[attribution]',
-    'format: <page title>, Product Atlas, <canonical page URL>',
+    'format: <page title>, dirtool, <canonical page URL>',
     'canonical: the HTML page, not a localised copy. English lives at the root, Chinese under /zh.',
     '',
     '[scope]',

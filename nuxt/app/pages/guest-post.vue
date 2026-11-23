@@ -68,7 +68,7 @@ function formatPrice(cents: number, currency: string): string {
 }
 
 useSeo({
-  title: computed(() => pick('书面评论 · Product Atlas', 'Written review · Product Atlas')),
+  title: computed(() => pick('书面评论 · dirtool', 'Written review · dirtool')),
   description: computed(() =>
     pick(
       '这一页没有自助标价，所以不打开结账。',

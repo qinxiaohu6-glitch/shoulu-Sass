@@ -46,8 +46,12 @@ const MAX_TAGS = 4
 const STATUSES = ['pending', 'approved', 'rejected'] as const
 export type Status = (typeof STATUSES)[number]
 
-/** Approving one of these before `paid_at` would publish what nobody paid for. */
-export const PAID_PLANS = ['standard', 'featured', 'pro', 'ad'] as const
+/**
+ * Approving one of these before `paid_at` would publish what nobody paid for.
+ * `standard`, `featured` and `pro` stay here so a listing already sold still
+ * waits for payment. New submissions of those plans are rejected below.
+ */
+export const PAID_PLANS = ['boost', 'standard', 'featured', 'pro', 'ad'] as const
 export const isPaidPlan = (plan: string) => (PAID_PLANS as readonly string[]).includes(plan)
 
 /**
@@ -60,7 +64,8 @@ export const isPaidPlan = (plan: string) => (PAID_PLANS as readonly string[]).in
 const PAID_PLACEHOLDERS = PAID_PLANS.map(() => '?').join(',')
 const PUBLIC_SQL = `status = 'approved' AND (paid_at IS NOT NULL OR plan NOT IN (${PAID_PLACEHOLDERS}))`
 
-const PLANS = ['free', 'standard', 'featured', 'pro', 'ad'] as const
+const PLANS = ['free', 'boost', 'standard', 'featured', 'pro', 'ad'] as const
+const RETIRED_NEW_PLANS = ['standard', 'featured', 'pro', 'ad', 'paid'] as const
 
 /* -------------------------------------------------------------------------
    catalogue index
@@ -247,7 +252,9 @@ export function validate(payload: unknown): CleanSubmission {
   // order with no way to tell it apart; collapsing them into each other would
   // have the operator invoice the wrong amount.
   let plan = String(body.plan ?? 'free').trim().toLowerCase()
-  if (plan === 'paid') plan = 'featured' // what the form sent before Standard existed
+  if ((RETIRED_NEW_PLANS as readonly string[]).includes(plan)) {
+    throw new SubmissionError('plan_retired', 'plan')
+  }
   if (!(PLANS as readonly string[]).includes(plan)) plan = 'free'
   const paid = isPaidPlan(plan)
 

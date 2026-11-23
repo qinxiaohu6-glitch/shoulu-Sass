@@ -26,11 +26,12 @@ import {
   setAdBookingStatus,
   slotConflict,
 } from '../../utils/ad-bookings'
-import { getPaymentProvider, paymentConfig, returnUrls } from '../../utils/payments'
+import { getPaymentProvider, paymentConfig, PaymentError, returnUrls } from '../../utils/payments'
 import { attachSession, createOrder, newOrderId, setOrderStatus } from '../../utils/payments/orders'
 import { campaignSnapshot } from '~~/shared/content/campaign'
 import { AD_WEEK_OPTIONS, adPlans } from '~~/shared/content/pricing'
-import { effectiveAmountCents, listAmountCents } from '~~/shared/utils/pricing-effective'
+import { adPriceCents } from '~~/shared/content/pricing'
+import { effectiveAdCents } from '~~/shared/utils/pricing-effective'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -64,21 +65,6 @@ export default defineEventHandler(async (event) => {
   const body = (await readBody<Body>(event).catch(() => null)) ?? {}
   const slot = String(body.slot ?? '').trim().toLowerCase()
 
-  // Weekly board rental is retired. Refuse before a provider session exists,
-  // so this path cannot charge $29 for a week or pretend checkout succeeded.
-  if (slot === 'board') {
-    throw createError({
-      statusCode: 409,
-      statusMessage: 'Conflict',
-      data: {
-        reason: 'board_retired',
-        message_en:
-          'The weekly board slot is no longer sold. Billboard is a one-time placement — pay on /billboard and it goes live when payment succeeds.',
-        message_zh: '榜单周租已停售。Billboard 改为一次性档位，请到 /billboard 付款，付款成功后自动上板。',
-      },
-    })
-  }
-
   const provider = getPaymentProvider(event)
   if (!provider) {
     throw createError({
@@ -104,8 +90,8 @@ export default defineEventHandler(async (event) => {
   if (!EMAIL_RE.test(email) || email.length > 160) badRequest('bad_email', 'email')
 
   const { end } = bookingWindow(start, weeks)
-  const amountCents = effectiveAmountCents('sidebar', String(weeks))
-  const listCents = listAmountCents('sidebar', String(weeks))
+  const amountCents = effectiveAdCents(slot, weeks)
+  const listCents = adPriceCents(slot, weeks)
   if (!amountCents) badRequest('bad_price')
 
   // Reuses the operator console's own validation: real dates, a window that
@@ -183,17 +169,22 @@ export default defineEventHandler(async (event) => {
     }
   } catch (err) {
     console.error('[payments] ad checkout failed', err)
+    const badAmount = err instanceof PaymentError && err.code === 'bad_amount'
     await setOrderStatus(db, orderId, 'failed', {
       note: err instanceof Error ? err.message.slice(0, 200) : 'provider_error',
     })
     await setAdBookingStatus(db, orderId, 'cancelled')
     throw createError({
-      statusCode: 502,
-      statusMessage: 'Bad Gateway',
+      statusCode: badAmount ? 409 : 502,
+      statusMessage: badAmount ? 'Conflict' : 'Bad Gateway',
       data: {
-        reason: 'provider_error',
-        message_en: 'The payment provider did not answer. Please try again in a moment.',
-        message_zh: '支付服务没有响应，请稍后再试。',
+        reason: badAmount ? 'amount_mismatch' : 'provider_error',
+        message_en: badAmount
+          ? 'The payment amount does not match the price on this page, so checkout was not opened.'
+          : 'The payment provider did not answer. Please try again in a moment.',
+        message_zh: badAmount
+          ? '支付金额和页面价格不一致，已停止打开付款页。'
+          : '支付服务没有响应，请稍后再试。',
       },
     })
   }

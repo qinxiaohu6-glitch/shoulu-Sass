@@ -5,7 +5,7 @@ const { isZh } = useLang()
 
 useSeo({
   title: computed(() =>
-    isZh.value ? '服务条款 · Product Atlas' : 'Terms of Service · Product Atlas',
+    isZh.value ? '服务条款 · dirtool' : 'Terms of Service · dirtool',
   ),
   description: computed(() =>
     isZh.value

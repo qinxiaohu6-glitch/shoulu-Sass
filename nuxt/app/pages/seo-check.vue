@@ -270,8 +270,8 @@ const openFaq = ref(-1)
 useSeo({
   title: computed(() =>
     isZh.value
-      ? 'SEO 诊断 · 粘一个链接，10 秒看完 28 项检查 · Product Atlas'
-      : 'SEO check · paste a link, get 28 checks in about 10 seconds · Product Atlas',
+      ? 'SEO 诊断 · 粘一个链接，10 秒看完 28 项检查 · dirtool'
+      : 'SEO check · paste a link, get 28 checks in about 10 seconds · dirtool',
   ),
   description: computed(() =>
     isZh.value

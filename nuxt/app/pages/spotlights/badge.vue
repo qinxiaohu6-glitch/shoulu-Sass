@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * /spotlights/badge — the embed code for "Featured on Product Atlas".
+ * /spotlights/badge — the embed code for "Featured on dirtool".
  *
  * The page exists because the badge has to be genuinely optional, and the only
  * way to make that credible is to say it plainly, on its own page, in the same
@@ -27,20 +27,20 @@ const listingExample = 'https://dirtool.com/products/your-product'
 
 const htmlSnippet = `<a href="${listingExample}" target="_blank" rel="noopener">
   <img src="${badgeUrl}"
-       alt="Featured on Product Atlas"
+       alt="Featured on dirtool"
        width="280" height="64" loading="lazy">
 </a>`
 
-const markdownSnippet = `[![Featured on Product Atlas](${badgeUrl})](${listingExample})`
+const markdownSnippet = `[![Featured on dirtool](${badgeUrl})](${listingExample})`
 
 useSeo({
   title: computed(() =>
-    pick('收录徽章 Featured on Product Atlas · Product Atlas', 'Featured on Product Atlas badge · Product Atlas'),
+    pick('收录徽章 Featured on dirtool · dirtool', 'Featured on dirtool badge · dirtool'),
   ),
   description: computed(() =>
     pick(
       '给已收录或做过聚光灯的产品用的可选徽章：嵌入代码，以及为什么它永远不是发布的前提条件。',
-      'An optional badge for products listed or spotlighted on Product Atlas. Embed code, and why it is never a condition of publication.',
+      'An optional badge for products listed or spotlighted on dirtool. Embed code, and why it is never a condition of publication.',
     ),
   ),
 })
@@ -58,7 +58,7 @@ useSeo({
 
     <header class="bd-head">
       <p class="bd-kicker">{{ pick('徽章', 'BADGE') }}</p>
-      <h1>{{ pick('收录于 Product Atlas', 'Featured on Product Atlas') }}</h1>
+      <h1>{{ pick('收录于 dirtool', 'Featured on dirtool') }}</h1>
       <p class="bd-lead">
         {{ pick(
           '给已经收录、或者做过聚光灯的产品用的一枚徽章。放哪儿都行——页脚、媒体页、关于页。它是个方便，不是义务。',
@@ -72,7 +72,7 @@ useSeo({
       <div class="bd-preview">
         <img
           :src="badgePath"
-          alt="Featured on Product Atlas"
+          alt="Featured on dirtool"
           width="280"
           height="64"
         >

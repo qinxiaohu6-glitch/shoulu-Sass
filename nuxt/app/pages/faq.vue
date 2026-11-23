@@ -12,18 +12,18 @@
  * `shared/content/pricing.ts` and `server/utils/votes.ts`.
  */
 import { centsLabel } from '~~/shared/content/campaign'
-import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
 const tierPrice = (id: string) => effectiveQuote('listing', id).priceLabel
 const sidebar = effectiveQuote('sidebar', '1')
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
+const boardLabel = centsLabel(adPriceCents('board', 1))
 const bundleLabel = effectiveQuote('sidebar', '4').priceLabel
 const localePath = useLocalePath()
 
 useSeo({
-  title: computed(() => pick('常见问答 · Product Atlas', 'Questions · Product Atlas')),
+  title: computed(() => pick('常见问答 · dirtool', 'Questions · dirtool')),
   description: computed(() =>
     pick(
       '收录、审核、投票、链接、定价与广告位 —— 每个问题一段短答案。',
@@ -52,7 +52,7 @@ const groups = computed<AnswerGroup[]>(() => [
     heading: pick('收录', 'Listing'),
     items: [
       {
-        q: pick('Product Atlas 是什么？', 'What is Product Atlas?'),
+        q: pick('dirtool 是什么？', 'What is dirtool?'),
         a: pick(
           '一个软件产品目录。每个收录页写产品做什么、分类和创客。付费收录带永久 dofollow 链接；免费收录是 nofollow，并由人工审核。',
           'A directory of software products. Each listing has a page with what the product does, its category, and its maker. Paid listings carry a permanent dofollow link; free listings are nofollow and are reviewed by a person.',
@@ -70,8 +70,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('审核要多久？', 'How long does review take?'),
         a: pick(
-          '标准、精选、专业三档在付款成功后自动发布。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
-          'Standard, Featured, and Pro go live automatically when payment succeeds. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
+          'Boost 在付款成功后上线。标准、精选和专业档已停售；已经付款的收录保留到原定置顶日期结束。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。',
+          'Boost goes live when payment succeeds. Standard, Featured, and Pro are no longer sold; a listing already paid for stays until its pin date ends. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy.',
         ),
         link: { label: pick('提交之后会发生什么', 'How it works'), to: '/how-it-works' },
       },
@@ -160,8 +160,8 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('置顶会一直保持吗？', 'Does a pin last forever?'),
         a: pick(
-          '不会。精选档在目录页和分类页置顶 7 天，之后回落到标准档排序；专业档在分类页置顶 90 天。两种情况下链接都不变。',
-          'No. Featured pins the listing to the top of the directory and category for 7 days, then it drops back to Standard ordering; Pro pins its category page for 90 days. In both cases the link does not change.',
+          'Boost 没有限期置顶。已经付款的精选档在目录页和分类页置顶 7 天，专业档在分类页置顶 90 天，到期后链接不变。这两档已停售。',
+          'Boost does not add a timed pin. A Featured listing already paid for stays pinned on the directory and its category for 7 days, and Pro for 90 days on its category. The link does not change when the pin ends. Those plans are no longer sold.',
         ),
       },
       {
@@ -180,16 +180,16 @@ const groups = computed<AnswerGroup[]>(() => [
       {
         q: pick('有哪些档位，多少钱？', 'What are the plans and prices?'),
         a: pick(
-          `四档，全部一次性付款：免费 ${tierPrice('free')}、标准 ${tierPrice('standard')}、精选 ${tierPrice('featured')}、专业 ${tierPrice('pro')}。没有订阅，没有自动续费，没有积分。`,
-          `Four plans, all one-time: free ${tierPrice('free')}, Standard ${tierPrice('standard')}, Featured ${tierPrice('featured')} and Pro ${tierPrice('pro')}. No subscription, no auto-renewal, no credits.`,
+          `现在在售的收录是免费 ${tierPrice('free')} 和 Boost ${tierPrice('boost')}，都是一次性付款。标准、精选和专业档已停售。发布榜广告 ${boardLabel}/周，右栏 ${sidebar.priceLabel}/周，连订 4 周 ${bundleLabel}。没有订阅，没有自动续费，没有积分。`,
+          `The listing plans for sale are free ${tierPrice('free')} and Boost ${tierPrice('boost')}, both one-time. Standard, Featured and Pro are no longer sold. The launch-board ad is ${boardLabel} a week. The sidebar is ${sidebar.priceLabel} a week, or ${bundleLabel} for four weeks. No subscription, no auto-renewal, no credits.`,
         ),
         link: { label: pick('完整定价表', 'Full pricing table'), to: '/pricing' },
       },
       {
         q: pick('广告位怎么卖？', 'How are ad slots sold?'),
         a: pick(
-          `Billboard 是一次性的自己出价，从 ${floorLabel} 起。如果想排得更靠前，为同一产品再付一次。金额会累加。被人超过只掉名次。此前从 $15 起。右栏 ${sidebar.priceLabel}/周，连投 4 周 ${bundleLabel}。Billboard 和每周投票榜不是同一份名单。`,
-          `Billboard is one-time, name your price from ${floorLabel}. If you want a higher rank, pay again for the same product. The amounts add up. Being outbid only drops your rank. Was from $15. The sidebar is ${sidebar.priceLabel} a week, or ${bundleLabel} for four weeks. Billboard is not the weekly vote list.`,
+          `发布榜广告是前三名下面的一条赞助横幅，每周一个品牌，周一到周日，${boardLabel}/周。右栏 ${sidebar.priceLabel}/周，连订 4 周 ${bundleLabel}。都不会自动续费。Billboard 已停止新出价；已经付款的出价仍留在榜上。Billboard 和每周投票榜不是同一份名单。`,
+          `The launch-board ad is one sponsored banner under the top 3, one brand per week, Monday to Sunday, at ${boardLabel} a week. The sidebar is ${sidebar.priceLabel} a week, or ${bundleLabel} for four weeks. Nothing renews. New Billboard bids are closed; a bid already paid stays on the board. Billboard is not the weekly vote list.`,
         ),
         link: { label: pick('看 Billboard', 'See Billboard'), to: '/billboard' },
       },

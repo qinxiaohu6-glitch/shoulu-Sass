@@ -180,7 +180,7 @@ npx wrangler secret put NUXT_GOOGLE_CLIENT_ID
 npx wrangler secret put NUXT_GOOGLE_CLIENT_SECRET
 # 邮件（Resend）：不配则所有通知静默跳过，提交照常落库
 npx wrangler secret put NUXT_MAIL_API_KEY
-npx wrangler secret put NUXT_MAIL_FROM        # 形如 Product Atlas <noreply@dirtool.com>
+npx wrangler secret put NUXT_MAIL_FROM        # 形如 dirtool <noreply@dirtool.com>
 npx wrangler secret put NUXT_MAIL_REPLY_TO    # 可选
 npx wrangler secret put NUXT_SITE_URL         # https://dirtool.com
 ```

@@ -10,6 +10,8 @@ import {
   campaignDeadlineShanghai,
 } from '~~/shared/content/campaign'
 import { remainingDhms } from '~~/shared/utils/directory-window'
+import { adPriceCents } from '~~/shared/content/pricing'
+import { centsLabel } from '~~/shared/content/campaign'
 import { effectiveQuote, type EffectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
@@ -42,20 +44,23 @@ type Cell = {
 
 const cells = computed<Cell[]>(() => {
   const at = now.value
+  const board = centsLabel(adPriceCents('board', 1))
   return [
     { id: 'boost', name: 'Boost', quote: effectiveQuote('listing', 'boost', at), badge: pick('最多人选', 'Most popular') },
-    { id: 'standard', name: pick('标准', 'Standard'), quote: effectiveQuote('listing', 'standard', at) },
+    { id: 'sidebar', name: pick('右栏', 'Sidebar'), quote: effectiveQuote('sidebar', '1', at) },
     {
-      id: 'featured',
-      name: pick('精选', 'Featured'),
-      quote: effectiveQuote('listing', 'featured', at),
-    },
-    { id: 'pro', name: 'Pro', quote: effectiveQuote('listing', 'pro', at) },
-    {
-      id: 'billboard',
-      name: 'Billboard',
-      quote: effectiveQuote('billboard', 'floor', at),
-      from: true,
+      id: 'board',
+      name: pick('发布榜广告', 'Board ad'),
+      quote: {
+        kind: 'sidebar',
+        id: 'board',
+        listCents: adPriceCents('board', 1),
+        amountCents: adPriceCents('board', 1),
+        listLabel: board,
+        priceLabel: board,
+        strikeLabel: null,
+        active: false,
+      },
     },
   ]
 })
@@ -64,7 +69,7 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-const floorLabel = computed(() => effectiveQuote('billboard', 'floor', now.value).priceLabel)
+const boardLabel = computed(() => centsLabel(adPriceCents('board', 1)))
 
 const units = computed(() => {
   const value = left.value
@@ -93,8 +98,8 @@ const units = computed(() => {
           <p class="bf-deal__sub">
             {{
               pick(
-                `页上标价即实付。截止 ${deadline}（上海时间）。Billboard 从 ${floorLabel} 起，此前从 $15 起。`,
-                `The price on the page is what you pay. Ends ${deadline} Asia/Shanghai. Billboard is from ${floorLabel}; was from $15.`,
+                `页上标价即实付。截止 ${deadline}（上海时间）。发布榜广告 ${boardLabel}/周，不参加这次划线。`,
+                `The price on the page is what you pay. Ends ${deadline} Asia/Shanghai. The launch-board ad is ${boardLabel} a week and is not struck.`,
               )
             }}
           </p>
@@ -106,8 +111,8 @@ const units = computed(() => {
           <p class="bf-deal__sub">
             {{
               pick(
-                `Billboard 从 ${floorLabel} 起，一次付清。此前从 $15 起。`,
-                `Billboard is name-your-price from ${floorLabel}; was from $15.`,
+                `发布榜广告 ${boardLabel}/周。右栏活动结束后回到标价。`,
+                `The launch-board ad is ${boardLabel} a week. The sidebar returns to its list price when the campaign ends.`,
               )
             }}
           </p>
@@ -156,8 +161,8 @@ const units = computed(() => {
         <p class="bf-deal__floor">
           {{
             pick(
-              `Billboard：从 ${floorLabel} 起 · 此前从 $15 起 · 步进 +$1`,
-              `Billboard: from ${floorLabel} · was from $15 · bid step +$1`,
+              `发布榜广告 ${boardLabel}/周 · 每周一个品牌`,
+              `Launch-board ad ${boardLabel}/week · one brand per week`,
             )
           }}
         </p>

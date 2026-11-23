@@ -5,28 +5,30 @@
  * checkout uses. Written review has no self-serve price in the pricing table,
  * so this page does not invent one.
  */
+import { centsLabel } from '~~/shared/content/campaign'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
 
 const { pick } = useLang()
 const localePath = useLocalePath()
 
 const cards = computed(() => {
-  const entry = effectiveQuote('billboard', 'floor')
+  const board = centsLabel(adPriceCents('board', 1))
   const side = effectiveQuote('sidebar', '1')
-  const featured = effectiveQuote('listing', 'featured')
+  const boost = effectiveQuote('listing', 'boost')
   return [
     {
-      id: 'billboard',
-      kicker: 'BILLBOARD',
-      title: pick('首页 Top 5', 'Homepage Top 5'),
-      price: pick(`从 ${entry.priceLabel} 起`, `From ${entry.priceLabel}`),
-      when: pick('确认后上线', 'Live when the payment is confirmed'),
+      id: 'board',
+      kicker: 'BOARD',
+      title: pick('发布榜广告', 'Launch board ad'),
+      price: `${board}${pick('/周', '/wk')}`,
+      when: pick('付款成功后排期', 'Scheduled when payment succeeds'),
       body: pick(
-        '自己出价，一次付清。和首页 Top 5 是同一份已确认名单。',
-        'Name your price, one payment. The same confirmed list as the homepage Top 5.',
+        '前三名下面一条赞助横幅。每周一个品牌，周一到周日，不会自动续费。',
+        'One sponsored banner under the top 3. One brand per week, Monday to Sunday. It does not renew.',
       ),
-      to: `${localePath('/billboard')}#claim`,
-      cta: pick('认领展示位', 'Claim a spot'),
+      to: `${localePath('/book-ad')}?slot=board&weeks=1`,
+      cta: pick('预订一周', 'Book a week'),
       preview: 'billboard' as const,
     },
     {
@@ -58,28 +60,28 @@ const cards = computed(() => {
       preview: 'review' as const,
     },
     {
-      id: 'featured',
-      kicker: 'FEATURED',
-      title: pick('精选收录', 'Featured listing'),
-      price: featured.priceLabel,
+      id: 'boost',
+      kicker: 'BOOST',
+      title: pick('Boost 收录', 'Boost listing'),
+      price: boost.priceLabel,
       when: pick('付款成功后自动发布', 'Published when payment succeeds'),
       body: pick(
-        '目录和分类页置顶 7 天，加首页精选卡。一次付清，不是订阅。',
-        'Pinned on the directory and category for 7 days, plus the homepage card. One payment, not a subscription.',
+        '永久 dofollow 反链、金色徽章、高亮行，排在免费收录之前。一次付清，不是订阅。',
+        'A permanent dofollow link, a gold badge, and a highlighted row above free listings. One payment, not a subscription.',
       ),
-      to: `${localePath('/submit')}?plan=featured`,
-      cta: pick('提交精选', 'Submit Featured'),
+      to: `${localePath('/submit')}?plan=boost`,
+      cta: pick('提交 Boost', 'Submit Boost'),
       preview: 'featured' as const,
     },
   ]
 })
 
 useSeo({
-  title: computed(() => pick('投放 · Product Atlas', 'Advertise · Product Atlas')),
+  title: computed(() => pick('投放 · dirtool', 'Advertise · dirtool')),
   description: computed(() =>
     pick(
-      'Billboard、右栏、评测和精选收录。价格与结账实付相同。不承诺排名或流量。',
-      'Billboard, sidebar, a written review and a featured listing. The price matches checkout. No promise of rank or traffic.',
+      '发布榜广告、右栏、评测和 Boost 收录。价格与结账实付相同。不承诺排名或流量。',
+      'A launch-board ad, a sidebar ad, a written review, and a Boost listing. The price matches checkout. No promise of rank or traffic.',
     ),
   ),
 })

@@ -14,6 +14,7 @@
  */
 
 import type { H3Event } from 'h3'
+import { WAFFO_PRODUCT_IDS } from '~~/shared/payments/waffo-product-ids'
 import { creemProvider } from './creem'
 import { stripeProvider } from './stripe'
 import { waffoProvider } from './waffo'
@@ -79,7 +80,10 @@ export function getPaymentProvider(event: H3Event): PaymentProvider | null {
           ? config.waffoEnvironment
           : '',
       productId: config.waffoProductId,
-      productIds: parseProductIds(config.waffoProductIds),
+      // Defaults hold one product per charge. The secret overrides a key, so a
+      // deployed map still wins, and a missing amount-key falls through to the
+      // product minted for that exact price.
+      productIds: { ...WAFFO_PRODUCT_IDS, ...parseProductIds(config.waffoProductIds) },
       taxCategory: config.waffoTaxCategory,
       webhookPublicKey: config.waffoWebhookPublicKey,
     })
@@ -103,10 +107,11 @@ export function getPaymentProvider(event: H3Event): PaymentProvider | null {
  * `{"standard":"PROD_x","featured":"PROD_y"}` → a map.
  *
  * A bare `PROD_x` is accepted too and means "every plan uses this product".
- * That is the fast path for Waffo, where the amount travels with the checkout
- * (`priceSnapshot`), so one product can serve all four tiers. Creem has no
- * such override, which is why its map has to name every plan that can be
- * bought. Unparseable JSON yields an empty map: the checkout then fails with
+ * Waffo still looks up `plan:cents` first (one product per charge). The bare
+ * id is only used when its stored price equals the amount on the page;
+ * checkout refuses to open when it does not. Creem has no price override,
+ * which is why its map has to name every plan that can be bought.
+ * Unparseable JSON yields an empty map: the checkout then fails with
  * "no product id for plan X" rather than silently charging the wrong price.
  *
  * The input is `unknown` on purpose. Nuxt's `applyEnv` runs `destr()` over

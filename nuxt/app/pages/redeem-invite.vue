@@ -33,7 +33,7 @@ async function submit() {
 }
 
 useSeo({
-  title: computed(() => pick('输入邀请码 | Product Atlas', 'Enter your invite code | Product Atlas')),
+  title: computed(() => pick('输入邀请码 | dirtool', 'Enter your invite code | dirtool')),
   description: computed(() => pick('本应用为邀请制,请输入有效的邀请码以继续。', 'This app is invite-only. Enter a valid invite code to continue.')),
 })
 </script>

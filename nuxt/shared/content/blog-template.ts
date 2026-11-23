@@ -25,8 +25,8 @@ export const BLOG_TEMPLATES: readonly BlogTemplate[] = [
     kind: 'guide',
     label_en: 'Guide',
     label_zh: '指南',
-    purpose_en: 'Explain a mechanism that is already a published rule on Product Atlas.',
-    purpose_zh: '解释 Product Atlas 已经公开的规则，不另写一套。',
+    purpose_en: 'Explain a mechanism that is already a published rule on dirtool.',
+    purpose_zh: '解释 dirtool 已经公开的规则，不另写一套。',
     slots_en: [
       'What the page is',
       'How a listing starts',
@@ -91,7 +91,7 @@ export const FIRST_ARTICLE: ArticleOutline = {
   slug: 'how-to-list-a-product',
   template: 'guide',
   status: 'outline',
-  title: 'How to list a product on Product Atlas',
+  title: 'How to list a product on dirtool',
   direction_en:
     'A mechanism article. Use only listing rules that are already approved. Do not write the long body until a separate review.',
   direction_zh: '机制文。只用已经拍板的收录规则。长正文等另一次审稿，这一页只是大纲。',

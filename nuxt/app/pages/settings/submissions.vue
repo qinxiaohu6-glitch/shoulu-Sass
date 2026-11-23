@@ -19,7 +19,7 @@ const localePath = useLocalePath()
 const { items } = useMySubmissions()
 
 useHead({
-  title: computed(() => `${t('directory.settings_submissions_title')} · Product Atlas`),
+  title: computed(() => `${t('directory.settings_submissions_title')} · dirtool`),
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

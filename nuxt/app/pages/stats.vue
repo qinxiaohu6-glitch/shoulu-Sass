@@ -69,7 +69,7 @@ const cells = computed(() => {
 })
 
 useSeo({
-  title: computed(() => pick('目录数字 · Product Atlas', 'Directory numbers · Product Atlas')),
+  title: computed(() => pick('目录数字 · dirtool', 'Directory numbers · dirtool')),
   description: computed(() =>
     pick(
       '这一页的每个数字都来自当前目录。',
@@ -86,7 +86,7 @@ useHead({
         JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Dataset',
-          name: 'Product Atlas directory numbers',
+          name: 'dirtool directory numbers',
           description: 'Counts read from the live directory: products, categories, queue, billboard, votes.',
           url: 'https://dirtool.com/stats',
         }),

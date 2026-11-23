@@ -10,8 +10,7 @@
 import { tools } from '~~/shared/utils/catalog'
 import type { Db } from './db'
 import { loadOverrides } from './overrides'
-
-const PAID_PLANS = ['standard', 'featured', 'pro', 'ad'] as const
+import { PAID_PLANS } from './submissions'
 
 export function listedAtMs(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) {

@@ -1,29 +1,20 @@
 <script setup lang="ts">
 /**
- * /billboard — pay what you want, from the bid floor.
+ * /billboard — placements already paid for.
  *
- * Guest claim exception: the claim modal does not require a session.
- * Submitting a directory listing at /submit signs in only when saving or paying.
- * A later payment for the same URL stacks on read. When card checkout is off,
- * the claim does not store an invoice and does not report success.
+ * New bids are closed. A new banner is the weekly launch-board ad on /book-ad.
+ * This page still ranks rows that were paid before the close.
  */
 import { BILLBOARD_TOP_N } from '~~/shared/content/billboard'
 import { englishCount } from '~~/shared/utils/english-count'
 import { centsLabel } from '~~/shared/content/campaign'
 import { slugForPlacementUrl } from '~~/shared/utils/billboard'
-import {
-  amountToTakeRank,
-  backingLabel,
-  BILLBOARD_FLOOR_CENTS,
-  faviconForUrl,
-  type BidOccupant,
-} from '~~/shared/utils/billboard-bid'
+import { backingLabel, faviconForUrl, type BidOccupant } from '~~/shared/utils/billboard-bid'
 import { backingCents } from '~~/shared/utils/billboard'
 
 const { pick, isZh } = useLang()
 const localePath = useLocalePath()
 const { ranked } = await useBillboard()
-const { ready: paymentReady } = await usePayment()
 const submitted = await useSubmittedTools()
 const overrides = useOverrides()
 
@@ -38,16 +29,8 @@ const urlToSlug = computed(() => {
   return out
 })
 
-const url = ref('')
-const busy = ref(false)
-const done = ref(false)
-const error = ref('')
-const modalOpen = ref(false)
-const presetCents = ref<number | null>(null)
 const filter = ref<'top' | 'under50' | 'under20' | 'landed'>('top')
 const openFaq = ref(-1)
-
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
 
 const occupants = computed<BidOccupant[]>(() =>
   ranked.value.map((row) => ({
@@ -75,24 +58,24 @@ const totalBacked = computed(() => occupants.value.reduce((sum, row) => sum + ro
 const rules = computed(() => [
   {
     n: '01',
-    title: pick('自己出价', 'Name your price'),
-    body: pick(`从 ${floorLabel} 起，一次付清。`, `Anything from ${floorLabel}. One-time payment.`),
+    title: pick('新出价已关闭', 'New bids are closed'),
+    body: pick(
+      '已经付款的 Billboard 仍按累计金额留在这张榜上。',
+      'A Billboard placement already paid for stays on this board, ranked by the total backed.',
+    ),
   },
   {
     n: '02',
-    title: pick('付款成功后上线', 'When payment succeeds'),
+    title: pick('发布榜广告按周卖', 'The launch-board ad is weekly'),
     body: pick(
-      '付款成功后出现在本页。进入前 5 名时同步出现在首页。无需排队审核。',
-      'Your spot appears on this page when payment succeeds. Top 5 also shows on the homepage. No review queue.',
+      '新的榜上横幅在预订页按周购买，每周一个品牌，周一到周日。',
+      'A new banner on the launch board is booked by the week. One brand per week, Monday to Sunday.',
     ),
   },
   {
     n: '03',
-    title: pick('再付一次，向上爬', 'Pay again, climb'),
-    body: pick(
-      '如果想排得更靠前，为同一产品再付一次。金额会累加。被人超过只掉名次。',
-      'If you want a higher rank, pay again for the same product. The amounts add up. If someone passes you, you only drop in rank.',
-    ),
+    title: pick('不会自动续费', 'Nothing renews'),
+    body: pick('周广告到期即下架。想再展示一周，再订一周。', 'A weekly ad comes down when its week ends. Book another week to show it again.'),
   },
 ])
 
@@ -100,22 +83,22 @@ const faq = computed(() => [
   {
     q: pick('我买到的是什么？', 'What am I buying?'),
     a: pick(
-      '一个永久的站内展示位，按该网站累计金额排序。前 5 名同时出现在首页。不承诺搜索排名或流量。',
-      'A permanent on-site spot, ranked by the total backed for that website. The top 10 also appear on the homepage. No promise of search rank or traffic.',
+      '这页现在展示已经付款的 Billboard。新的榜上广告按周预订，不承诺搜索排名或流量。',
+      'This page shows Billboard placements that were already paid for. A new launch-board ad is booked by the week. No promise of search rank or traffic.',
     ),
   },
   {
     q: pick('这是订阅吗？', 'Is the payment recurring?'),
     a: pick(
-      `不是。每一笔都是一次性的，新出价从 ${floorLabel} 起。如果想排得更靠前，为同一产品再付一次。金额会累加。`,
-      `No. Every payment is one-time, from ${floorLabel}. If you want a higher rank, pay again for the same product. The amounts add up.`,
+      '不是。Billboard 的已付款项是一次付清。新的发布榜广告按周租，不会自动续费。',
+      'No. A Billboard placement already paid for was a one-time charge. The new launch-board ad is rented by the week and does not renew.',
     ),
   },
   {
     q: pick('被人超过会怎样？', 'Can someone knock me off?'),
     a: pick(
-      `你的位置还在，只是名次下降。如果想排得更靠前，为同一产品再付一次。金额会累加。`,
-      `Your spot stays. You only drop in rank. If you want a higher rank, pay again for the same product. The amounts add up.`,
+      '已经付款的位置还在。新出价已关闭，所以不能再为同一产品加价。',
+      'A spot already paid for stays. New bids are closed, so you cannot add to the same product.',
     ),
   },
   {
@@ -125,8 +108,8 @@ const faq = computed(() => [
   {
     q: pick('要登录吗？', 'Do I need an account?'),
     a: pick(
-      '认领这个展示位不需要登录。免费目录提交仍然走提交页的登录。',
-      'Claiming this spot does not require a sign-in. A free directory submission still uses the sign-in on the submit page.',
+      '预订周广告不需要先提交收录。免费目录提交仍然走提交页的登录。',
+      'Booking a weekly ad does not require a listing first. A free directory submission still uses the sign-in on the submit page.',
     ),
   },
 ])
@@ -138,71 +121,17 @@ const filters = computed(() => [
   { id: 'landed' as const, label: pick('刚登上', 'Just landed') },
 ])
 
-function openClaim(cents: number | null = null) {
-  error.value = ''
-  done.value = false
-  presetCents.value = cents
-  modalOpen.value = true
-}
-
 function rankOf(id: string): number {
   const index = ranked.value.findIndex((row) => row.id === id)
   return index < 0 ? 1 : index + 1
 }
 
-function claimAt(rank: number) {
-  openClaim(amountToTakeRank(rank, occupants.value, url.value))
-}
-
-function onChangeUrl() {
-  modalOpen.value = false
-  nextTick(() => document.getElementById('bb-url')?.focus())
-}
-
-async function onSubmit(payload: { email: string; name: string; tagline: string; amountCents: number }) {
-  if (busy.value) return
-  error.value = ''
-  busy.value = true
-  try {
-    const body = {
-      url: url.value,
-      email: payload.email,
-      name: payload.name,
-      tagline: payload.tagline,
-      amount_cents: payload.amountCents,
-    }
-    if (!paymentReady.value) {
-      error.value = pick(
-        '暂时打不开付款页面，请稍后再试。',
-        'Could not open the payment page — try again in a moment.',
-      )
-      return
-    }
-    const res = await $fetch<{ ok: boolean; url?: string; amount_cents: number; published: boolean }>(
-      '/api/billboard/checkout',
-      { method: 'POST', body },
-    )
-    if (!res?.ok || res.published || res.amount_cents !== payload.amountCents || !res.url) {
-      throw new Error('unexpected')
-    }
-    window.location.assign(res.url)
-    return
-  } catch (err) {
-    const info = (err as { data?: { message_zh?: string; message_en?: string } })?.data
-    error.value =
-      (isZh.value ? info?.message_zh : info?.message_en) ||
-      pick('这一步没有完成，请稍后再试。', 'That step did not finish. Try again in a moment.')
-  } finally {
-    busy.value = false
-  }
-}
-
 useSeo({
-  title: computed(() => pick('Billboard · Product Atlas', 'The Billboard · Product Atlas')),
+  title: computed(() => pick('Billboard · dirtool', 'The Billboard · dirtool')),
   description: computed(() =>
     pick(
-      `自己出价，从 ${floorLabel} 起。一次付清。前 5 名同步首页。`,
-      `Name your price, from ${floorLabel}. One-time. Top 5 also shown on the home page.`,
+      'Billboard 新出价已关闭。已经付款的展示仍留在榜上。新的发布榜广告按周预订。',
+      'New Billboard bids are closed. Placements already paid for stay on the board. A new launch-board ad is booked by the week.',
     ),
   ),
 })
@@ -231,43 +160,36 @@ useHead({
   <div class="bb-page">
     <div class="bb-page__hero">
       <div>
-        <p class="bb-page__from">{{ pick(`从 ${floorLabel} 起 · 一次付清`, `From ${floorLabel} · one-time`) }}</p>
+        <p class="bb-page__from">{{ pick('新出价已关闭', 'New bids are closed') }}</p>
         <h1>{{ pick('Billboard', 'The Billboard') }}</h1>
-        <p class="bb-page__tag">{{ pick('自己出价。留住这个位置。', 'Name your price. Keep the spot.') }}</p>
+        <p class="bb-page__tag">{{ pick('已经付款的展示留在榜上。', 'Placements already paid for stay on the board.') }}</p>
         <p class="bb-page__desc">
           {{
             pick(
-              '按你已经支持的累计金额排名。前 5 名出现在首页。被人超过只掉名次。',
-              'Ranked by the total you have backed. Top 5 on the homepage. If someone passes you, you only drop in rank.',
+              '这张榜仍按已付金额排序。新的发布榜横幅改到按周预订，每周一个品牌。',
+              'This board still ranks placements already paid for. A new banner is booked by the week, one brand per week.',
             )
           }}
         </p>
 
-        <form id="claim" class="bb-claim" @submit.prevent="openClaim(null)">
+        <div id="claim" class="bb-claim">
           <div class="bb-claim__head">
-            <h2>{{ pick('认领展示位', 'Claim your spot') }}</h2>
-            <span>{{ pick('付款成功后上线', 'When payment succeeds') }}</span>
+            <h2>{{ pick('预订发布榜广告', 'Book the launch-board ad') }}</h2>
+            <span>{{ pick('按周，不自动续费', 'Weekly, no renewal') }}</span>
           </div>
-          <label class="sr-only" for="bb-url">URL</label>
-          <input id="bb-url" v-model="url" type="url" required placeholder="https://yourproduct.com" maxlength="500">
-          <button class="btn btn--primary btn--block" type="submit">
-            {{ pick('认领展示位', 'Claim your spot') }}
+          <NuxtLink class="btn btn--primary btn--block" :to="localePath('/book-ad') + '?slot=board&weeks=1'">
+            {{ pick('去预订', 'Book a week') }}
             →
-          </button>
-          <ul class="bb-trust">
-            <li>{{ pick('长期展示', 'Permanent') }}</li>
-            <li>{{ pick('一次付清', 'One payment') }}</li>
-            <li>{{ pick('同一网站可累加', 'Stack on the same site') }}</li>
-          </ul>
+          </NuxtLink>
           <p class="bb-claim__fine">
             {{
               pick(
-                `新出价从 ${floorLabel} 起，此前从 $15 起。付款成功后上线。`,
-                `New bids start at ${floorLabel}; was from $15. It goes live when payment succeeds.`,
+                'Billboard 不再接受新出价。已经付款的位置不会被删掉。',
+                'Billboard does not take a new bid. A placement already paid for is not removed.',
               )
             }}
           </p>
-        </form>
+        </div>
       </div>
 
       <section class="bb-rank" aria-labelledby="bb-rank-title" data-billboard-source="api/billboard">
@@ -325,9 +247,9 @@ useHead({
             </span>
             <span class="bb-rank__side">
               <span class="bb-price">{{ backingLabel(row) }}</span>
-              <button type="button" class="bb-rank__go" @click="claimAt(rankOf(row.id))">
-                {{ pick(`认领 #${rankOf(row.id)} ${centsLabel(amountToTakeRank(rankOf(row.id), occupants, url))}`, `Claim #${rankOf(row.id)} ${centsLabel(amountToTakeRank(rankOf(row.id), occupants, url))}`) }}
-              </button>
+              <NuxtLink class="bb-rank__go" :to="localePath('/book-ad') + '?slot=board&weeks=1'">
+                {{ pick('改订周广告', 'Book a week') }}
+              </NuxtLink>
             </span>
           </li>
           <li v-for="n in filter === 'top' ? openSlots : 0" :key="`open-${n}`" class="is-open">
@@ -338,14 +260,14 @@ useHead({
               <span>{{ pick('付款确认后公开。', 'Public after payment is confirmed.') }}</span>
             </span>
             <span class="bb-rank__side">
-              <button type="button" class="bb-rank__go" @click="claimAt(ranked.length + n)">
-                {{ pick(`认领 · ${floorLabel} 起`, `Claim · from ${floorLabel}`) }}
-              </button>
+              <NuxtLink class="bb-rank__go" :to="localePath('/book-ad') + '?slot=board&weeks=1'">
+                {{ pick('改订周广告', 'Book a week') }}
+              </NuxtLink>
             </span>
           </li>
         </ol>
         <p v-if="ranked.length > BILLBOARD_TOP_N" class="bb-claim__fine">
-          {{ pick('第 11 名及以后只在本页。再加一笔就可能进首页。', 'Rank 11 and below stay on this page. One more backing can reach the homepage.') }}
+          {{ pick('第 11 名及以后只在本页。新出价已关闭。', 'Rank 11 and below stay on this page. New bids are closed.') }}
         </p>
       </section>
     </div>
@@ -357,8 +279,8 @@ useHead({
         <p class="bb-rules__lead">
           {{
             pick(
-              '看一个产品在榜上的位置，然后出价，再往上爬。这就是全部。',
-              'Watch a product on the board, then pay again and take the top. That is the whole game.',
+              '已经付款的 Billboard 留在这张榜上。新的横幅去预订页按周买。',
+              'Billboard placements already paid for stay on this board. A new banner is booked by the week.',
             )
           }}
         </p>
@@ -385,27 +307,13 @@ useHead({
 
     <section class="bb-close">
       <div>
-        <h2>{{ pick(`首页前 5 名。从 ${floorLabel} 起。`, `Homepage Top 5. From ${floorLabel}.`) }}</h2>
+        <h2>{{ pick('新的榜上广告按周预订。', 'A new board ad is booked by the week.') }}</h2>
         <p>
-          {{ pick('一次付清。付款成功后上线。位置长期保留。', 'One-time payment. It goes live when payment succeeds. The spot stays.') }}
+          {{ pick('每周一个品牌。周一到周日。不会自动续费。', 'One brand per week. Monday to Sunday. Nothing renews.') }}
         </p>
       </div>
-      <a href="#claim">{{ pick('认领展示位', 'Claim your spot') }} →</a>
+      <NuxtLink :to="localePath('/book-ad') + '?slot=board&weeks=1'">{{ pick('去预订', 'Book a week') }} →</NuxtLink>
     </section>
-
-    <BillboardClaimDialog
-      :open="modalOpen"
-      :url="url"
-      :occupants="occupants"
-      :payment-ready="paymentReady"
-      :busy="busy"
-      :error="error"
-      :done="done"
-      :preset-cents="presetCents"
-      @close="modalOpen = false"
-      @change-url="onChangeUrl"
-      @submit="onSubmit"
-    />
   </div>
 </template>
 

@@ -11,7 +11,7 @@
  *    the page's own table of contents. Nobody searches for "Related", and the
  *    tail pushed the description past the cut, so the useful half of the title
  *    never reached the result at all.
- *  * The brand suffix. ` | Product Atlas` costs 16 of the ~60 characters a
+ *  * The brand suffix. ` | dirtool` costs 16 of the ~60 characters a
  *    result shows. Keeping it left roughly 30 for the description — not enough
  *    to say anything — so on product pages the name and the description keep
  *    the whole budget. The site name still reaches a result through

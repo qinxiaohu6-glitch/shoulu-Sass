@@ -143,7 +143,7 @@ const columns = computed<DataColumn[]>(() => [
 ])
 
 useHead({
-  title: computed(() => `${t('settings.payments.title')} · Product Atlas`),
+  title: computed(() => `${t('settings.payments.title')} · dirtool`),
   meta: [{ name: 'robots', content: 'noindex,nofollow' }],
 })
 </script>

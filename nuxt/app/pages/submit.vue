@@ -13,7 +13,7 @@
 const { pick } = useLang()
 
 useSeo({
-  title: computed(() => pick('提交产品 · Product Atlas', 'Submit a product · Product Atlas')),
+  title: computed(() => pick('提交产品 · dirtool', 'Submit a product · dirtool')),
   description: computed(() =>
     pick(
       '先粘贴网址。我们起草收录。只在保存或付款时登录。',

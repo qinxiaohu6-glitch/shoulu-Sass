@@ -1,156 +1,159 @@
 /**
- * One-time setup of the Waffo catalogue for dirtool.com.
+ * Create one Waffo product per amount dirtool can charge.
  *
- * The account had a single product — "Featured Directory Listing (30 days)" at
- * $39 — while the site sells six SKUs. That name is wrong twice over (Featured
- * is a 7-day pin, and $39 is now the *regular* price, not the charged one), and
- * a one-product account makes the dashboard unable to tell a Boost from a Pro.
+ * The stored price IS the charge. Checkout also sends `priceSnapshot` with
+ * the same number, then reads the stored price back and refuses to open a
+ * session when they differ. A campaign price and the regular price are two
+ * products, so the clock expiring does not depend on editing a live product
+ * between two buyers.
  *
- * This script creates one product per SKU at the REGULAR price. The campaign
- * price is never written into Waffo: checkout sends `priceSnapshot` from
- * `effectiveAmountCents()`, so the charge follows `CAMPAIGN.endsAt` and reverts
- * to the regular price here automatically. Writing the sale price into the
- * product instead would leave the account charging $4.99 after the clock ends.
+ * Legacy "Product Atlas" products are left alone. The site that is live today
+ * still charges through those ids. This script only creates or reprices a
+ * product whose name starts with "dirtool —".
  *
- * The existing product is reused as the Featured SKU (rename + metadata) so the
- * already-deployed `NUXT_WAFFO_PRODUCT_ID` keeps resolving to a real product.
- *
- *   node waffo-products.mjs          # dry run, prints the plan
- *   node waffo-products.mjs --apply  # creates/renames
+ *   node scripts/waffo/waffo-products.mjs          # dry run
+ *   node scripts/waffo/waffo-products.mjs --apply  # create / reprice dirtool products
  */
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { WaffoPancake } from '@waffo/pancake-ts'
+
+const HERE = dirname(fileURLToPath(import.meta.url))
+const NUXT = join(HERE, '../..')
+const IDS_FILE = join(NUXT, 'shared/payments/waffo-product-ids.ts')
 
 const MERCHANT = process.env.WAFFO_MERCHANT_ID || 'MER_4wGnd956hsqBbRs2EZPx5b'
 const STORE = 'STO_6MBLArB4FXmrUHHjkyXxoV'
-const LEGACY_FEATURED = 'PROD_5HQOX0laZm15SKWQTSgYEB'
 const APPLY = process.argv.includes('--apply')
+
+/** Products the current production site still uses. Never reprice these. */
+const LEGACY_IDS = new Set([
+  'PROD_4eD1iGfl1bqdhaGul01hor',
+  'PROD_421o8REQUoFO0L0PlvWhXx',
+  'PROD_5HQOX0laZm15SKWQTSgYEB',
+  'PROD_6RYnnSdwxk4IRXMEkETtqd',
+  'PROD_76I8otMCarp0AiIoKtdYLf',
+  'PROD_44caej1VRQG0QqYBWuvrBh',
+])
+
+function loadCatalogue() {
+  const res = spawnSync(process.execPath, [
+    '--experimental-strip-types',
+    '--input-type=module',
+    '-e',
+    `import { waffoChargeProducts } from './shared/payments/waffo-amount.ts'; process.stdout.write(JSON.stringify(waffoChargeProducts()))`,
+  ], { cwd: NUXT, encoding: 'utf8' })
+  if (res.status !== 0) {
+    throw new Error(res.stderr || res.stdout || 'could not load waffoChargeProducts()')
+  }
+  return JSON.parse(res.stdout)
+}
+
+function usdOf(product) {
+  const row = product.prices?.find((price) => price.currency === 'USD')
+  return row?.priceInfo?.amount ?? null
+}
 
 const client = new WaffoPancake({
   merchantId: MERCHANT,
   privateKey: readFileSync(process.env.WAFFO_KEY_PATH || '/Users/mac/waffo-prod.pem', 'utf8'),
 })
 
-const SALE_ENDS = '2026-12-01T06:59:00+08:00'
-
-/** Regular price only. `sale` is metadata for humans, never the Waffo price. */
-const CATALOGUE = [
-  {
-    sku: 'boost',
-    name: 'Product Atlas — Boost',
-    description:
-      'Verified gold badge and a highlighted row on the weekly board, plus a permanent dofollow link. One-time.',
-    regular: '10.00',
-    sale: '4.99',
-  },
-  {
-    sku: 'standard',
-    name: 'Product Atlas — Standard listing',
-    description: 'Listing published as soon as payment succeeds, with a permanent dofollow link. One-time.',
-    regular: '19.00',
-    sale: '9.00',
-  },
-  {
-    sku: 'featured',
-    name: 'Product Atlas — Featured listing (7-day pin)',
-    description:
-      'Everything in Standard, plus a 7-day pin on the directory and category pages and a homepage card. One-time.',
-    regular: '39.00',
-    sale: '19.00',
-    reuse: LEGACY_FEATURED,
-  },
-  {
-    sku: 'pro',
-    name: 'Product Atlas — Pro listing (90-day pin)',
-    description:
-      'Everything in Featured, with a 90-day category pin and four copy edits a year. One-time.',
-    regular: '69.00',
-    sale: '29.00',
-  },
-  {
-    sku: 'billboard',
-    name: 'Product Atlas — Billboard placement',
-    description:
-      'Name-your-price placement in the Billboard Top 5. The amount charged is the bid, from $9.99. One-time.',
-    regular: '9.99',
-    sale: '9.99',
-  },
-  {
-    sku: 'ad',
-    name: 'Product Atlas — Sidebar ad (1 week)',
-    description:
-      'Card in the right rail of the homepage and the just-added feed for seven days, starting Monday.',
-    regular: '19.00',
-    sale: '9.00',
-  },
-]
-
-function meta(entry) {
-  return {
-    sku: entry.sku,
-    site: 'https://dirtool.com',
-    regular_amount: entry.regular,
-    campaign_amount: entry.sale,
-    campaign_ends_at: SALE_ENDS,
-    note: 'Campaign price is sent by checkout as priceSnapshot; this product always holds the regular price.',
-  }
-}
-
 async function existing() {
   const res = await client.graphql.query({
-    query: `query { onetimeProducts(storeId: "${STORE}", limit: 50) { id name status prices { currency priceInfo { amount } } } }`,
+    query: `query { onetimeProducts(storeId: "${STORE}", limit: 100) { id name status prices { currency priceInfo { amount } } } }`,
   })
   return res.data?.onetimeProducts ?? []
 }
 
+const catalogue = loadCatalogue()
 const before = await existing()
 console.log('existing products:')
-for (const p of before) console.log(`  ${p.id}  ${p.status}  ${p.prices?.[0]?.priceInfo?.amount ?? '?'}  ${p.name}`)
-
-if (!APPLY) {
-  console.log('\nplan (dry run):')
-  for (const entry of CATALOGUE) {
-    const hit = before.find((p) => p.name === entry.name) || (entry.reuse ? before.find((p) => p.id === entry.reuse) : null)
-    console.log(
-      `  ${hit ? 'reuse ' : 'create'}  ${entry.sku.padEnd(10)} $${entry.regular}  (campaign $${entry.sale})  ${entry.name}`,
-    )
-  }
-  console.log('\nre-run with --apply to write')
-  process.exit(0)
+for (const product of before) {
+  console.log(`  ${product.id}  ${product.status}  ${usdOf(product) ?? '?'}  ${product.name}`)
 }
 
-const created = {}
+console.log(APPLY ? '\napplying:' : '\nplan (dry run):')
+const written = {}
+let failed = 0
 
-for (const entry of CATALOGUE) {
-  // Match by name first: without this, every re-run after a price change
-  // created a second product for the same SKU instead of repricing the one the
-  // live checkout already points at.
-  const reuse = before.find((p) => p.name === entry.name) || (entry.reuse ? before.find((p) => p.id === entry.reuse) : null)
-  if (reuse) {
+for (const entry of catalogue) {
+  const named = before.find((product) => product.name === entry.name)
+  if (named && LEGACY_IDS.has(named.id)) {
+    console.log(`  REFUSE  ${entry.key}  name collides with legacy ${named.id}`)
+    failed += 1
+    continue
+  }
+  if (named) {
+    const current = usdOf(named)
+    if (current === entry.amount) {
+      written[entry.key] = named.id
+      console.log(`  keep    ${entry.key.padEnd(16)} $${entry.amount}  ${named.id}`)
+      continue
+    }
+    if (!APPLY) {
+      console.log(`  reprice ${entry.key.padEnd(16)} $${current ?? '?'} → $${entry.amount}  ${named.id}`)
+      continue
+    }
     const { product } = await client.onetimeProducts.update({
-      id: reuse.id,
+      id: named.id,
       name: entry.name,
       description: entry.description,
-      prices: { USD: { amount: entry.regular, taxCategory: 'digital_goods' } },
-      metadata: meta(entry),
+      prices: { USD: { amount: entry.amount, taxCategory: 'digital_goods' } },
+      metadata: { sku: entry.key, site: 'https://dirtool.com', amount: entry.amount },
     })
-    created[entry.sku] = product.id
-    console.log(`updated ${product.id} → ${entry.name} (${product.status})`)
+    written[entry.key] = product.id
+    console.log(`  updated ${entry.key.padEnd(16)} $${entry.amount}  ${product.id}`)
+    continue
+  }
+  if (!APPLY) {
+    console.log(`  create  ${entry.key.padEnd(16)} $${entry.amount}  ${entry.name}`)
     continue
   }
   const { product } = await client.onetimeProducts.create({
     storeId: STORE,
     name: entry.name,
     description: entry.description,
-    prices: { USD: { amount: entry.regular, taxCategory: 'digital_goods' } },
-    metadata: meta(entry),
+    prices: { USD: { amount: entry.amount, taxCategory: 'digital_goods' } },
+    metadata: { sku: entry.key, site: 'https://dirtool.com', amount: entry.amount },
   })
-  created[entry.sku] = product.id
-  console.log(`created ${product.id} → ${entry.name} (${product.status})`)
+  written[entry.key] = product.id
+  console.log(`  created ${entry.key.padEnd(16)} $${entry.amount}  ${product.id}  ${product.status}`)
 }
 
-console.log('\nNUXT_WAFFO_PRODUCT_IDS =', JSON.stringify(created))
-console.log('\nverify:')
-for (const p of await existing()) {
-  console.log(`  ${p.id}  ${p.status}  ${p.prices?.[0]?.priceInfo?.amount ?? '?'}  ${p.name}`)
+if (!APPLY) {
+  console.log('\nre-run with --apply to write. Legacy product prices are not changed.')
+  process.exit(failed ? 1 : 0)
 }
+
+console.log('\nread-back:')
+const after = await existing()
+for (const entry of catalogue) {
+  const id = written[entry.key]
+  const product = after.find((row) => row.id === id)
+  const amount = product ? usdOf(product) : null
+  const ok = amount === entry.amount && !LEGACY_IDS.has(id)
+  if (!ok) failed += 1
+  console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${entry.key.padEnd(16)} stored $${amount ?? '?'} expected $${entry.amount}  ${id ?? 'missing'}`)
+}
+
+if (failed) {
+  console.error('\nrefusing to write product ids: a stored price does not match the page')
+  process.exit(1)
+}
+
+const body = `/**
+ * One Waffo product per charge. The value is the product whose stored USD
+ * price equals that charge. Written by \`scripts/waffo/waffo-products.mjs --apply\`
+ * after a read-back. The worker secret overrides a key when it sets the same key.
+ *
+ * These ids are not a secret. They do not replace the legacy plan keys the
+ * current production site still uses (\`boost\`, \`ad\`, …).
+ */
+export const WAFFO_PRODUCT_IDS: Record<string, string> = ${JSON.stringify(written, null, 2)}
+`
+writeFileSync(IDS_FILE, body)
+console.log(`\nwrote ${IDS_FILE}`)
+console.log('NUXT_WAFFO_PRODUCT_IDS amount keys are in that file. Do not replace the legacy plan keys on the worker until the new checkout is deployed.')

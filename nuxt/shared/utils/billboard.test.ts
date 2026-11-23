@@ -47,7 +47,7 @@ test('listing prices are the regular list charges; Billboard tiers stay storage 
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}:${plan.weeklyCents}:${plan.bundleCents}`),
-    ['sidebar:$19:1900:7600'],
+    ['board:$29:2900:11600', 'sidebar:$19:1900:7600'],
   )
   assert.equal(billboardStandardCents(), 2900)
   assert.equal(planAmountCents('ad'), 2900)
@@ -55,8 +55,9 @@ test('listing prices are the regular list charges; Billboard tiers stay storage 
   assert.equal(adPriceCents('sidebar', 1), 1900)
   assert.equal(adPriceCents('sidebar', 4), 7600)
   assert.equal(adPriceCents('sidebar', 2), 0)
-  assert.equal(adPriceCents('board', 1), 0)
-  assert.equal(adPriceCents('board', 4), 0)
+  assert.equal(adPriceCents('board', 1), 2900)
+  assert.equal(adPriceCents('board', 4), 11600)
+  assert.equal(adPriceCents('board', 2), 0)
 })
 
 test('percent-off stays at zero and the countdown clock still ends', () => {
@@ -142,19 +143,23 @@ test('an invoice request cannot publish itself or name a checkout', () => {
 
   const invoice = readFileSync(join(here, '../../server/api/billboard/invoice.post.ts'), 'utf8')
   const checkout = readFileSync(join(here, '../../server/api/payments/ad-checkout.post.ts'), 'utf8')
+  const closed = readFileSync(join(here, '../../server/api/billboard/checkout.post.ts'), 'utf8')
   const home = readFileSync(join(here, '../../app/pages/index.vue'), 'utf8')
   const page = readFileSync(join(here, '../../app/pages/billboard.vue'), 'utf8')
   assert.equal(/checkout|ad-checkout|payment/i.test(invoice), false)
-  assert.ok(checkout.indexOf('board_retired') < checkout.indexOf('getPaymentProvider(event)'))
-  assert.match(checkout, /board_retired/)
+  assert.equal(checkout.includes('board_retired'), false)
+  assert.match(checkout, /effectiveAdCents\(/)
+  assert.match(closed, /billboard_closed/)
+  assert.equal(/billboardBidDraft\(/.test(closed), false)
   assert.match(home, /useBillboard\(/)
   assert.match(page, /useBillboard\(/)
-  assert.match(page, /\/api\/billboard\/checkout/)
+  assert.equal(page.includes('/api/billboard/checkout'), false)
   assert.equal(page.includes('Request invoice'), false)
   assert.equal(page.includes('索取发票'), false)
   assert.equal(page.includes('/api/billboard/invoice'), false)
-  assert.match(page, /Claim your spot/)
-  assert.match(page, /Name your price\. Keep the spot\./)
+  assert.equal(page.includes('Claim your spot'), false)
+  assert.equal(page.includes('Name your price. Keep the spot.'), false)
+  assert.match(page, /Book a week/)
   assert.equal(page.includes('/api/payments/'), false)
   assert.equal(page.includes('Stripe'), false)
   assert.equal(page.includes('AHREFS'), false)
