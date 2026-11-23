@@ -44,8 +44,17 @@ export default defineEventHandler(async (event) => {
     const pending = addPageView(db, now, vid).catch((err: unknown) => {
       console.error('[traffic] count failed', err)
     })
-    const waitUntil = (event as unknown as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil
-    if (typeof waitUntil === 'function') waitUntil.call(event, pending)
+    // Nitro's Cloudflare handler puts `waitUntil` on the *event context*
+    // (`_module-handler.mjs`: `context: { waitUntil: (p) => context.waitUntil(p) }`),
+    // not on the h3 event itself. A floating promise is not enough: the Worker
+    // can be torn down the moment the response is sent, and the view would be
+    // lost silently. Read the context first, then the legacy event property.
+    const context = event.context as { waitUntil?: (p: Promise<unknown>) => void }
+    const waitUntil =
+      typeof context.waitUntil === 'function'
+        ? context.waitUntil
+        : (event as unknown as { waitUntil?: (p: Promise<unknown>) => void }).waitUntil
+    if (typeof waitUntil === 'function') waitUntil.call(context, pending)
   } catch (err) {
     console.error('[traffic]', err)
   }
