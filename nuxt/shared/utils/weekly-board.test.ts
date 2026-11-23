@@ -224,18 +224,29 @@ test('recentIsoWeeks returns the open week last and one-week exclusive ranges', 
   assert.equal(w46.end, w47.start)
 })
 
-test('the board strip headline counts listings, not votes', () => {
+test('the board strip headline is a number the site can actually count', () => {
   const strip = read('../../app/components/WeeklyPulse.vue')
-  assert.match(strip, /本周新收录/)
   assert.match(strip, /launch_weeks/)
-  // The guard used to ban the identifier `weekVotes` outright, which also
-  // banned putting a real vote count anywhere on the card. The invariant that
-  // actually matters is narrower: the BIG number is listings, and votes may
-  // only appear in the secondary column, clearly labelled as votes.
-  assert.match(strip, /pb-strip__big">\{\{ weekListings/)
+  // The big figure is the directory size. It used to be "listed this week",
+  // which is 0 every Monday morning — the strip read as a dead site on the
+  // busiest page. It must never be a vote count either.
+  assert.match(strip, /pb-strip__big">\{\{ totals \? totals\.products/)
   assert.equal(/pb-strip__big">\{\{ weekVotes/.test(strip), false)
-  assert.match(strip, /本周获票/)
-  assert.equal(strip.includes('本周票数'), false)
+  assert.equal(/pb-strip__big">\{\{ weekListings/.test(strip), false)
+  // No traffic figure: we do not run visitor analytics, so "page views / 24h"
+  // would be an invented number on the front page. Comments may discuss the
+  // gap; the rendered copy may not claim it.
+  const markup = strip
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+  assert.equal(/page\s*views|pageview|24h/i.test(markup), false)
+  // The line has to end on the headline number, or the chart contradicts the
+  // figure printed next to it. The starting point is whatever was listed
+  // before the six-week window.
+  assert.match(strip, /total - sum/)
+  // Three tallies behind dividers, like the leaderboard header it copies.
+  assert.match(strip, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
   const stats = read('../../server/utils/stats.ts')
   assert.match(stats, /loadEligibleListedAt/)
   assert.match(stats, /launch_weeks: launchWeeks/)

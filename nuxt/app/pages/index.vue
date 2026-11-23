@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { NuxtLink } from '#components'
 import { centsLabel } from '~~/shared/content/campaign'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { englishCount } from '~~/shared/utils/english-count'
 import { liveRankingRows } from '~~/shared/utils/archive-rows'
 import { isoWeekId } from '~~/shared/utils/iso-week'
-import { weekPresentation } from '~~/shared/utils/weekly-board'
+import { weekFromQuery, weekPresentation } from '~~/shared/utils/weekly-board'
+import { adAfterRank } from '~~/shared/utils/feed-ad'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
-import { BILLBOARD_FLOOR_CENTS } from '~~/shared/utils/billboard-bid'
 import { slugForPlacementUrl, samePlacementUrl } from '~~/shared/utils/billboard'
 import {
   nextLaunchInstant,
@@ -190,9 +191,28 @@ const allByWeek = computed(() => {
 const availableWeeks = computed(() => [...allByWeek.value.keys()].sort().reverse())
 
 /** The selected week the board API resolved (?year=&week=, else current). */
-const activeWeekId = computed(() =>
+const requestedWeekId = computed(() =>
   boardData.value.week?.id || boardData.value.current?.id || '',
 )
+
+/**
+ * The week the feed renders.
+ *
+ * On Monday morning the open week has no launches yet, so `requestedWeekId`
+ * points at an empty bucket and the page would open with "no votes yet" under
+ * a live week label — every Monday, on the busiest page. Falling back to the
+ * newest week that does have rows keeps something to read; the header prints
+ * that week's real date range, and the switcher still reaches the open week.
+ * An explicit ?year=&week= is honoured either way: if a visitor asked for an
+ * empty week, that is the answer.
+ */
+const activeWeekId = computed(() => {
+  const requested = requestedWeekId.value
+  if (!requested) return availableWeeks.value[0] || ''
+  if (weekFromQuery(route.query as Record<string, unknown>)) return requested
+  if ((allByWeek.value.get(requested)?.length ?? 0) > 0) return requested
+  return availableWeeks.value[0] || requested
+})
 
 /**
  * The board shows ONE week at a time — the selected week's listings, sorted by
@@ -205,9 +225,15 @@ const weekGroups = computed<WeekGroup[]>(() => {
   const id = activeWeekId.value
   const tools = allByWeek.value.get(id) ?? []
 
-  // Vote counts for the selected week only.
+  // Vote counts for the week on screen. `activeWeekId` can fall back to the
+  // newest week that has rows (see above), and `/api/board` answers the
+  // *requested* week — so the ranking has to be looked up by id across the
+  // current week, the selected one and the archive. Reading `payload.week`
+  // blindly printed 0 votes on every row whenever the fallback kicked in.
   const votesBySlug = new Map<string, number>()
-  const boardWeek = id === payload.current?.id ? payload.current : payload.week
+  const boardWeek = [payload.current, payload.week, ...(payload.history ?? [])].find(
+    (week) => week?.id === id,
+  )
   for (const row of boardWeek?.ranking ?? []) votesBySlug.set(row.slug, Number(row.votes) || 0)
 
   const rows = tools
@@ -265,21 +291,32 @@ const groups = computed(() => (isPreview.value ? PREVIEW_GROUPS : weekGroups.val
 const nextAt = computed(() => nextLaunchInstant(all.value, tick.value))
 const clock = computed(() => (nextAt.value ? remainingHms(nextAt.value, tick.value) : null))
 
-const floorLabel = centsLabel(BILLBOARD_FLOOR_CENTS)
-const featuredQuote = computed(() => effectiveQuote('listing', 'featured', tick.value))
-const standardQuote = computed(() => effectiveQuote('listing', 'standard', tick.value))
-const proQuote = computed(() => effectiveQuote('listing', 'pro', tick.value))
+const boardLabel = centsLabel(adPriceCents('board', 1))
 const boostQuote = computed(() => effectiveQuote('listing', 'boost', tick.value))
 const sidebarQuote = computed(() => effectiveQuote('sidebar', '1'))
 
 // Real booked ads (if any) drive the rail; empty slots show an honest placeholder.
-const { sidebar: bookedSidebar } = await useAds()
+const { sidebar: bookedSidebar, board: bookedBoard } = await useAds()
 const adsTo = computed(() => `${localePath('/sponsor')}`)
 const bookSidebarTo = computed(() => `${localePath('/book-ad')}?slot=sidebar&weeks=1`)
 
-const featuredTo = computed(() => `${localePath('/submit')}?plan=featured`)
-const featuredCta = computed(() => pick('去付款 · 精选', 'Pay · Featured'))
 const boostTo = computed(() => `${localePath('/submit')}?plan=boost`)
+const boardAdTo = computed(() => `${localePath('/book-ad')}?slot=board&weeks=1`)
+
+/**
+ * Where the sponsored row sits in the feed: after third place, the same rule
+ * the /weekly table follows and the same sentence the slot is sold with.
+ * `groups` holds one week, so the first group is the feed on screen.
+ */
+const adAnchor = computed(() => adAfterRank(groups.value[0]?.rows.length ?? 0))
+
+/** Copy for the empty slot. The price comes from the pricing table, not here. */
+const adPitch = computed(() =>
+  pick(
+    `榜单前三下方 · 整周展示 · ${boardLabel}/周 · 每周仅一位`,
+    `Under the top 3, all week · ${boardLabel} / week · one slot per week`,
+  ),
+)
 
 /** Homepage hero: paste a URL → prefill the submit draft in one step. */
 const heroUrl = ref('')
@@ -316,14 +353,12 @@ function hostOf(url?: string): string {
 }
 
 const faq = computed(() => {
-  const standard = standardQuote.value.priceLabel
-  const featured = featuredQuote.value.priceLabel
-  const pro = proQuote.value.priceLabel
+  const boost = boostQuote.value.priceLabel
   return isZh.value
     ? [
         {
           q: '提交要花钱吗？',
-          a: `免费收录 0 元。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。链接是 nofollow。标准一次性 ${standard}：付款成功后自动收录发布、永久 dofollow、目录页排在免费收录之前。精选 ${featured}：再加目录页和分类页置顶 7 天、首页精选卡。专业 ${pro}：分类页置顶 90 天、全年 4 次文案修改。问题发到页脚的联系地址。都是单次付费，不是订阅。Billboard 从 ${floorLabel} 起自己出价，此前从 $15 起。`,
+          a: `免费收录 0 元。免费收录由人工审核。中位审核时间见统计页；忙碌时请按最多 7–14 天来预期。链接是 nofollow。Boost 一次 ${boost}：付款成功后上线，永久 dofollow，金色认证徽章，高亮行排在免费收录之前。发布榜广告 ${boardLabel}/周，每周一个品牌。右栏按周租。都不是订阅。已经买过的置顶留到原定日期结束。`,
         },
         {
           q: '多久能上线？',
@@ -341,7 +376,7 @@ const faq = computed(() => {
     : [
         {
           q: 'How much does it cost?',
-          a: `A free listing costs nothing. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy. It carries a nofollow link. Standard is a one-time ${standard}: published automatically as soon as payment succeeds, permanent dofollow, listed above every free submission. Featured is ${featured} and adds a 7-day pin on the directory and category pages plus the homepage card. Pro is ${pro} for a 90-day category pin and four copy edits a year. Questions go to the contact address in the footer. All one-time payments, never a subscription. Billboard is name-your-price from ${floorLabel}; was from $15.`,
+          a: `A free listing costs nothing. We review free listings by hand. The median time is shown on the stats page; plan for up to 7–14 days when it is busy. It carries a nofollow link. Boost is one payment of ${boost}: it goes live when payment succeeds, with a permanent dofollow link, a gold verified badge, and a highlighted row above free listings. The launch-board ad is ${boardLabel} a week, one brand. The sidebar is rented by the week. Nothing is a subscription. A pin already paid for stays until its original end date.`,
         },
         {
           q: 'How fast does my listing go live?',
@@ -349,7 +384,7 @@ const faq = computed(() => {
         },
         {
           q: 'Is the free link nofollow?',
-          a: 'Yes. Free listings cost nothing, so the link is nofollow — the page still stays up forever and still competes on the weekly board. Dofollow comes with a paid listing, and there are no strings attached to it: no badge to install, no periodic re-check, nothing that expires while you are not looking.',
+          a: 'Yes. A free listing is nofollow. The page stays up and can still appear on the weekly board. Boost includes a permanent dofollow backlink. It does not expire, and you do not have to place a badge on your site to keep it.',
         },
         {
           q: 'Can I edit after it goes live?',
@@ -364,13 +399,13 @@ const browseOpen = ref(false)
 useSeo({
   title: computed(() =>
     isZh.value
-      ? '发布产品，获得长期曝光 | Product Atlas 产品目录'
-      : 'List your product, get found | Product Atlas directory',
+      ? '提交软件产品，获得永久目录页 | dirtool'
+      : 'Submit your software product | dirtool',
   ),
   description: computed(() =>
     isZh.value
-      ? '在 Product Atlas 免费提交产品，获得一页永久产品页与 dofollow 链接。可被搜索引擎收录、被 AI 读取，一次付费升级，无订阅。'
-      : 'Submit your product free to Product Atlas. Get a permanent product page with a dofollow link, indexed by search engines and readable by AI. Upgrade once, no subscription.',
+      ? '向 dirtool 提交软件产品。免费收录由人工审核，链接为 nofollow。付费收录在付款成功后上线，并包含永久 dofollow 反链。一次付费，不是订阅。'
+      : 'Submit a software product to dirtool. Free listings are reviewed by hand and use a nofollow link. Paid listings include a permanent dofollow backlink and go live when payment succeeds.',
   ),
 })
 
@@ -388,7 +423,7 @@ const schemaScripts = computed<SchemaScript[]>(() => {
   const list: SchemaScript[] = [
     // First, and unconditional: the site's own identity. It is the only block
     // on the site that describes the publisher rather than a page, and it is
-    // what a search engine reads to print "Product Atlas" above a result.
+    // what a search engine reads to print "dirtool" above a result.
     {
       type: 'application/ld+json',
       innerHTML: JSON.stringify(
@@ -450,14 +485,14 @@ useHead({ script: schemaScripts })
 
         <section class="mk-hero mk-hero--center mk-hero--launch hero-launch">
           <h1 class="hero-launch__title">
-            {{ pick('发布你的产品。', 'List your product.') }}<br>
-            <span class="hero-launch__accent">{{ pick('被看见，不被埋没。', 'Get found, not buried.') }}</span>
+            {{ pick('提交你的软件产品。', 'Submit your software product.') }}<br>
+            <span class="hero-launch__accent">{{ pick('获得一页永久目录页。', 'Get a permanent directory page.') }}</span>
           </h1>
           <p class="hero-launch__sub">
             {{
               pick(
-                '一页永久产品页，含 dofollow 链接——可被搜索引擎收录，也能被 AI 读懂。免费提交，一次付费即可升级，无订阅。',
-                'A permanent product page with a dofollow link — indexed by search engines and readable by AI. Submit free, upgrade once, no subscription.',
+                '免费收录由人工审核，链接为 nofollow。付费收录在付款成功后上线，并包含永久 dofollow 反链。一次付费，不是订阅。',
+                'Free listings are reviewed by hand and use a nofollow link. Paid listings include a permanent dofollow backlink and go live when payment succeeds. One-time payment, no subscription.',
               )
             }}
           </p>
@@ -497,11 +532,11 @@ useHead({ script: schemaScripts })
               <small>{{ tool.short }}</small>
             </span>
           </NuxtLink>
-          <NuxtLink class="feat-card feat-card--open" :to="featuredTo">
+          <NuxtLink class="feat-card feat-card--open" :to="boostTo">
             <span class="feat-card__mark" aria-hidden="true">★</span>
             <span>
               <strong>{{ pick('你的产品在这里', 'Your product here') }}</strong>
-              <small>{{ pick('全站精选位', 'Featured across the site') }}</small>
+              <small>{{ pick('Boost · 永久 dofollow', 'Boost · permanent dofollow') }}</small>
             </span>
           </NuxtLink>
         </aside>
@@ -567,9 +602,8 @@ useHead({ script: schemaScripts })
             <span v-if="group.current" class="pb-week-head__live">{{ pick('实时', 'LIVE') }}</span>
           </div>
           <ol class="home-feed">
+            <template v-for="row in group.rows" :key="row.slug">
             <li
-              v-for="row in group.rows"
-              :key="row.slug"
               class="pb-row"
               :class="{
                 'pb-row--featured': row.badges.length > 0,
@@ -619,6 +653,57 @@ useHead({ script: schemaScripts })
                 <b>{{ row.votes }}</b>
               </span>
             </li>
+
+            <!-- The board slot, sold as "one sponsored row under the top 3"
+                 (see `adPlans`). Booked: the buyer's row, clickable through to
+                 their site. Unbooked: the slot sells itself at the same price
+                 the pricing page charges. One component either way, so the
+                 placement can never exist on one page and not the other. -->
+            <li
+              v-if="adAnchor > 0 && row.rank === adAnchor"
+              class="pb-row pb-row--ad"
+              :class="{ 'pb-row--ad-open': !bookedBoard }"
+            >
+              <span class="pb-row__rank" aria-hidden="true">
+                <em class="pb-row__ad-tag">{{ pick('广告', 'AD') }}</em>
+              </span>
+              <a
+                v-if="bookedBoard"
+                class="pb-row__link"
+                :href="bookedBoard.url"
+                target="_blank"
+                rel="sponsored nofollow noopener"
+              >
+                <span class="pb-row__logo">
+                  <ToolLogo :logo="bookedBoard.logo" :name="bookedBoard.name" :size="56" decorative />
+                </span>
+                <span class="pb-row__body">
+                  <strong class="pb-row__title">
+                    {{ bookedBoard.name }}
+                    <em class="pb-row__badge pb-row__badge--ad">{{ pick('赞助', 'SPONSORED') }}</em>
+                  </strong>
+                  <span class="pb-row__desc">{{ bookedBoard.headline }}</span>
+                  <span class="pb-row__meta">
+                    <em class="pb-row__domain">🌐 {{ hostOf(bookedBoard.url) }}</em>
+                  </span>
+                </span>
+              </a>
+              <NuxtLink v-else class="pb-row__link" :to="boardAdTo">
+                <span class="pb-row__logo pb-row__logo--ad" aria-hidden="true">📣</span>
+                <span class="pb-row__body">
+                  <strong class="pb-row__title">
+                    {{ pick('你的广告在这里', 'Your ad here') }}
+                    <em class="pb-row__badge pb-row__badge--ad">{{ pick('赞助位', 'SPONSORED') }}</em>
+                  </strong>
+                  <span class="pb-row__desc">{{ adPitch }}</span>
+                </span>
+              </NuxtLink>
+              <span v-if="bookedBoard" class="pb-row__visit pb-row__visit--static" aria-hidden="true">↗</span>
+              <NuxtLink v-else class="pb-row__ad-cta" :to="boardAdTo">
+                {{ pick('预订此位', 'Book this spot') }} →
+              </NuxtLink>
+            </li>
+            </template>
           </ol>
         </template>
         <p v-if="isPreview" class="pb-preview-note">
@@ -649,23 +734,23 @@ useHead({ script: schemaScripts })
           </ol>
         </section>
 
-        <p class="home-dir__kicker">{{ pick('精选', 'FEATURED') }}</p>
+        <p class="home-dir__kicker">{{ pick('加速', 'BOOST') }}</p>
         <section class="feat-sell">
-          <span class="launch-row__badge">FEATURED</span>
+          <span class="launch-row__badge">BOOST</span>
           <h2 id="featured-sell-title">{{ pick('你的产品', 'Your product') }}</h2>
-          <p>{{ pick('固定在首页与目录里。一次性，不是月费。', 'Pinned on the homepage and in the directory. One-time, not a monthly fee.') }}</p>
+          <p>{{ pick('永久 dofollow 反链、金色认证徽章、高亮行。一次付费，不是月费。', 'A permanent dofollow link, a gold verified badge, and a highlighted row. One payment, not a monthly fee.') }}</p>
           <ul>
-            <li>{{ pick('首页精选卡', 'Homepage featured card') }}</li>
-            <li>{{ pick('目录页和分类页置顶', 'Pinned in the directory and category pages') }}</li>
-            <li>{{ pick('永久产品页', 'Permanent product page') }}</li>
+            <li>{{ pick('永久 dofollow 反链', 'Permanent dofollow backlink') }}</li>
+            <li>{{ pick('金色认证徽章', 'Gold verified badge') }}</li>
+            <li>{{ pick('排在免费收录之前', 'Listed above free listings') }}</li>
           </ul>
           <p class="feat-sell__price">
-            <s v-if="featuredQuote.strikeLabel">{{ featuredQuote.strikeLabel }}</s>
-            <b>{{ featuredQuote.priceLabel }}</b>
+            <s v-if="boostQuote.strikeLabel">{{ boostQuote.strikeLabel }}</s>
+            <b>{{ boostQuote.priceLabel }}</b>
             <span>{{ pick('一次性', 'one-time') }}</span>
           </p>
-          <NuxtLink class="btn btn--primary btn--block" :to="featuredTo">
-            {{ featuredCta }}
+          <NuxtLink class="btn btn--primary btn--block" :to="boostTo">
+            {{ pick('去付款 · Boost', 'Pay · Boost') }}
           </NuxtLink>
           <p class="feat-sell__note">
             {{ pick('付款成功后上线。', 'It goes live when payment succeeds.') }}
@@ -709,14 +794,14 @@ useHead({ script: schemaScripts })
             </span>
           </div>
 
-          <NuxtLink class="rail-ad__card rail-ad__card--featured" :to="`${localePath('/billboard')}#claim`">
+          <NuxtLink class="rail-ad__card rail-ad__card--featured" :to="boardAdTo">
             <span class="rail-ad__mark" aria-hidden="true">👑</span>
             <span class="rail-ad__body">
-              <strong>{{ pick('首页精选位', 'Featured spot') }}</strong>
+              <strong>{{ pick('发布榜广告', 'Launch board ad') }}</strong>
               <em>{{ pick('榜单前三下方 · 每周一个品牌', 'Under the top 3 · one brand per week') }}</em>
               <span class="rail-ad__foot">
-                <b>{{ pick('从', 'from') }} {{ floorLabel }}</b>
-                <span>{{ pick('查看位置', 'See spot') }} →</span>
+                <b>{{ boardLabel }}<small>/{{ pick('周', 'week') }}</small></b>
+                <span>{{ pick('预订此位', 'Book this spot') }} →</span>
               </span>
             </span>
           </NuxtLink>
@@ -897,6 +982,72 @@ useHead({ script: schemaScripts })
   background: linear-gradient(90deg, rgba(255, 247, 224, 0.85), rgba(255, 255, 255, 0));
   box-shadow: inset 3px 0 0 #e5b53a;
 }
+/* ---- Sponsored row, after third place -------------------------------------
+   A booked placement reads like the paid row it is (solid gold edge). An empty
+   slot uses the site's own "sellable space" language — a dashed amber outline,
+   the same one the billboard's open cells and the stats strip use — so it
+   cannot be mistaken for a product row with a gold badge. */
+.pb-row--ad {
+  /* Three tracks, not the product row's four: the ad row has no vote button,
+     so its button (or its arrow) takes the last track instead of landing in
+     the 34px arrow column and painting over the description. */
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  padding-left: 14px;
+  background: linear-gradient(90deg, rgba(255, 247, 224, 0.9), rgba(255, 255, 255, 0));
+  box-shadow: inset 3px 0 0 #e5b53a;
+}
+.pb-row--ad-open {
+  margin: 6px 0;
+  padding-left: 12px;
+  border: 1.5px dashed #e8c97a;
+  border-radius: 12px;
+  background: #fffdf4;
+  box-shadow: none;
+}
+.pb-row--ad-open:hover { background: #fffbe9; }
+.pb-row__rank .pb-row__ad-tag {
+  width: 30px;
+  height: 20px;
+  border-radius: 6px;
+  background: #f1f3f6;
+  color: #8b9099;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+.pb-row__logo--ad {
+  align-items: center;
+  justify-content: center;
+  background: #fff5d6;
+  border: 1px solid #f0d79a;
+  border-radius: 10px;
+  font-size: 24px;
+  line-height: 1;
+}
+/* Neutral, not gold: the row is an ad, not a paid listing. */
+.pb-row__badge--ad {
+  background: #eef0f3 !important;
+  border-color: #dfe3e9 !important;
+  color: #5b6470 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.pb-row__badge--ad::before { content: none !important; }
+/* Above the row's stretched link, or the CTA would open the pricing page as
+   part of the row instead of being the button it looks like. */
+.pb-row__ad-cta {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  white-space: nowrap;
+  padding: 9px 14px;
+  border-radius: 10px;
+  background: #f5b426;
+  color: #4a3400;
+  font-size: 12.5px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.pb-row__ad-cta:hover { background: #eda01a; }
 .pb-row__rank {
   position: relative;
   display: flex;

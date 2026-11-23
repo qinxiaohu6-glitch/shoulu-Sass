@@ -1,77 +1,115 @@
 <script setup lang="ts">
 /**
- * The top data strip of the launch board — laid out like the leaderboard's
- * traffic header: a big number with a trend line on the left, three tallies
- * on the right.
+ * The board's number strip — the row of figures under the week switcher.
  *
- * We do NOT run visitor analytics, so there is no "page views / 24h" here.
- * The left figure is how many products were LISTED this week, taken from
- * `/api/stats` → `launch_weeks`, which counts the same `listedAt` timestamps
- * the board uses to place a product in a week. The line is the previous five
- * weeks of the same count. An empty week draws no line and claims no traffic.
+ * Shaped like the leaderboard's traffic header (one big figure with a trend
+ * line, three tallies behind dividers), because that is the reading order a
+ * visitor already knows from every other launch board.
  *
- * Votes are still on the right ("Voted this week") but they are no longer the
- * headline: four votes across the whole directory reads like nobody is here,
- * while "four new products this week" is the number a visitor actually cares
- * about.
+ * What is NOT here: "page views / 24h". We do not run visitor analytics, so a
+ * traffic figure would have to be invented. The big number is the one we can
+ * count — the directory's size — and the line behind it is the same number
+ * week by week, ending on today. The three tallies are the site's activity
+ * (reviews completed, how long a review takes, how many categories there are).
+ *
+ * The panel used to lead with "N listed this week", which is 0 every Monday
+ * morning: the open week has no launches yet, so the whole strip read as a
+ * dead site. Cumulative listings cannot be 0, and the line tells the same
+ * story as the number.
  */
 const { isZh, pick } = useLang()
-const boardData = await useBoardData()
 
-const weekProducts = computed(() => (boardData.value.current?.ranking ?? []).length)
-/** Votes cast in the open week, and the median days from submit to review. */
-const weekVotes = ref<number | null>(null)
-const medianReviewDays = ref<number | null>(null)
+const totals = ref<{
+  products: number
+  categories: number
+  reviews: number
+  median: number | null
+} | null>(null)
 /** Oldest → newest, six ISO weeks; the last entry is the open week. */
 const launchWeeks = ref<{ id: string; listed: number }[]>([])
 
-// Live directory totals, fetched once; hidden entirely if the read fails.
+// Fetched on the server so the strip is in the HTML; hidden if the read fails.
 const requestFetch = useRequestFetch()
 try {
   const stats = await requestFetch<{
     ok: boolean
-    week_votes?: number
+    products?: number
+    categories?: number
+    reviewed_last_30d?: number
     median_review_days?: number | null
     launch_weeks?: { id: string; listed: number }[]
   }>('/api/stats')
   if (stats?.ok) {
-    weekVotes.value = stats.week_votes ?? 0
-    medianReviewDays.value = stats.median_review_days ?? null
+    totals.value = {
+      products: stats.products ?? 0,
+      categories: stats.categories ?? 0,
+      reviews: stats.reviewed_last_30d ?? 0,
+      median: stats.median_review_days ?? null,
+    }
     launchWeeks.value = stats.launch_weeks ?? []
   }
 } catch {
-  // leave null → the template hides the number instead of printing 0
+  // leave null → the template prints an em dash instead of a confident 0
 }
 
-/** Products listed in the open week. */
-const weekListings = computed(() => {
-  const last = launchWeeks.value[launchWeeks.value.length - 1]
-  if (!last) return null
-  return last.listed
+/**
+ * Cumulative listings per week, oldest → newest.
+ *
+ * The six weeks the API returns may not cover the whole directory — anything
+ * listed before that window is the starting value, so the last point always
+ * equals the number printed above it. A chart whose endpoint disagreed with
+ * the headline figure would be worse than no chart.
+ */
+const series = computed(() => {
+  const weeks = launchWeeks.value
+  const total = totals.value?.products
+  if (!weeks.length || total === undefined) return []
+  const sum = weeks.reduce((n, week) => n + week.listed, 0)
+  let run = Math.max(0, total - sum)
+  return weeks.map((week) => (run += week.listed))
 })
 
-/**
- * The last five weeks INCLUDING the open one, oldest → newest, so the line
- * ends on the point the axis calls "now". The open week is partial by nature;
- * that is the same convention a traffic chart uses.
- */
-const series = computed(() => launchWeeks.value.slice(-5).map((week) => week.listed))
-
-/** SVG polyline in a 300×70 box; null when there is no meaningful trend. */
-const spark = computed(() => {
+const points = computed(() => {
   const s = series.value
-  if (s.length < 2) return null
+  if (s.length < 2) return []
   const max = Math.max(...s)
   const min = Math.min(...s)
   const span = max - min || 1
-  const pts = s.map((v, i) => {
+  return s.map((v, i) => {
     const x = 2 + (i * 296) / (s.length - 1)
     const y = 62 - ((v - min) / span) * 52
     return [Number(x.toFixed(1)), Number(y.toFixed(2))] as const
   })
-  const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join(' ')
+})
+
+const clampY = (v: number) => Math.max(0, Math.min(70, v))
+
+/** Catmull-Rom → cubic bezier: the soft curve the competitor's chart uses. */
+function smoothPath(pts: readonly (readonly [number, number])[]): string {
+  if (pts.length < 2) return ''
+  let d = `M${pts[0]![0]},${pts[0]![1]}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i]!
+    const p1 = pts[i]!
+    const p2 = pts[i + 1]!
+    const p3 = pts[i + 2] ?? p2
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6
+    const c1y = clampY(p1[1] + (p2[1] - p0[1]) / 6)
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6
+    const c2y = clampY(p2[1] - (p3[1] - p1[1]) / 6)
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0]},${p2[1]}`
+  }
+  return d
+}
+
+/** Line, filled area and the end dot in a 300×70 box; null without a trend. */
+const spark = computed(() => {
+  const pts = points.value
+  if (pts.length < 2) return null
+  const line = smoothPath(pts)
   const last = pts[pts.length - 1]!
-  return { line, area: `${line} L${last[0]},70 L2,70 Z`, dot: last }
+  const first = pts[0]!
+  return { line, area: `${line} L${last[0]},70 L${first[0]},70 Z`, dot: last }
 })
 </script>
 
@@ -79,11 +117,11 @@ const spark = computed(() => {
   <section class="pb-strip" aria-label="Board numbers">
     <div class="pb-strip__main">
       <div class="pb-strip__main-top">
-        <span class="pb-strip__label"><i />{{ pick('本周新收录', 'NEW THIS WEEK') }}</span>
+        <span class="pb-strip__label"><i />{{ pick('已收录', 'IN THE DIRECTORY') }}</span>
       </div>
-      <p class="pb-strip__big">{{ weekListings !== null ? weekListings.toLocaleString() : '—' }}</p>
+      <p class="pb-strip__big">{{ totals ? totals.products.toLocaleString() : '—' }}</p>
       <p class="pb-strip__hint">
-        {{ isZh ? '本周上线的产品' : 'listed this week' }}
+        {{ isZh ? '个产品已收录' : 'products listed' }}
       </p>
       <svg
         v-if="spark"
@@ -92,6 +130,12 @@ const spark = computed(() => {
         preserveAspectRatio="none"
         aria-hidden="true"
       >
+        <defs>
+          <linearGradient id="pb-strip-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f97316" stop-opacity="0.30" />
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0" />
+          </linearGradient>
+        </defs>
         <path class="pb-strip__area" :d="spark.area" />
         <path class="pb-strip__line" :d="spark.line" fill="none" />
         <circle class="pb-strip__dot" :cx="spark.dot[0]" :cy="spark.dot[1]" r="3.5" />
@@ -100,37 +144,44 @@ const spark = computed(() => {
         {{ pick('满两周后出现趋势', 'Trend appears after two weeks') }}
       </p>
       <p class="pb-strip__axis">
-        <span>{{ pick('近 5 周', 'Last 5 weeks') }}</span>
-        <span>{{ pick('当前', 'Now') }}</span>
+        <span>{{ pick('6 周前', '6 weeks ago') }}</span>
+        <span>{{ pick('现在', 'Now') }}</span>
       </p>
     </div>
-    <!-- Deliberately NOT product and category totals: the rail beside this card
-         already prints both ("79 products listed", the category list with its
-         counts), so repeating them here was the same number twice on one
-         screen and pushed the two figures that are actually new off the card.
-         What is left is this week's activity and how long a review takes. -->
+    <!-- Three tallies, not two: the strip had a wide empty band in the middle
+         and printed "0 votes this week" on the left of it every Monday. These
+         three answer "is this place alive" without a single zero in the row. -->
     <div class="pb-strip__cols">
       <div class="pb-strip__col">
-        <b>{{ weekVotes !== null ? weekVotes.toLocaleString() : '—' }}</b>
-        <span>{{ pick('本周获票', 'Votes this week') }}</span>
-        <small>{{ pick(`${weekProducts} 个产品获票`, `${weekProducts} products voted`) }}</small>
+        <b>{{ totals ? totals.reviews.toLocaleString() : '—' }}</b>
+        <span>{{ pick('近 30 天审核', 'Reviews · 30d') }}</span>
+        <small>{{ pick('已完成', 'completed') }}</small>
       </div>
       <div class="pb-strip__col">
-        <b :class="{ 'is-empty': medianReviewDays === null }">
-          {{ medianReviewDays !== null ? medianReviewDays.toFixed(1) : '—' }}
-          <u v-if="medianReviewDays !== null">{{ pick('天', 'd') }}</u>
+        <b :class="{ 'is-empty': !totals || totals.median === null }">
+          {{ totals && totals.median !== null ? totals.median.toFixed(1) : '—' }}
+          <u v-if="totals && totals.median !== null">{{ pick('天', 'd') }}</u>
         </b>
         <span>{{ pick('中位审核', 'Median review') }}</span>
         <small>{{ pick('提交到上线', 'submit to live') }}</small>
+      </div>
+      <div class="pb-strip__col">
+        <b>{{ totals ? totals.categories.toLocaleString() : '—' }}</b>
+        <span>{{ pick('分类', 'Categories') }}</span>
+        <small>{{ pick('全站', 'site-wide') }}</small>
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
+/* Two blocks, not four: `.pb-strip__cols` is its own three-column grid, so the
+   outer track list is "the figure" + "the tallies". Listing four tracks here
+   put the whole tallies block in one 0.82fr track and squeezed the labels into
+   one character per line. */
 .pb-strip {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 2.5fr);
   gap: 0;
   margin: 0 0 18px;
   padding: 0;
@@ -139,10 +190,14 @@ const spark = computed(() => {
   background: var(--card, #fff);
   overflow: hidden;
 }
+/* The figure block is ~200px wide here — the homepage keeps two rails, so the
+   centre column is nothing like the competitor's full-width header. A chart
+   laid beside the number at that width covers the caption, so the block is a
+   vertical stack instead: label, figure, caption, line, axis. */
 .pb-strip__main {
-  position: relative;
-  padding: 20px 24px 34px;
-  min-height: 168px;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 12px;
 }
 .pb-strip__main-top { display: flex; align-items: center; }
 .pb-strip__label {
@@ -172,32 +227,31 @@ const spark = computed(() => {
   color: #6b7280;
 }
 .pb-strip__spark {
-  position: absolute;
-  right: 24px;
-  bottom: 34px;
-  width: 46%;
-  height: 76px;
-  opacity: 0.95;
+  width: 100%;
+  height: 62px;
+  margin-top: auto;
+  padding-top: 8px;
+  overflow: visible;
 }
-.pb-strip__area { fill: rgba(249, 115, 22, 0.12); }
-.pb-strip__line { stroke: #f97316; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.pb-strip__area { fill: url(#pb-strip-fill); }
+.pb-strip__line { stroke: #f97316; stroke-width: 2.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
 .pb-strip__dot { fill: #f97316; }
 .pb-strip__spark-empty {
-  position: absolute;
-  right: 24px; bottom: 52px;
-  font-size: 11px; color: #9ca3af; max-width: 45%; text-align: right;
+  margin: auto 0 0;
+  padding-top: 10px;
+  font-size: 11px;
+  color: #9ca3af;
 }
 .pb-strip__axis {
-  position: absolute;
-  left: 24px; right: 24px; bottom: 14px;
-  display: flex; justify-content: space-between;
-  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0 0;
   font-size: 10.5px;
   color: #9ca3af;
 }
 .pb-strip__cols {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border-left: 1px solid #eef0f3;
 }
 .pb-strip__col {
@@ -205,7 +259,7 @@ const spark = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 10px;
+  padding: 20px 8px;
   text-align: center;
   border-right: 1px solid #eef0f3;
 }
@@ -214,7 +268,7 @@ const spark = computed(() => {
   display: inline-flex;
   align-items: baseline;
   gap: 2px;
-  font-size: 34px;
+  font-size: 32px;
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -226,12 +280,13 @@ const spark = computed(() => {
   text-decoration: none;
   color: #6b7280;
 }
-/* A missing median is not a zero: an em dash at 34px/800 reads as a black bar. */
+/* A missing median is not a zero: an em dash at 32px/800 reads as a black bar. */
 .pb-strip__col b.is-empty { font-size: 26px; color: #c4c8cf; }
 .pb-strip__col span {
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
+  line-height: 1.25;
 }
 .pb-strip__col small {
   margin-top: 4px;
@@ -242,6 +297,8 @@ const spark = computed(() => {
 @media (max-width: 760px) {
   .pb-strip { grid-template-columns: 1fr; }
   .pb-strip__cols { border-left: 0; border-top: 1px solid #eef0f3; }
-  .pb-strip__spark { width: 42%; }
+  .pb-strip__spark { height: 56px; }
+  .pb-strip__col { padding: 14px 6px; }
+  .pb-strip__col b { font-size: 24px; }
 }
 </style>
