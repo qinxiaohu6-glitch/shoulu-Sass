@@ -151,6 +151,7 @@ export const privacyPolicy: LegalDoc = {
         en: [
           'Account information — if you sign in with Google, we receive your Google account identifier, email address, display name and avatar URL. There is no password stored on this site.',
           'Usage data — pages and listings viewed, and votes cast while signed in. Votes are stored against an internal identifier so one account cannot vote twice in the same week. We do not build advertising profiles.',
+          'Anonymous traffic counts — one page view per human request, kept as an hourly counter, plus one row per visitor per UTC day keyed by a salted hash of your IP address and browser string that rotates with the day. The address itself is not stored, rows from different days cannot be linked, and visitor rows are deleted after 35 days. These counts are the only source of the traffic figures published on the site.',
           'Submission data — the product name, description, website URL, logo URL, tags, contact email and screenshots you send us for review.',
           'Support data — the content of tickets you open and our replies.',
           'Payment data — the plan, order reference, amount and payment status. Card numbers are collected by the payment processor, never by us; a verified payment webhook settles the order and publishes the placement automatically. Where no processor is enabled, the operator confirms receipt by hand.',
@@ -159,6 +160,7 @@ export const privacyPolicy: LegalDoc = {
         zh: [
           '账号信息 —— 若你使用 Google 登录，我们会收到 Google 账号标识、邮箱、显示名与头像地址。本站不存储密码。',
           '使用数据 —— 浏览的页面与登录后投出的票。投票按内部标识记录，用于防止同一账号在一周内重复投票；我们不构建广告画像。',
+          '匿名访问计数 —— 每个真人请求计一次页面浏览，按小时累计；另按 UTC 日保存一行访客记录，键值为由 IP 与浏览器串加盐哈希、且每天轮换的标识。我们不保存 IP 本身，不同日期之间无法关联，访客记录 35 天后删除。站内公开的流量数字仅由这些计数得出。',
           '提交数据 —— 你提交审核的产品名称、简介、网址、图标地址、标签、联系邮箱与截图。',
           '工单数据 —— 你提交的工单内容以及我们的回复。',
           '支付数据 —— 方案、订单号、金额与支付状态。银行卡号由支付服务商收集，本站不接触；支付回调验签后由系统自动完成订单并发布展示。未启用在线支付时由站长人工确认收款。',

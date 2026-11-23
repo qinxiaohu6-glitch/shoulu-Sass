@@ -224,32 +224,36 @@ test('recentIsoWeeks returns the open week last and one-week exclusive ranges', 
   assert.equal(w46.end, w47.start)
 })
 
-test('the board strip headline is a number the site can actually count', () => {
+test('the board strip reports measured traffic, not the size of the directory', () => {
   const strip = read('../../app/components/WeeklyPulse.vue')
-  assert.match(strip, /launch_weeks/)
-  // The big figure is the directory size. It used to be "listed this week",
-  // which is 0 every Monday morning — the strip read as a dead site on the
-  // busiest page. It must never be a vote count either.
-  assert.match(strip, /pb-strip__big">\{\{ totals \? totals\.products/)
+  // The big figure is page views over the last 24 hours, read from the counter.
+  assert.match(strip, /\/api\/stats/)
+  assert.match(strip, /pb-strip__big">\{\{ figure\(traffic\?\.views_24h\) \}\}/)
+  // It used to be the directory size, then the week's vote count — both are
+  // numbers a reader cannot act on, and neither says whether anyone is here.
+  assert.equal(/totals \? totals\.products/.test(strip), false)
   assert.equal(/pb-strip__big">\{\{ weekVotes/.test(strip), false)
   assert.equal(/pb-strip__big">\{\{ weekListings/.test(strip), false)
-  // No traffic figure: we do not run visitor analytics, so "page views / 24h"
-  // would be an invented number on the front page. Comments may discuss the
-  // gap; the rendered copy may not claim it.
-  const markup = strip
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/^\s*\/\/.*$/gm, '')
-  assert.equal(/page\s*views|pageview|24h/i.test(markup), false)
-  // The line has to end on the headline number, or the chart contradicts the
-  // figure printed next to it. The starting point is whatever was listed
-  // before the six-week window.
-  assert.match(strip, /total - sum/)
-  // Three tallies behind dividers, like the leaderboard header it copies.
+  // A counter that started ten minutes ago must not print a confident 0.
+  assert.match(strip, /has_data/)
+  assert.match(strip, /statistics|Counting|统计/)
+  // Three tallies behind dividers, like the leaderboard header it copies, and
+  // all three are traffic.
   assert.match(strip, /grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/)
+  for (const key of ['visitors_today', 'views_week', 'peak']) {
+    assert.equal(strip.includes(`traffic?.${key}`), true, `strip shows ${key}`)
+  }
+  // The figures are counted, not assembled: the API reads the counter, and a
+  // middleware writes it. Without the middleware the strip would be a zero.
   const stats = read('../../server/utils/stats.ts')
-  assert.match(stats, /loadEligibleListedAt/)
-  assert.match(stats, /launch_weeks: launchWeeks/)
+  assert.match(stats, /readTraffic/)
+  assert.match(stats, /traffic,/)
+  const middleware = read('../../server/middleware/10-traffic.ts')
+  assert.match(middleware, /isBotUserAgent/)
+  assert.match(middleware, /isPrefetch/)
+  assert.match(middleware, /waitUntil/)
+  // The line has to end on the headline number's own window: 24 hourly points.
+  assert.match(strip, /hourly/)
 })
 
 test('a feed row is one big link to the product, and it is a real anchor', () => {

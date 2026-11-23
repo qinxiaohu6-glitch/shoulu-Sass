@@ -533,3 +533,35 @@ CREATE TABLE IF NOT EXISTS product_slug_alias (
 );
 
 CREATE INDEX IF NOT EXISTS idx_product_slug_alias_domain ON product_slug_alias (domain, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Traffic counters
+--
+-- The board's stats strip sells placements, so it has to show whether anyone
+-- is actually here. That number has to be measured, and these two tables are
+-- the whole of it: an hourly counter and a per-day visitor set.
+--
+-- `bucket` is `YYYY-MM-DDTHH` in UTC — fixed width, so "the last 24 hours" is a
+-- text range and a week is `>= '2026-11-16T00' AND < '2026-11-23T00'`.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS traffic_hour (
+  bucket TEXT    PRIMARY KEY,
+  views  INTEGER NOT NULL DEFAULT 0
+);
+
+-- One row per visitor per UTC day. `vid` is a salted hash of the request that
+-- includes the day, so rows from different days cannot be joined and the
+-- address itself is never stored. Counting is a `COUNT(*)`, not a profile.
+--
+-- `seen_at` is the last request's unix second, which is the only way to answer
+-- "how many people are on the site right now" — the strip prints that next to
+-- the traffic figure. It is an overwrite, not a history: the row remembers one
+-- moment per visitor per day and nothing else.
+CREATE TABLE IF NOT EXISTS traffic_visitor (
+  day     TEXT    NOT NULL,
+  vid     TEXT    NOT NULL,
+  seen_at INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, vid)
+);
+
+CREATE INDEX IF NOT EXISTS idx_traffic_visitor_seen ON traffic_visitor (seen_at);

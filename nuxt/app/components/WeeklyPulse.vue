@@ -1,83 +1,77 @@
 <script setup lang="ts">
 /**
- * The board's number strip — the row of figures under the week switcher.
+ * The board's traffic strip — the row of figures above the feed.
  *
- * Shaped like the leaderboard's traffic header (one big figure with a trend
- * line, three tallies behind dividers), because that is the reading order a
- * visitor already knows from every other launch board.
+ * It is a traffic header, not a directory summary. The strip used to lead with
+ * "N products listed" and three tallies about our own review queue: true, and
+ * worth nothing to the reader. A visitor deciding whether to list a product
+ * here, and a buyer deciding whether to pay for a slot, both ask the same
+ * question — is anyone actually on this site? — so the strip answers that and
+ * nothing else.
  *
- * What is NOT here: "page views / 24h". We do not run visitor analytics, so a
- * traffic figure would have to be invented. The big number is the one we can
- * count — the directory's size — and the line behind it is the same number
- * week by week, ending on today. The three tallies are the site's activity
- * (reviews completed, how long a review takes, how many categories there are).
+ * The figures are measured. `server/middleware/10-traffic.ts` counts one page
+ * view per human request into `traffic_hour` (one row per UTC hour) and one
+ * visitor row per day keyed by a salted hash that rotates with the day. There
+ * is no analytics vendor and no per-person history: two `COUNT`s and a `SUM`.
  *
- * The panel used to lead with "N listed this week", which is 0 every Monday
- * morning: the open week has no launches yet, so the whole strip read as a
- * dead site. Cumulative listings cannot be 0, and the line tells the same
- * story as the number.
+ * Two states matter as much as the numbers:
+ *  - nothing counted yet → em dash, not a confident 0, plus a note saying the
+ *    counter starts today. "Nobody came" and "we started an hour ago" are
+ *    different statements and the page must not confuse them;
+ *  - counted, but a quiet 24 hours → the real 0, with the line flat on the
+ *    baseline. An honest zero is the price of the figure being worth anything.
  */
-const { isZh, pick } = useLang()
+const { pick } = useLang()
 
-const totals = ref<{
-  products: number
-  categories: number
-  reviews: number
-  median: number | null
-} | null>(null)
-/** Oldest → newest, six ISO weeks; the last entry is the open week. */
-const launchWeeks = ref<{ id: string; listed: number }[]>([])
-
-// Fetched on the server so the strip is in the HTML; hidden if the read fails.
-const requestFetch = useRequestFetch()
-try {
-  const stats = await requestFetch<{
-    ok: boolean
-    products?: number
-    categories?: number
-    reviewed_last_30d?: number
-    median_review_days?: number | null
-    launch_weeks?: { id: string; listed: number }[]
-  }>('/api/stats')
-  if (stats?.ok) {
-    totals.value = {
-      products: stats.products ?? 0,
-      categories: stats.categories ?? 0,
-      reviews: stats.reviewed_last_30d ?? 0,
-      median: stats.median_review_days ?? null,
-    }
-    launchWeeks.value = stats.launch_weeks ?? []
-  }
-} catch {
-  // leave null → the template prints an em dash instead of a confident 0
+type Traffic = {
+  /** 24 numbers, oldest → newest, ending on the current hour. */
+  hourly: number[]
+  views_24h: number
+  visitors_today: number
+  views_week: number
+  live_now: number
+  peak: number
+  has_data: boolean
 }
 
-/**
- * Cumulative listings per week, oldest → newest.
- *
- * The six weeks the API returns may not cover the whole directory — anything
- * listed before that window is the starting value, so the last point always
- * equals the number printed above it. A chart whose endpoint disagreed with
- * the headline figure would be worse than no chart.
- */
-const series = computed(() => {
-  const weeks = launchWeeks.value
-  const total = totals.value?.products
-  if (!weeks.length || total === undefined) return []
-  const sum = weeks.reduce((n, week) => n + week.listed, 0)
-  let run = Math.max(0, total - sum)
-  return weeks.map((week) => (run += week.listed))
+const requestFetch = useRequestFetch()
+// Fetched through `useAsyncData` so the server-rendered figures arrive with the
+// HTML and are not re-fetched (and re-rendered with different values) during
+// hydration. A failed read leaves it null and the strip prints em dashes.
+const { data: payload } = await useAsyncData('board-traffic', async () => {
+  try {
+    return await requestFetch<{ ok: boolean; traffic?: Traffic }>('/api/stats')
+  } catch {
+    return null
+  }
 })
 
+const traffic = computed(() => (payload.value?.ok ? (payload.value.traffic ?? null) : null))
+const hourly = computed(() => traffic.value?.hourly ?? [])
+const hasData = computed(() => traffic.value?.has_data === true)
+
+/** One figure, or an em dash while the counter has nothing to report. */
+function figure(value: number | undefined): string {
+  if (!hasData.value || value === undefined || !Number.isFinite(value)) return '—'
+  return value.toLocaleString()
+}
+
+const live = computed(() => (hasData.value ? (traffic.value?.live_now ?? 0) : 0))
+
+/**
+ * The line, anchored at zero.
+ *
+ * Not min/max scaled: a single view must not stretch into a mountain range,
+ * and a quiet hour has to sit on the baseline where it belongs. Only the
+ * busiest hour of the window reaches the top.
+ */
 const points = computed(() => {
-  const s = series.value
-  if (s.length < 2) return []
-  const max = Math.max(...s)
-  const min = Math.min(...s)
-  const span = max - min || 1
-  return s.map((v, i) => {
-    const x = 2 + (i * 296) / (s.length - 1)
-    const y = 62 - ((v - min) / span) * 52
+  const series = hourly.value
+  if (series.length < 2) return []
+  const max = Math.max(...series, 1)
+  return series.map((value, i) => {
+    const x = 2 + (i * 296) / (series.length - 1)
+    const y = 62 - (Math.max(0, value) / max) * 52
     return [Number(x.toFixed(1)), Number(y.toFixed(2))] as const
   })
 })
@@ -105,24 +99,38 @@ function smoothPath(pts: readonly (readonly [number, number])[]): string {
 /** Line, filled area and the end dot in a 300×70 box; null without a trend. */
 const spark = computed(() => {
   const pts = points.value
-  if (pts.length < 2) return null
+  if (!pts.length || !hasData.value) return null
   const line = smoothPath(pts)
   const last = pts[pts.length - 1]!
   const first = pts[0]!
   return { line, area: `${line} L${last[0]},70 L${first[0]},70 Z`, dot: last }
 })
+
+/** Why the line is missing — the two reasons are not the same sentence. */
+const emptyNote = computed(() => {
+  if (!hasData.value) {
+    return pick(
+      '统计从今天开始，24 小时后出现曲线',
+      'Counting starts today — the line appears within 24 hours',
+    )
+  }
+  return pick('最近 24 小时没有访问', 'No visits in the last 24 hours')
+})
 </script>
 
 <template>
-  <section class="pb-strip" aria-label="Board numbers">
+  <section class="pb-strip" aria-label="Site traffic">
     <div class="pb-strip__main">
       <div class="pb-strip__main-top">
-        <span class="pb-strip__label"><i />{{ pick('已收录', 'IN THE DIRECTORY') }}</span>
+        <span class="pb-strip__label">{{ pick('24 小时流量', '24H TRAFFIC') }}</span>
+        <!-- Only when someone is here: "0 live" is a reason to leave. -->
+        <span v-if="live > 0" class="pb-strip__live">
+          <i />
+          {{ live }} {{ pick('在线', 'live') }}
+        </span>
       </div>
-      <p class="pb-strip__big">{{ totals ? totals.products.toLocaleString() : '—' }}</p>
-      <p class="pb-strip__hint">
-        {{ isZh ? '个产品已收录' : 'products listed' }}
-      </p>
+      <p class="pb-strip__big">{{ figure(traffic?.views_24h) }}</p>
+      <p class="pb-strip__hint">{{ pick('次页面浏览 / 24 小时', 'page views / 24h') }}</p>
       <svg
         v-if="spark"
         class="pb-strip__spark"
@@ -140,35 +148,30 @@ const spark = computed(() => {
         <path class="pb-strip__line" :d="spark.line" fill="none" />
         <circle class="pb-strip__dot" :cx="spark.dot[0]" :cy="spark.dot[1]" r="3.5" />
       </svg>
-      <p v-else class="pb-strip__spark-empty">
-        {{ pick('满两周后出现趋势', 'Trend appears after two weeks') }}
-      </p>
+      <p v-else class="pb-strip__spark-empty">{{ emptyNote }}</p>
       <p class="pb-strip__axis">
-        <span>{{ pick('6 周前', '6 weeks ago') }}</span>
+        <span>{{ pick('24 小时前', '24h ago') }}</span>
         <span>{{ pick('现在', 'Now') }}</span>
       </p>
     </div>
-    <!-- Three tallies, not two: the strip had a wide empty band in the middle
-         and printed "0 votes this week" on the left of it every Monday. These
-         three answer "is this place alive" without a single zero in the row. -->
+    <!-- Three tallies behind dividers, like the leaderboard header this copies.
+         All three are traffic, so the row reads as one subject instead of four
+         unrelated counts. -->
     <div class="pb-strip__cols">
       <div class="pb-strip__col">
-        <b>{{ totals ? totals.reviews.toLocaleString() : '—' }}</b>
-        <span>{{ pick('近 30 天审核', 'Reviews · 30d') }}</span>
-        <small>{{ pick('已完成', 'completed') }}</small>
+        <b>{{ figure(traffic?.visitors_today) }}</b>
+        <span>{{ pick('今日访客', 'Visitors today') }}</span>
+        <small>{{ pick('按日去重', 'unique') }}</small>
       </div>
       <div class="pb-strip__col">
-        <b :class="{ 'is-empty': !totals || totals.median === null }">
-          {{ totals && totals.median !== null ? totals.median.toFixed(1) : '—' }}
-          <u v-if="totals && totals.median !== null">{{ pick('天', 'd') }}</u>
-        </b>
-        <span>{{ pick('中位审核', 'Median review') }}</span>
-        <small>{{ pick('提交到上线', 'submit to live') }}</small>
+        <b>{{ figure(traffic?.views_week) }}</b>
+        <span>{{ pick('本周浏览', 'Views this week') }}</span>
+        <small>{{ pick('周一起算', 'since Monday') }}</small>
       </div>
       <div class="pb-strip__col">
-        <b>{{ totals ? totals.categories.toLocaleString() : '—' }}</b>
-        <span>{{ pick('分类', 'Categories') }}</span>
-        <small>{{ pick('全站', 'site-wide') }}</small>
+        <b>{{ figure(traffic?.peak) }}</b>
+        <span>{{ pick('峰值小时', 'Peak hour') }}</span>
+        <small>{{ pick('24 小时内', 'in 24h') }}</small>
       </div>
     </div>
   </section>
@@ -199,19 +202,36 @@ const spark = computed(() => {
   flex-direction: column;
   padding: 18px 18px 12px;
 }
-.pb-strip__main-top { display: flex; align-items: center; }
-.pb-strip__label {
-  display: inline-flex;
+.pb-strip__main-top {
+  display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 18px;
+}
+.pb-strip__label {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: #8b9099;
 }
-.pb-strip__label i {
-  width: 7px; height: 7px; border-radius: 50%;
+/* The one green thing on the strip: somebody is on the site right now. */
+.pb-strip__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #1a8f3c;
+  white-space: nowrap;
+}
+.pb-strip__live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   background: #22a544;
+  box-shadow: 0 0 0 3px rgba(34, 165, 68, 0.16);
 }
 .pb-strip__big {
   margin: 10px 0 0;
@@ -240,6 +260,7 @@ const spark = computed(() => {
   margin: auto 0 0;
   padding-top: 10px;
   font-size: 11px;
+  line-height: 1.4;
   color: #9ca3af;
 }
 .pb-strip__axis {
@@ -274,14 +295,6 @@ const spark = computed(() => {
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
-.pb-strip__col b u {
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  color: #6b7280;
-}
-/* A missing median is not a zero: an em dash at 32px/800 reads as a black bar. */
-.pb-strip__col b.is-empty { font-size: 26px; color: #c4c8cf; }
 .pb-strip__col span {
   margin-top: 10px;
   font-size: 12.5px;

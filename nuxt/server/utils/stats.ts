@@ -5,14 +5,14 @@
  */
 
 import { categories, isoWeekId, tools } from '~~/shared/utils/catalog'
-import { recentIsoWeeks } from '~~/shared/utils/iso-week'
+import { isoWeekStart } from '~~/shared/utils/iso-week'
 import { queueStats, type ReviewSpan } from '~~/shared/utils/queue'
 import { upcomingMondays, weekAvailability } from './ad-bookings'
 import { listLiveBillboard } from './billboard'
 import type { Db } from './db'
-import { loadEligibleListedAt } from './eligible-listings'
 import { loadOverrides } from './overrides'
 import { listPublishedTools } from './submissions'
+import { readTraffic } from './traffic'
 import { countWeekVotes } from './votes'
 
 const DAY = 86400
@@ -39,10 +39,17 @@ export async function publicListingIndex(db: Db): Promise<PublicListing[]> {
   return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug))
 }
 
+/**
+ * Every figure the site prints about itself.
+ *
+ * The traffic block is measured, not derived: `traffic` is the page-view
+ * counter, and `weekStart` is only used to bound its "this week" figure.
+ */
 export async function publicStats(db: Db, now = new Date()) {
   const unix = Math.floor(now.getTime() / 1000)
   const since = unix - 30 * DAY
-  const [index, live, pending, reviewed, samples, votes, listedAt] = await Promise.all([
+  const weekStart = isoWeekStart(isoWeekId(now)) ?? now
+  const [index, live, pending, reviewed, samples, votes, traffic] = await Promise.all([
     publicListingIndex(db),
     listLiveBillboard(db),
     db.prepare(`SELECT COUNT(*) AS n FROM submissions WHERE status = 'pending' AND plan = 'free'`).first<{ n: number }>(),
@@ -56,18 +63,8 @@ export async function publicStats(db: Db, now = new Date()) {
       )
       .all<{ created_at: number; reviewed_at: number }>(),
     countWeekVotes(db, isoWeekId(now)),
-    // Same source the board uses to place a listing in a week, so the counter
-    // and the board can never disagree about which week a product belongs to.
-    loadEligibleListedAt(db),
+    readTraffic(db, now, weekStart),
   ])
-
-  const launchWeeks = recentIsoWeeks(now, 6).map((range) => {
-    let listed = 0
-    for (const at of listedAt.values()) {
-      if (Number.isFinite(at) && at >= range.start && at < range.end) listed++
-    }
-    return { id: range.id, listed }
-  })
 
   const starts = upcomingMondays(6)
   const open = await weekAvailability(db, 'sidebar', 1, starts)
@@ -93,7 +90,7 @@ export async function publicStats(db: Db, now = new Date()) {
     bookable_weeks: bookableWeeks,
     week_votes: Number(votes ?? 0),
     paid_publish: queue.paid_publish,
-    /** Oldest → newest, six ISO weeks; the last entry is the open week. */
-    launch_weeks: launchWeeks,
+    /** Measured: page views and visitors, from the counter in `./traffic`. */
+    traffic,
   }
 }
