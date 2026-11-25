@@ -16,6 +16,7 @@
  * Hidden when there is only one tab — a nav pointing at a single section is noise.
  */
 import type { SectionTabItem } from '~/utils/directory-ui'
+import { pageScrollBehavior } from '~/utils/motion'
 
 const props = defineProps<{ tabs: SectionTabItem[] }>()
 
@@ -58,7 +59,7 @@ function goTo(event: MouseEvent, id: string) {
   const el = document.getElementById(id)
   if (!el) return
   const top = window.scrollY + el.getBoundingClientRect().top - stickyOffsetPx()
-  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+  window.scrollTo({ top: Math.max(0, top), behavior: pageScrollBehavior() })
   window.history.replaceState(null, '', `#${id}`)
 }
 </script>

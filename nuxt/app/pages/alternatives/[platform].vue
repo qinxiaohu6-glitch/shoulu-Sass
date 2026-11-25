@@ -199,12 +199,19 @@ useHead({
       <div class="alt-sub__faq">
         <article v-for="(item, i) in faq" :key="item.q" class="alt-sub__faq-item">
           <h3>
-            <button type="button" :aria-expanded="openFaq === i" @click="openFaq = openFaq === i ? null : i">
+            <button
+              type="button"
+              :aria-expanded="openFaq === i"
+              :aria-controls="openFaq === i ? `alternative-faq-panel-${i}` : undefined"
+              @click="openFaq = openFaq === i ? null : i"
+            >
               {{ item.q }}
               <Icon name="chevron-down" :size="18" :class="{ 'is-open': openFaq === i }" />
             </button>
           </h3>
-          <p v-if="openFaq === i">{{ item.a }}</p>
+          <Transition name="content-reveal">
+            <p v-if="openFaq === i" :id="`alternative-faq-panel-${i}`">{{ item.a }}</p>
+          </Transition>
         </article>
       </div>
     </section>

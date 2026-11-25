@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { pageScrollBehavior } from '~/utils/motion'
+
 /**
  * Sticky section tabs for the tool detail page.
  *
@@ -63,7 +65,7 @@ function go(event: MouseEvent, id: string) {
   const el = document.getElementById(id)
   if (!el) return
   const top = window.scrollY + el.getBoundingClientRect().top - offsetPx() - 8
-  window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+  window.scrollTo({ top: Math.max(0, top), behavior: pageScrollBehavior() })
   // replaceState, not pushState: a tab click is not a page visit, and pushing
   // would make the browser Back button walk through every section.
   window.history.replaceState(null, '', `#${id}`)

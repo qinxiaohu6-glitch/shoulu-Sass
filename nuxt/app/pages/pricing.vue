@@ -456,13 +456,16 @@ useHead({
                 <button
                   type="button"
                   :aria-expanded="openFaq === index"
+                  :aria-controls="openFaq === index ? `pricing-faq-panel-${index}` : undefined"
                   @click="openFaq = openFaq === index ? null : index"
                 >
                   <span>{{ t(item.q) }}</span>
                   <span class="pb-faq__chevron" :class="{ 'is-open': openFaq === index }" aria-hidden="true">⌄</span>
                 </button>
               </h3>
-              <p v-if="openFaq === index">{{ t(item.a) }}</p>
+              <Transition name="content-reveal">
+                <p v-if="openFaq === index" :id="`pricing-faq-panel-${index}`">{{ t(item.a) }}</p>
+              </Transition>
             </article>
           </div>
         </section>

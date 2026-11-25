@@ -296,12 +296,19 @@ useHead({
     <section class="bb-faq" aria-label="FAQ">
       <article v-for="(item, index) in faq" :key="item.q">
         <h3>
-          <button type="button" :aria-expanded="openFaq === index" @click="openFaq = openFaq === index ? -1 : index">
+          <button
+            type="button"
+            :aria-expanded="openFaq === index"
+            :aria-controls="openFaq === index ? `billboard-faq-panel-${index}` : undefined"
+            @click="openFaq = openFaq === index ? -1 : index"
+          >
             {{ item.q }}
             <span aria-hidden="true">{{ openFaq === index ? '–' : '+' }}</span>
           </button>
         </h3>
-        <p v-if="openFaq === index">{{ item.a }}</p>
+        <Transition name="content-reveal">
+          <p v-if="openFaq === index" :id="`billboard-faq-panel-${index}`">{{ item.a }}</p>
+        </Transition>
       </article>
     </section>
 

@@ -110,6 +110,12 @@ const label = computed(() => {
 
 /** ---- Full month calendar popover (competitor style) ---- */
 const calendarOpen = ref(false)
+const calendarButton = ref<HTMLButtonElement | null>(null)
+function closeCalendar(restoreFocus = false) {
+  if (!calendarOpen.value) return
+  calendarOpen.value = false
+  if (restoreFocus) nextTick(() => calendarButton.value?.focus())
+}
 /** The month the popover is showing (year, 0-based month). */
 const calMonth = ref({ y: activeYear.value, m: (activeStart.value?.getUTCMonth() ?? 0) })
 watch(active, () => {
@@ -202,7 +208,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="ws" aria-label="Choose a week">
+  <section class="ws" aria-label="Choose a week" @keydown.esc.stop.prevent="closeCalendar(true)">
     <div class="ws__nav">
       <NuxtLink
         v-if="prevWeek"
@@ -256,15 +262,18 @@ onBeforeUnmount(() => {
 
     <div class="ws__calendar-wrap">
       <button
+        ref="calendarButton"
         class="ws__calendar-btn"
         type="button"
         :aria-label="pick('从日历选择周', 'Pick a week from the calendar')"
+        aria-controls="week-calendar-popover"
         :aria-expanded="calendarOpen"
         @click="calendarOpen = !calendarOpen"
       >
         <Icon name="calendar" />
       </button>
-      <div v-if="calendarOpen" class="ws__calendar-pop" @click.stop>
+      <Transition name="week-calendar">
+        <div v-if="calendarOpen" id="week-calendar-popover" class="ws__calendar-pop" @click.stop>
         <div class="cal__head">
           <button type="button" class="cal__nav" :aria-label="pick('上个月', 'Previous month')" @click="shiftMonth(-1)">‹</button>
           <strong>{{ calTitle }}</strong>
@@ -300,7 +309,8 @@ onBeforeUnmount(() => {
           <span><i class="cal__legend cal__legend--up" />{{ pick('未开始', 'Upcoming') }}</span>
           <button type="button" class="cal__today" @click="goToday">{{ pick('回到本周', 'Today') }}</button>
         </div>
-      </div>
+        </div>
+      </Transition>
     </div>
   </section>
 </template>
@@ -434,6 +444,18 @@ onBeforeUnmount(() => {
   position: absolute; right: 0; top: calc(100% + 10px); z-index: 50;
   padding: 16px; border: 1px solid #e5e7eb; border-radius: 16px; background: var(--card, #fff);
   box-shadow: 0 16px 44px rgba(0,0,0,.16); width: 320px;
+}
+.week-calendar-enter-active,
+.week-calendar-leave-active {
+  transform-origin: top right;
+  transition:
+    opacity var(--motion-panel) var(--motion-ease-standard),
+    transform var(--motion-panel) var(--motion-ease-emphasized);
+}
+.week-calendar-enter-from,
+.week-calendar-leave-to {
+  opacity: 0;
+  transform: translateY(-12px) scale(.97);
 }
 .cal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .cal__head strong { font-size: 14px; font-weight: 800; }

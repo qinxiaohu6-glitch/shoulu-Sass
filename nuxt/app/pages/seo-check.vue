@@ -487,12 +487,13 @@ useSeo({
             class="acc-trigger"
             type="button"
             :aria-expanded="openFaq === i"
+            :aria-controls="`seo-faq-panel-${i}`"
             @click="openFaq = openFaq === i ? -1 : i"
           >
             {{ item.q }}
             <Icon name="chevron-down" />
           </button>
-          <div class="acc-panel">{{ item.a }}</div>
+          <div :id="`seo-faq-panel-${i}`" class="acc-panel">{{ item.a }}</div>
         </div>
       </div>
     </section>

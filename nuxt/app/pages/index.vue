@@ -813,11 +813,17 @@ useHead({ script: schemaScripts })
       <h2>{{ pick('常见问题', 'Questions') }}</h2>
       <div class="accordion">
         <div v-for="(item, i) in faq" :key="item.q" class="acc-item" :class="{ 'is-open': openFaq === i }">
-          <button class="acc-trigger" type="button" :aria-expanded="openFaq === i" @click="openFaq = openFaq === i ? -1 : i">
+          <button
+            class="acc-trigger"
+            type="button"
+            :aria-expanded="openFaq === i"
+            :aria-controls="`home-faq-panel-${i}`"
+            @click="openFaq = openFaq === i ? -1 : i"
+          >
             {{ item.q }}
             <Icon name="chevron-down" />
           </button>
-          <div class="acc-panel">{{ item.a }}</div>
+          <div :id="`home-faq-panel-${i}`" class="acc-panel">{{ item.a }}</div>
         </div>
       </div>
     </section>

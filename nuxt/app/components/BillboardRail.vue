@@ -15,6 +15,7 @@
  */
 import { backingLabel, faviconForUrl } from '~~/shared/utils/billboard-bid'
 import { BILLBOARD_TOP_N } from '~~/shared/content/billboard'
+import { adPriceCents } from '~~/shared/content/pricing'
 import { screenshotSrc } from '~~/shared/utils/screenshot'
 import type { BillboardCell, BillboardRow } from '~~/shared/utils/billboard'
 
@@ -39,6 +40,18 @@ const brokenShots = ref<Record<string, true>>({})
 const rootEl = ref<HTMLElement | null>(null)
 
 const isHot = computed(() => props.side === 'right')
+const firstOpenRank = computed(() => {
+  if (props.side === 'stack') return null
+  return props.cells.find((cell) => cell.kind === 'empty')?.rank ?? null
+})
+const boardWeeklyPrice = computed(() => {
+  const cents = adPriceCents('board', 1)
+  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`
+})
+
+function flipsOpenSlot(cell: BillboardCell<BillboardRow>): boolean {
+  return cell.kind === 'empty' && cell.rank === firstOpenRank.value
+}
 
 function shotOf(row: BillboardRow): string {
   const src = screenshotSrc(row.screenshot)
@@ -160,14 +173,38 @@ function slugOf(row: BillboardRow): string {
         </div>
       </article>
 
-      <NuxtLink v-else class="bb-slot bb-slot--empty" :to="claimTo">
-        <span class="bb-slot__rank">{{ cell.rank }}</span>
-        <span class="bb-slot__shot bb-slot__shot--empty" aria-hidden="true">+</span>
-        <span class="bb-slot__body">
-          <strong class="bb-slot__name">{{ pick('空位', 'Open spot') }}</strong>
-          <span class="bb-slot__sub">{{ pick('按周预订', 'Book a week') }}</span>
+      <NuxtLink
+        v-else
+        class="bb-slot bb-slot--empty"
+        :class="{ 'bb-slot--flip': flipsOpenSlot(cell) }"
+        :to="claimTo"
+        :aria-label="flipsOpenSlot(cell) ? pick(`预订第 ${cell.rank} 位 Billboard 广告位，${boardWeeklyPrice} 每周`, `Book Billboard slot ${cell.rank} for ${boardWeeklyPrice} per week`) : undefined"
+      >
+        <span v-if="flipsOpenSlot(cell)" class="bb-slot__flip-inner">
+          <span class="bb-slot__flip-face bb-slot__flip-front">
+            <span class="bb-slot__rank">{{ cell.rank }}</span>
+            <span class="bb-slot__shot bb-slot__shot--empty" aria-hidden="true">+</span>
+            <span class="bb-slot__body">
+              <strong class="bb-slot__name">{{ pick('空位', 'Open spot') }}</strong>
+              <span class="bb-slot__sub">{{ pick('按周预订', 'Book a week') }}</span>
+            </span>
+            <span class="bb-slot__claim">{{ pick('预订 →', 'Book →') }}</span>
+          </span>
+          <span class="bb-slot__flip-face bb-slot__flip-back" aria-hidden="true">
+            <strong class="bb-slot__flip-price">{{ boardWeeklyPrice }}</strong>
+            <span class="bb-slot__flip-unit">{{ pick('/ 周', '/ week') }}</span>
+            <span class="bb-slot__flip-cta">{{ pick('预订广告位 →', 'Rent this spot →') }}</span>
+          </span>
         </span>
-        <span class="bb-slot__claim">{{ pick('预订 →', 'Book →') }}</span>
+        <template v-else>
+          <span class="bb-slot__rank">{{ cell.rank }}</span>
+          <span class="bb-slot__shot bb-slot__shot--empty" aria-hidden="true">+</span>
+          <span class="bb-slot__body">
+            <strong class="bb-slot__name">{{ pick('空位', 'Open spot') }}</strong>
+            <span class="bb-slot__sub">{{ pick('按周预订', 'Book a week') }}</span>
+          </span>
+          <span class="bb-slot__claim">{{ pick('预订 →', 'Book →') }}</span>
+        </template>
       </NuxtLink>
     </template>
   </section>

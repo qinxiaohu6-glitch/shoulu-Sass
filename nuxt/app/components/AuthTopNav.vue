@@ -11,6 +11,7 @@ const localePath = useLocalePath()
 const route = useRoute()
 
 const open = ref(false)
+const menuToggle = ref<HTMLButtonElement | null>(null)
 
 const links = computed(() => [
   { label: pick('发现', 'Discover'), to: '/' },
@@ -44,6 +45,15 @@ watch(() => route.fullPath, () => {
   open.value = false
 })
 
+function onDocumentKey(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !open.value) return
+  open.value = false
+  nextTick(() => menuToggle.value?.focus())
+}
+
+onMounted(() => document.addEventListener('keydown', onDocumentKey))
+onBeforeUnmount(() => document.removeEventListener('keydown', onDocumentKey))
+
 async function switchLang() {
   await setLocale(locale.value === 'zh' ? 'en' : 'zh')
 }
@@ -53,10 +63,12 @@ async function switchLang() {
   <header class="auth-topnav topbar">
     <div class="topbar__inner">
       <button
+        ref="menuToggle"
         class="icon-btn auth-topnav__toggle"
         type="button"
+        aria-controls="auth-primary-nav"
         :aria-expanded="open"
-        :aria-label="pick('打开菜单', 'Open menu')"
+        :aria-label="open ? pick('关闭菜单', 'Close menu') : pick('打开菜单', 'Open menu')"
         @click="open = !open"
       >
         <Icon name="panel-left" :size="20" />
@@ -69,7 +81,7 @@ async function switchLang() {
         </NuxtLink>
       </div>
 
-      <nav class="topbar__nav" :class="{ 'is-open': open }" :aria-label="pick('主导航', 'Primary')">
+      <nav id="auth-primary-nav" class="topbar__nav" :class="{ 'is-open': open }" :aria-label="pick('主导航', 'Primary')">
         <NuxtLink
           v-for="item in links"
           :key="item.to"
@@ -152,18 +164,54 @@ async function switchLang() {
     padding-top: 8px;
     padding-bottom: 8px;
   }
-  .auth-topnav .topbar__nav.is-open {
+  .auth-topnav .topbar__nav {
     display: flex;
     flex-direction: column;
     align-items: stretch;
     order: 5;
     flex: 1 0 100%;
     gap: 2px;
+    max-height: 0;
+    overflow: hidden;
+    margin-top: -8px;
+    padding: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition:
+      max-height var(--motion-panel) var(--motion-ease-emphasized),
+      margin-top var(--motion-panel) var(--motion-ease-emphasized),
+      padding var(--motion-panel) var(--motion-ease-standard),
+      opacity var(--motion-fast) var(--motion-ease-standard),
+      transform var(--motion-panel) var(--motion-ease-emphasized),
+      visibility 0s linear var(--motion-panel);
+  }
+  .auth-topnav .topbar__nav.is-open {
+    max-height: 360px;
+    margin-top: 0;
     padding: 6px 0 4px;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition-delay: 0s;
   }
   .auth-topnav .topbar__nav.is-open .topbar__link {
     display: flex;
     padding: 8px 10px;
+  }
+}
+@media (min-width: 640px) and (max-width: 899px) {
+  .auth-topnav .topbar__nav {
+    margin-top: -12px;
+  }
+}
+@media (min-width: 900px) {
+  .auth-topnav .topbar__nav {
+    max-height: none;
+    overflow: visible;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
   }
 }
 </style>

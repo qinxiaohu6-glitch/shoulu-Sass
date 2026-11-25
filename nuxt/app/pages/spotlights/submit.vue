@@ -35,6 +35,7 @@ import {
 } from '~~/shared/content/spotlights'
 import { mergeDirectory, orderedTools } from '~~/shared/utils/catalog'
 import { useSubmittedTools } from '~/composables/useSubmittedTools'
+import { pageScrollBehavior } from '~/utils/motion'
 
 const { lang, isZh, pick } = useLang()
 const localePath = useLocalePath()
@@ -107,7 +108,7 @@ async function submit() {
       { method: 'POST', body: { ...form.value } },
     )
     done.value = { slug: res.slug, productName: res.productName, words: res.words }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: pageScrollBehavior() })
   } catch (error) {
     // The refusal body carries `message_zh` and `message_en` verbatim (see
     // `sendSubmitError`). ofetch puts a non-2xx JSON body on `error.data`, and a

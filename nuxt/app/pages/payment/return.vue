@@ -65,6 +65,39 @@ const order = computed(() => data.value?.order ?? null)
 const status = computed(() => order.value?.status ?? 'unknown')
 const ad = computed(() => order.value?.ad ?? null)
 
+const confettiVisible = ref(false)
+const confettiPieces = Array.from({ length: 56 }, (_, index) => ({
+  id: index,
+  style: {
+    '--confetti-left': `${(index * 47 + 11) % 100}%`,
+    '--confetti-drift': `${Math.round(Math.sin(index * 1.71) * 150)}px`,
+    '--confetti-duration': `${1800 + (index % 7) * 100}ms`,
+    '--confetti-delay': `${(index % 12) * 38}ms`,
+    '--confetti-rotation': `${((index * 137) % 900) - 450}deg`,
+    '--confetti-width': `${6 + (index % 3) * 2}px`,
+    '--confetti-height': `${9 + (index % 4) * 3}px`,
+  },
+}))
+let pageMounted = false
+let celebratedPaidOrder = false
+let confettiTimer: ReturnType<typeof setTimeout> | null = null
+
+/** Celebrate only an order status returned by the server, never a URL flag. */
+function celebratePaidOrder() {
+  if (!pageMounted || celebratedPaidOrder || status.value !== 'paid') return
+  celebratedPaidOrder = true
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  confettiVisible.value = true
+  confettiTimer = setTimeout(() => {
+    confettiVisible.value = false
+    confettiTimer = null
+  }, 3000)
+}
+
+watch(status, (next, previous) => {
+  if (pageMounted && next === 'paid' && previous !== 'paid') celebratePaidOrder()
+})
+
 /** An abandoned ad checkout goes back to the booking page, not to a listing. */
 const rebookLink = computed(() =>
   ad.value
@@ -103,6 +136,8 @@ const tries = ref(0)
 let timer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
+  pageMounted = true
+  if (status.value === 'paid') celebratePaidOrder()
   if (status.value !== 'pending' || cancelled.value) return
   timer = setInterval(async () => {
     tries.value += 1
@@ -116,6 +151,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
+  if (confettiTimer) clearTimeout(confettiTimer)
 })
 
 const heading = computed(() => {
@@ -182,6 +218,15 @@ useHead({
 </script>
 
 <template>
+  <div v-if="confettiVisible" class="payment-confetti" aria-hidden="true">
+    <span
+      v-for="piece in confettiPieces"
+      :key="piece.id"
+      class="payment-confetti__piece"
+      :style="piece.style"
+    />
+  </div>
+
   <div class="container">
     <header class="page-head">
       <h1 class="page-title">{{ heading }}</h1>

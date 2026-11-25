@@ -104,12 +104,73 @@ function isActive(to: string) {
 }
 
 const drawerOpen = ref(false)
+const drawerRoot = ref<HTMLElement | null>(null)
+const drawerTrigger = ref<HTMLButtonElement | null>(null)
 const searchOpen = ref(false)
+let previousBodyOverflow = ''
+let drawerRestoreFocus: HTMLElement | null = null
 
 watch(() => route.fullPath, () => {
   drawerOpen.value = false
   searchOpen.value = false
 })
+
+/** Keep the mobile drawer modal to keyboard and touch users, not just visually. */
+watch(drawerOpen, async (isOpen) => {
+  if (!import.meta.client) return
+
+  if (isOpen) {
+    drawerRestoreFocus = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : drawerTrigger.value
+    previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    await nextTick()
+    const first = drawerFocusableElements()[0]
+    ;(first ?? drawerRoot.value)?.focus()
+    return
+  }
+
+  document.body.style.overflow = previousBodyOverflow
+  const target = drawerRestoreFocus
+  drawerRestoreFocus = null
+  await nextTick()
+  if (target?.isConnected) target.focus()
+})
+
+function drawerFocusableElements(): HTMLElement[] {
+  return Array.from(
+    drawerRoot.value?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? [],
+  ).filter((element) => element.getClientRects().length > 0 && !element.hasAttribute('disabled'))
+}
+
+function onDrawerKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    event.stopPropagation()
+    drawerOpen.value = false
+    return
+  }
+
+  if (event.key !== 'Tab') return
+  const focusable = drawerFocusableElements()
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  const active = document.activeElement
+
+  if (!first || !last) {
+    event.preventDefault()
+    drawerRoot.value?.focus()
+  } else if (event.shiftKey && (active === first || active === drawerRoot.value || !drawerRoot.value?.contains(active))) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && (active === last || active === drawerRoot.value || !drawerRoot.value?.contains(active))) {
+    event.preventDefault()
+    first.focus()
+  }
+}
 
 const isDark = computed(() => colorMode.value === 'dark')
 
@@ -250,7 +311,10 @@ function onDocumentClick(event: MouseEvent) {
 }
 
 function onDocumentKey(event: KeyboardEvent) {
-  if (event.key === 'Escape') userMenuOpen.value = false
+  if (event.key === 'Escape') {
+    userMenuOpen.value = false
+    drawerOpen.value = false
+  }
 }
 
 onMounted(() => {
@@ -260,6 +324,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocumentClick)
   document.removeEventListener('keydown', onDocumentKey)
+  if (drawerOpen.value) document.body.style.overflow = previousBodyOverflow
 })
 
 function onSignOut() {
@@ -277,11 +342,11 @@ watch(() => route.fullPath, () => {
 <template>
   <IconSprite />
 
-  <BlackFridayBar />
+  <BlackFridayBar :inert="drawerOpen" />
 
   <div class="shell shell--topnav">
     <!-- ── Left rail ─────────────────────────────────────────────────────── -->
-    <aside class="sidebar">
+    <aside class="sidebar" :inert="drawerOpen">
       <div class="sidebar__brand">
         <NuxtLink class="brand" :to="localePath('/')">
           <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
@@ -321,14 +386,18 @@ watch(() => route.fullPath, () => {
     </aside>
 
     <!-- ── Main column ───────────────────────────────────────────────────── -->
-    <div class="main">
+    <div class="main" :inert="drawerOpen">
       <header class="topbar">
         <div class="topbar__inner">
           <button
+            ref="drawerTrigger"
             class="icon-btn topbar__toggle"
             type="button"
-            :aria-label="pick('打开菜单', 'Toggle sidebar')"
-            :title="pick('打开菜单', 'Toggle sidebar')"
+            aria-haspopup="dialog"
+            aria-controls="drawer-root"
+            :aria-expanded="drawerOpen"
+            :aria-label="drawerOpen ? pick('关闭菜单', 'Close menu') : pick('打开菜单', 'Open menu')"
+            :title="drawerOpen ? pick('关闭菜单', 'Close menu') : pick('打开菜单', 'Open menu')"
             @click="drawerOpen = true"
           >
             <Icon name="panel-left" :size="20" />
@@ -505,65 +574,72 @@ watch(() => route.fullPath, () => {
     </div>
 
     <!-- ── Mobile drawer ─────────────────────────────────────────────────── -->
-    <div
-      id="drawer-root"
-      class="drawer-root"
-      :class="{ 'is-open': drawerOpen }"
-      role="dialog"
-      aria-modal="true"
-      :aria-label="pick('菜单', 'Menu')"
-    >
-      <div class="modal-overlay" @click="drawerOpen = false" />
-      <div class="drawer">
-        <div class="sidebar__brand">
-          <NuxtLink class="brand" :to="localePath('/')">
-            <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
-            <span>dirtool</span>
-          </NuxtLink>
-        </div>
-        <nav class="sidebar__nav">
-          <div v-for="group in navGroups" :key="group.label" class="nav-group">
-            <p class="nav-group__label">{{ group.label }}</p>
-            <ul class="nav-list">
-              <li v-for="item in group.items" :key="item.to">
-                <NuxtLink
-                  class="nav-item"
-                  :class="{ 'is-active': isActive(item.to) }"
-                  :to="localePath(item.to)"
-                  @click="drawerOpen = false"
-                >
-                  <Icon :name="item.icon" />
-                  {{ item.label }}
-                </NuxtLink>
-              </li>
-            </ul>
+    <Transition name="mobile-drawer">
+      <div
+        v-show="drawerOpen"
+        id="drawer-root"
+        ref="drawerRoot"
+        class="drawer-root"
+        role="dialog"
+        :aria-modal="drawerOpen ? 'true' : undefined"
+        :aria-hidden="!drawerOpen"
+        :inert="!drawerOpen"
+        :aria-label="pick('菜单', 'Menu')"
+        tabindex="-1"
+        @keydown="onDrawerKeydown"
+      >
+        <div class="modal-overlay" @click="drawerOpen = false" />
+        <div class="drawer">
+          <div class="sidebar__brand">
+            <NuxtLink class="brand" :to="localePath('/')">
+              <img src="/assets/img/brand/logo.png" alt="dirtool" width="28" height="28" >
+              <span>dirtool</span>
+            </NuxtLink>
           </div>
-        </nav>
-        <div class="drawer__foot">
-          <NuxtLink class="icon-btn" :to="switchLocalePath(locale === 'zh' ? 'en' : 'zh')" :aria-label="pick('切换语言', 'Switch language')">
-            <Icon name="globe" :size="16" />
-          </NuxtLink>
-          <button class="icon-btn" type="button" @click="colorMode.preference = isDark ? 'light' : 'dark'">
-            <Icon :name="isDark ? 'sun' : 'moon'" :size="16" />
-            <span class="sr-only">{{ pick('切换主题', 'Toggle theme') }}</span>
-          </button>
-          <!--
-            Session-aware: the drawer used to show the sign-in CTA to everyone,
-            so a signed-in visitor on a phone had no way to reach their account
-            and was invited to sign in again.
-          -->
-          <NuxtLink v-if="me" class="btn btn--primary" style="margin-left: auto" :to="localePath('/settings')">
-            {{ pick('我的账户', 'My account') }}
-          </NuxtLink>
-          <NuxtLink v-else class="btn btn--primary" style="margin-left: auto" :to="signInLink">
-            {{ pick('登录', 'Sign In') }}
-          </NuxtLink>
+          <nav class="sidebar__nav">
+            <div v-for="group in navGroups" :key="group.label" class="nav-group">
+              <p class="nav-group__label">{{ group.label }}</p>
+              <ul class="nav-list">
+                <li v-for="item in group.items" :key="item.to">
+                  <NuxtLink
+                    class="nav-item"
+                    :class="{ 'is-active': isActive(item.to) }"
+                    :to="localePath(item.to)"
+                    @click="drawerOpen = false"
+                  >
+                    <Icon :name="item.icon" />
+                    {{ item.label }}
+                  </NuxtLink>
+                </li>
+              </ul>
+            </div>
+          </nav>
+          <div class="drawer__foot">
+            <NuxtLink class="icon-btn" :to="switchLocalePath(locale === 'zh' ? 'en' : 'zh')" :aria-label="pick('切换语言', 'Switch language')">
+              <Icon name="globe" :size="16" />
+            </NuxtLink>
+            <button class="icon-btn" type="button" @click="colorMode.preference = isDark ? 'light' : 'dark'">
+              <Icon :name="isDark ? 'sun' : 'moon'" :size="16" />
+              <span class="sr-only">{{ pick('切换主题', 'Toggle theme') }}</span>
+            </button>
+            <!--
+              Session-aware: the drawer used to show the sign-in CTA to everyone,
+              so a signed-in visitor on a phone had no way to reach their account
+              and was invited to sign in again.
+            -->
+            <NuxtLink v-if="me" class="btn btn--primary" style="margin-left: auto" :to="localePath('/settings')">
+              {{ pick('我的账户', 'My account') }}
+            </NuxtLink>
+            <NuxtLink v-else class="btn btn--primary" style="margin-left: auto" :to="signInLink">
+              {{ pick('登录', 'Sign In') }}
+            </NuxtLink>
+          </div>
         </div>
       </div>
-    </div>
+    </Transition>
 
     <SearchDialog v-model:open="searchOpen" />
-    <CampaignFloat />
+    <CampaignFloat :inert="drawerOpen" />
   </div>
 </template>
 
