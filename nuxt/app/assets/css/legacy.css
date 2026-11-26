@@ -8056,6 +8056,17 @@ html[lang="en"] .ad-section__head h2 {
   background: #fff7ed;
   flex: none;
 }
+/* `ToolLogo` falls back to a bare `.tool-logo__initial` span (width: 100%) when
+   a listing has no stored logo. As a flex child that collapses to the letter's
+   own width, so the text block drifts out of line with the cards above it. Give
+   the fallback the same 36px box the image would have had. */
+.feat-card .tool-logo__initial {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fff7ed;
+}
 .home-dir {
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr) 300px;
