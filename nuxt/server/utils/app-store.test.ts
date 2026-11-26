@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { AppStoreError, cleanAppStores, googleScreenshots, lookupAppStore, parseAppStoreUrl } from './app-store.ts'
+import { AppStoreError, cleanAppStores, cleanStoreDescription, googleScreenshots, lookupAppStore, parseAppStoreUrl } from './app-store.ts'
 import { SUBMIT_ERRORS } from './http.ts'
 
 const appStore = (platform: 'ios' | 'android' | 'macos', url: string, appId: string) => ({
@@ -130,4 +130,23 @@ test('a transient store failure is retried once', async () => {
   } finally {
     globalThis.fetch = original
   }
+})
+
+test('store descriptions drop the developer privacy and terms links', () => {
+  const raw =
+    'Find people fast. DISCLAIMER This is not a consumer reporting agency. ' +
+    'Privacy Policy: https://example.com/privacy Terms of Use: ' +
+    'https://www.apple.com/legal/internet-services/itunes/dev/stdeula'
+  const text = cleanStoreDescription(raw)
+  assert.equal(text.includes('http'), false)
+  assert.equal(/privacy\s*policy\s*:/i.test(text), false)
+  assert.equal(/terms\s*of\s*use\s*:/i.test(text), false)
+  assert.match(text, /not a consumer reporting agency/)
+})
+
+test('store descriptions drop inline links but keep the sentence', () => {
+  const text = cleanStoreDescription('Read the docs at https://example.com/docs for more.')
+  assert.equal(text.includes('https://'), false)
+  assert.match(text, /Read the docs at/)
+  assert.match(text, /for more\./)
 })

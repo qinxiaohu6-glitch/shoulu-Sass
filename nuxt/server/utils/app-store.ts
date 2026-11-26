@@ -37,6 +37,23 @@ const cleanText = (value: unknown, max: number) =>
     .trim()
     .slice(0, max)
 
+const URL_IN_TEXT = /https?:\/\/[^\s<>"'）)】\]]+/gi
+/**
+ * Store descriptions routinely end with the developer's own legal links
+ * ("Privacy Policy: … Terms of Use: …"). The directory copy must not carry
+ * links, so both the URL and the label it leaves behind are dropped here —
+ * otherwise the submitter sees a description they cannot submit.
+ */
+const POLICY_LABEL =
+  /(?:^|[\s·|•])(?:privacy\s+policy|privacy|terms\s+of\s+(?:use|service)|eula|end\s+user\s+license\s+agreement|隐私政策|隐私权政策|服务条款|用户协议|使用条款)\s*[:：]/gi
+
+export function cleanStoreDescription(raw: unknown): string {
+  return String(raw ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(URL_IN_TEXT, ' ')
+    .replace(POLICY_LABEL, ' ')
+}
+
 function httpsUrl(value: unknown, base?: string): string {
   const raw = String(value ?? '').trim()
   if (!raw || raw.length > 1200 || /[\s<>]/.test(raw)) return ''
@@ -150,7 +167,7 @@ function appleInfo(raw: Record<string, unknown>, parsed: ParsedStoreUrl): AppSto
   info.platform = parsed.platform
   info.name = cleanText(raw.trackName, 180)
   info.developer = cleanText(raw.artistName, 120)
-  info.description = cleanText(raw.description, MAX_DESCRIPTION)
+  info.description = cleanText(cleanStoreDescription(raw.description), MAX_DESCRIPTION)
   info.icon = httpsUrl(raw.artworkUrl512 || raw.artworkUrl100 || raw.artworkUrl60)
   info.screenshots = listOfStrings(
     [...(Array.isArray(raw.screenshotUrls) ? raw.screenshotUrls : []), ...(Array.isArray(raw.ipadScreenshotUrls) ? raw.ipadScreenshotUrls : [])]
@@ -280,7 +297,12 @@ function googleInfo(html: string, parsed: ParsedStoreUrl): AppStoreInfo {
 
   info.name = firstText(app.name, extractMeta(html, 'og:title'), extractMeta(html, 'twitter:title'))
   info.developer = firstText(author.name, app.authorName)
-  info.description = firstText(app.description, extractMeta(html, 'og:description'), extractMeta(html, 'description')).slice(0, MAX_DESCRIPTION)
+  info.description = cleanText(
+    cleanStoreDescription(
+      firstText(app.description, extractMeta(html, 'og:description'), extractMeta(html, 'description')),
+    ),
+    MAX_DESCRIPTION,
+  )
   info.icon = httpsUrl(firstText(app.image, extractMeta(html, 'og:image')), parsed.storeUrl)
   const playShots = googleScreenshots(html, info.icon)
   info.screenshots = playShots.length

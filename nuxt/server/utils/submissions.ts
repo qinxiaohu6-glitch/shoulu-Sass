@@ -177,6 +177,7 @@ export function cleanText(
   minLen: number,
   maxLen: number,
   required = true,
+  stripLinks = false,
 ): string {
   let s = String(raw ?? '').replace(TAG_STRIP, ' ')
   s = s.replace(/\s+/g, ' ').trim()
@@ -188,9 +189,16 @@ export function cleanText(
   if (s.length > maxLen) s = s.slice(0, maxLen).trimEnd()
   const low = s.toLowerCase()
   // Links belong in the `url` field; links inside copy are how a listing turns
-  // into an advert for something else.
+  // into an advert for something else. App copy is imported from the store and
+  // routinely ends with the developer's privacy/terms URLs, so for apps the
+  // links are removed instead of rejecting text the submitter never wrote.
   if (low.includes('http://') || low.includes('https://')) {
-    throw new SubmissionError('no_links', field)
+    if (!stripLinks) throw new SubmissionError('no_links', field)
+    s = s.replace(/https?:\/\/\S+/gi, ' ').replace(/\s+/g, ' ').trim()
+    if (!s) {
+      if (required) throw new SubmissionError('required', field)
+      return ''
+    }
   }
   return s
 }
@@ -284,8 +292,9 @@ export function validate(payload: unknown): CleanSubmission {
   const name = publicProductName(
     cleanText(body.name, 'name', textFloor(paid, NAME_MIN), NAME_MAX),
   )
-  const short = cleanText(body.short, 'short', textFloor(paid, SHORT_MIN), SHORT_MAX)
-  const long = cleanText(body.long, 'long', textFloor(paid, LONG_MIN), LONG_MAX, false)
+  const isAppListing = listing_type === 'app'
+  const short = cleanText(body.short, 'short', textFloor(paid, SHORT_MIN), SHORT_MAX, true, isAppListing)
+  const long = cleanText(body.long, 'long', textFloor(paid, LONG_MIN), LONG_MAX, false, isAppListing)
 
   const importedCategory = app_stores.find((store) => store.category)?.category ?? ''
   const category = listing_type === 'app'
