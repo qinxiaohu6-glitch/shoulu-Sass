@@ -16,6 +16,7 @@ const menuToggle = ref<HTMLButtonElement | null>(null)
 const links = computed(() => [
   { label: pick('发现', 'Discover'), to: '/' },
   { label: pick('产品', 'Products'), to: '/products' },
+  { label: pick('应用', 'Apps'), to: '/apps' },
   { label: pick('工具', 'Tools'), to: '/tools' },
   { label: pick('周榜', 'Weekly'), to: '/weekly' },
   { label: 'Billboard', to: '/billboard' },

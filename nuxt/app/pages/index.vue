@@ -27,6 +27,7 @@ const localePath = useLocalePath()
 const route = useRoute()
 
 const submitted = await useSubmittedTools()
+const submittedApps = await useSubmittedApps({ key: 'home-submitted-apps' })
 const overrides = useOverrides()
 const { categories: liveCategories } = useDirectoryMeta()
 const { homeGrid, ranked: billboardRanked } = await useBillboard()
@@ -43,6 +44,47 @@ const billboardRight = computed(() => homeGrid.value.slice(2))
 const all = computed(() =>
   mergeDirectory(orderedTools(lang.value, overrides.value), submitted.value, overrides.value),
 )
+
+/** The app slot is deliberately separate from the ranked product feed and ad rows. */
+const homeApp = computed(() => submittedApps.value[0] ?? null)
+const homeAppSummary = computed(() => {
+  const stores = homeApp.value?.app_stores ?? []
+  const platformLabels = { ios: 'iOS', android: 'Android', macos: 'Mac' }
+  const rating = stores.find((store) => store.rating !== null)
+  return {
+    platforms: [...new Set(stores.map((store) => platformLabels[store.platform]))],
+    category: stores.find((store) => store.category)?.category ?? '',
+    rating: rating?.rating ?? null,
+    ratingCount: rating?.ratingCount ?? null,
+  }
+})
+
+/**
+ * Entrance motion for the app slot. The animation classes are only applied
+ * after mount, so SSR (and a failed hydration) still renders the slot fully
+ * visible instead of leaving it stuck at opacity 0.
+ */
+const appSlotEl = ref<HTMLElement | null>(null)
+const appSlotMounted = ref(false)
+const appSlotVisible = ref(false)
+onMounted(() => {
+  appSlotMounted.value = true
+  const el = appSlotEl.value
+  if (!el || typeof IntersectionObserver === 'undefined') {
+    appSlotVisible.value = true
+    return
+  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      appSlotVisible.value = true
+      observer.disconnect()
+    },
+    { threshold: 0.2 },
+  )
+  observer.observe(el)
+  onBeforeUnmount(() => observer.disconnect())
+})
 
 const cats = computed(() =>
   liveCategories.value
@@ -596,6 +638,72 @@ useHead({ script: schemaScripts })
             <b>{{ clock.s }}s</b>
           </p>
         </div>
+
+        <section
+          ref="appSlotEl"
+          class="home-app-spotlight"
+          :class="{
+            'home-app-spotlight--anim': appSlotMounted,
+            'is-visible': appSlotVisible,
+          }"
+          aria-labelledby="home-app-spotlight-title"
+        >
+          <div class="home-app-spotlight__head">
+            <div>
+              <p class="home-app-spotlight__eyebrow">{{ pick('应用发现', 'APP DISCOVERY') }}</p>
+              <h3 id="home-app-spotlight-title">{{ pick('应用收录已开放', 'App listings are open') }}</h3>
+            </div>
+            <NuxtLink class="home-app-spotlight__browse" :to="localePath('/apps')">
+              {{ pick('浏览全部', 'Browse all') }} <span aria-hidden="true">→</span>
+            </NuxtLink>
+          </div>
+
+          <NuxtLink
+            v-if="homeApp"
+            class="home-app-spotlight__feature"
+            :to="localePath(`/apps/${homeApp.slug}`)"
+          >
+            <span class="home-app-spotlight__logo">
+              <ToolLogo :logo="homeApp.logo" :name="homeApp.name" :size="56" decorative />
+            </span>
+            <span class="home-app-spotlight__identity">
+              <span class="home-app-spotlight__tag">{{ pick('应用速览', 'APP SPOTLIGHT') }}</span>
+              <strong>{{ homeApp.name }}</strong>
+              <span class="home-app-spotlight__description">{{ homeApp.short }}</span>
+              <span
+                v-if="homeAppSummary.platforms.length || homeAppSummary.category || homeAppSummary.rating !== null"
+                class="home-app-spotlight__meta"
+              >
+                <em v-for="platform in homeAppSummary.platforms" :key="platform">{{ platform }}</em>
+                <em v-if="homeAppSummary.category">{{ homeAppSummary.category }}</em>
+                <em v-if="homeAppSummary.rating !== null">
+                  ★ {{ homeAppSummary.rating }}<span v-if="homeAppSummary.ratingCount"> ({{ homeAppSummary.ratingCount.toLocaleString() }})</span>
+                </em>
+              </span>
+            </span>
+            <span class="home-app-spotlight__action">
+              {{ pick('查看应用', 'View app') }} <span aria-hidden="true">↗</span>
+            </span>
+          </NuxtLink>
+
+          <div v-else class="home-app-spotlight__empty">
+            <span class="home-app-spotlight__empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+                <rect x="6" y="2.5" width="12" height="19" rx="3" />
+                <path d="M10.5 18.5h3" />
+              </svg>
+            </span>
+            <span class="home-app-spotlight__empty-copy">
+              <strong>{{ pick('应用目录已开放', 'The app directory is open') }}</strong>
+              <span>{{ pick('浏览 iOS、Android 和 Mac 应用，或提交第一个应用。', 'Explore iOS, Android, and Mac apps—or submit the first one.') }}</span>
+            </span>
+            <span class="home-app-spotlight__empty-actions">
+              <NuxtLink :to="localePath('/apps')">{{ pick('浏览应用', 'Browse apps') }} →</NuxtLink>
+              <NuxtLink :to="localePath('/apps/submit')">{{ pick('提交应用', 'Submit an app') }}</NuxtLink>
+            </span>
+          </div>
+        </section>
+
         <template v-for="group in groups" :key="group.id">
           <div class="pb-week-head">
             <h3>{{ group.label }}</h3>
@@ -1337,16 +1445,295 @@ a.pb-row__link::after {
   color: #4a3400;
   border-color: #e0a020;
 }
+
+/* A permanent app discovery slot, kept outside the ranked list and ad anchor. */
+.home-app-spotlight {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 18px 0 22px;
+  padding: 14px;
+  border: 1px solid color-mix(in oklab, var(--primary, #b45309) 18%, var(--border, #e5e7eb));
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--primary, #b45309) 5%, var(--card, #fff));
+}
+/* Slow drifting brand glow, so the slot reads as "alive" without shouting. */
+.home-app-spotlight::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -45% -12%;
+  background:
+    radial-gradient(38% 55% at 16% 0%, color-mix(in oklab, var(--primary, #b45309) 22%, transparent), transparent 70%),
+    radial-gradient(34% 52% at 88% 100%, color-mix(in oklab, var(--primary, #b45309) 15%, transparent), transparent 72%);
+  animation: app-slot-drift 18s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes app-slot-drift {
+  from { transform: translate3d(-2%, -1%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.07); }
+}
+/* Staged reveal: only armed after mount, so SSR never hides the slot.
+   `backwards` (not `both`) keeps the finished animation from pinning
+   `transform`, which would otherwise kill the card's hover lift. */
+.home-app-spotlight--anim .home-app-spotlight__head,
+.home-app-spotlight--anim .home-app-spotlight__feature,
+.home-app-spotlight--anim .home-app-spotlight__empty { opacity: 0; }
+.home-app-spotlight--anim.is-visible .home-app-spotlight__head {
+  opacity: 1;
+  animation: app-slot-rise .5s cubic-bezier(.22, .61, .36, 1) backwards;
+}
+.home-app-spotlight--anim.is-visible .home-app-spotlight__feature,
+.home-app-spotlight--anim.is-visible .home-app-spotlight__empty {
+  opacity: 1;
+  animation: app-slot-rise .62s cubic-bezier(.22, .61, .36, 1) .1s backwards;
+}
+@keyframes app-slot-rise {
+  from { opacity: 0; transform: translate3d(0, 12px, 0) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+.home-app-spotlight__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+.home-app-spotlight__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 3px;
+  color: var(--primary, #b45309);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .09em;
+}
+.home-app-spotlight__eyebrow::before {
+  content: '';
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: app-slot-ping 2.6s ease-out infinite;
+}
+@keyframes app-slot-ping {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary, #b45309) 55%, transparent); }
+  70% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary, #b45309) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary, #b45309) 0%, transparent); }
+}
+.home-app-spotlight__head h3 {
+  margin: 0;
+  color: var(--foreground, #1a1a1a);
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+.home-app-spotlight__browse {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: var(--primary, #b45309);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+.home-app-spotlight__browse:hover { text-decoration: underline; text-underline-offset: 3px; }
+.home-app-spotlight__browse span { display: inline-block; transition: transform .2s ease; }
+.home-app-spotlight__browse:hover span { transform: translateX(3px); }
+.home-app-spotlight__feature {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--card, #fff);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color .2s, transform .28s cubic-bezier(.22, .61, .36, 1), box-shadow .28s;
+}
+/* A light sweep that keeps looping on its own, the "premium listing" cue. */
+.home-app-spotlight__feature::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -55%;
+  width: 40%;
+  background: linear-gradient(
+    100deg,
+    transparent 4%,
+    color-mix(in oklab, var(--primary, #b45309) 38%, transparent) 50%,
+    transparent 96%
+  );
+  opacity: 0;
+  transform: skewX(-14deg);
+  animation: app-slot-sheen 3s ease-in-out 1.2s infinite;
+  pointer-events: none;
+}
+/* 0.9s of sweep, 2.1s of rest, repeating every 3s. */
+@keyframes app-slot-sheen {
+  0% { opacity: 0; transform: translateX(0) skewX(-14deg); }
+  6% { opacity: .9; }
+  30% { opacity: 0; transform: translateX(330%) skewX(-14deg); }
+  100% { opacity: 0; transform: translateX(330%) skewX(-14deg); }
+}
+.home-app-spotlight__feature:hover {
+  border-color: color-mix(in oklab, var(--primary, #b45309) 42%, var(--border, #e5e7eb));
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px -16px color-mix(in oklab, var(--primary, #b45309) 60%, transparent);
+}
+.home-app-spotlight__feature:focus-visible,
+.home-app-spotlight__browse:focus-visible,
+.home-app-spotlight__empty-actions a:focus-visible {
+  outline: 3px solid var(--ring, var(--primary, #b45309));
+  outline-offset: 3px;
+}
+.home-app-spotlight__logo {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--secondary, #f4f4f5);
+  transition: transform .3s cubic-bezier(.22, .61, .36, 1);
+}
+.home-app-spotlight__feature:hover .home-app-spotlight__logo { transform: scale(1.05) rotate(-3deg); }
+.home-app-spotlight__logo :deep(img) { width: 56px; height: 56px; border-radius: 12px; object-fit: contain; }
+.home-app-spotlight__identity { display: grid; min-width: 0; gap: 3px; }
+.home-app-spotlight__tag {
+  color: var(--primary, #b45309);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+.home-app-spotlight__identity > strong {
+  overflow: hidden;
+  color: var(--foreground, #1a1a1a);
+  font-size: 15px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.home-app-spotlight__description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground, #6b7280);
+  font-size: 12px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.home-app-spotlight__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.home-app-spotlight__meta em {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--secondary, #f4f4f5);
+  color: var(--muted-foreground, #6b7280);
+  font-size: 10px;
+  font-style: normal;
+  line-height: 1.4;
+}
+.home-app-spotlight__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary, #b45309);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.home-app-spotlight__action span { display: inline-block; transition: transform .2s ease; }
+.home-app-spotlight__feature:hover .home-app-spotlight__action span { transform: translate(3px, -3px); }
+.home-app-spotlight__empty {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px dashed color-mix(in oklab, var(--primary, #b45309) 35%, var(--border, #e5e7eb));
+  border-radius: 12px;
+  background: var(--card, #fff);
+}
+.home-app-spotlight__empty-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 11px;
+  background: color-mix(in oklab, var(--primary, #b45309) 10%, var(--card, #fff));
+  color: var(--primary, #b45309);
+  animation: app-slot-float 3.8s ease-in-out infinite;
+}
+@keyframes app-slot-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.home-app-spotlight__empty-copy { display: grid; min-width: 0; gap: 3px; }
+.home-app-spotlight__empty-copy strong { font-size: 13px; font-weight: 800; }
+.home-app-spotlight__empty-copy > span { color: var(--muted-foreground, #6b7280); font-size: 11.5px; line-height: 1.45; }
+.home-app-spotlight__empty-actions { display: flex; flex: none; align-items: center; gap: 8px; }
+.home-app-spotlight__empty-actions a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border-radius: 9px;
+  color: var(--primary, #b45309);
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform .2s ease, filter .2s ease;
+}
+.home-app-spotlight__empty-actions a:first-child {
+  background: var(--primary, #b45309);
+  color: var(--primary-foreground, #fff);
+}
+.home-app-spotlight__empty-actions a:hover { filter: brightness(.96); transform: translateY(-1px); }
+
 @media (max-width: 760px) {
   .pb-row { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; padding: 12px; }
   .pb-row__visit { display: none; }
   .pb-row__logo { display: none; }
   .pb-row__rank em { width: 28px; height: 28px; font-size: 13px; }
+  .home-app-spotlight { padding: 11px; }
+  .home-app-spotlight__feature { grid-template-columns: 56px minmax(0, 1fr); gap: 10px; }
+  .home-app-spotlight__action { grid-column: 2; }
+  .home-app-spotlight__empty { grid-template-columns: 40px minmax(0, 1fr); gap: 10px; }
+  .home-app-spotlight__empty-actions { grid-column: 2; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .pb-row--ad-open,
   .pb-row--ad-open .pb-row__logo--ad,
   .pb-row--ad-open .pb-row__ad-cta {
+    animation: none !important;
+    transform: none !important;
+  }
+  .home-app-spotlight__feature { transition: none; }
+  .home-app-spotlight__feature:hover { transform: none; }
+  .home-app-spotlight::before,
+  .home-app-spotlight__eyebrow::before,
+  .home-app-spotlight__empty-icon { animation: none !important; }
+  .home-app-spotlight__feature::after { animation: none; opacity: 0; }
+  .home-app-spotlight__feature:hover .home-app-spotlight__logo,
+  .home-app-spotlight__feature:hover .home-app-spotlight__action span,
+  .home-app-spotlight__browse:hover span,
+  .home-app-spotlight__empty-actions a:hover { transform: none; }
+  .home-app-spotlight--anim .home-app-spotlight__head,
+  .home-app-spotlight--anim .home-app-spotlight__feature,
+  .home-app-spotlight--anim .home-app-spotlight__empty {
+    opacity: 1 !important;
     animation: none !important;
     transform: none !important;
   }

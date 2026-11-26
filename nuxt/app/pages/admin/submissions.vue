@@ -29,11 +29,14 @@ import { Check, Eye, ExternalLink, Minus, Pencil, Plus, ThumbsDown, Wallet } fro
 import { toast } from 'vue-sonner'
 import { cn, type DataColumn } from '~/utils/ui'
 import type { DetailBlock } from '~~/shared/types/catalog'
+import type { AppStoreInfo } from '~~/shared/types/app-store'
 import { legalLogoUrl } from '~~/shared/utils/logo'
 import { filterByStatus, pageWindow } from '~~/shared/utils/submission-queue'
 
 type Row = {
   id: string
+  listing_type: 'website' | 'app'
+  app_stores: AppStoreInfo[]
   slug: string
   name: string
   url: string
@@ -127,6 +130,8 @@ const COPY = {
   visit_website: { zh: '打开网站', en: 'Open website' },
   field_name: { zh: '名称', en: 'Name' },
   field_website: { zh: '网址', en: 'Website' },
+  field_store_links: { zh: '应用商店链接', en: 'App store links' },
+  field_type: { zh: '收录类型', en: 'Listing type' },
   field_domain: { zh: '域名', en: 'Domain' },
   field_category: { zh: '分类', en: 'Category' },
   field_tags: { zh: '标签', en: 'Tags' },
@@ -332,8 +337,15 @@ const detailFields = computed<{ label: string; value: string; wide?: boolean }[]
   if (!row) return []
   return [
     { label: c('field_name'), value: row.name },
-    { label: c('field_website'), value: row.url, wide: true },
-    { label: c('field_domain'), value: row.domain },
+    { label: c('field_type'), value: row.listing_type === 'app' ? 'APP' : '网站' },
+    ...(row.listing_type === 'app'
+      ? [{
+          label: c('field_store_links'),
+          value: (row.app_stores ?? []).map((store) => `${store.platform} · ${store.name} · ${store.storeUrl}`).join('\\n'),
+          wide: true,
+        }]
+      : [{ label: c('field_website'), value: row.url, wide: true }]),
+    ...(row.listing_type === 'website' ? [{ label: c('field_domain'), value: row.domain }] : []),
     { label: c('field_category'), value: row.category },
     { label: c('field_tags'), value: (row.tags ?? []).join(', ') },
     { label: c('field_plan'), value: row.plan },
@@ -447,13 +459,16 @@ function confirmPayment() {
             <div class="flex min-w-0 items-center gap-2">
               <SettingsListIcon :src="row.logo" :alt="row.name" :size="28" />
               <div class="min-w-0">
-                <button
-                  type="button"
-                  class="truncate text-left font-medium hover:underline"
-                  @click="detail = row"
-                >
-                  {{ row.name }}
-                </button>
+                <div class="flex min-w-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    class="truncate text-left font-medium hover:underline"
+                    @click="detail = row"
+                  >
+                    {{ row.name }}
+                  </button>
+                  <UiBadge v-if="row.listing_type === 'app'" variant="outline" class="shrink-0">APP</UiBadge>
+                </div>
                 <p class="text-muted-foreground truncate text-xs">
                   {{ row.slug }}
                   <UiBadge v-if="!legalLogoUrl(row.logo)" variant="outline" class="ml-1">
@@ -556,16 +571,30 @@ function confirmPayment() {
             <dd class="mt-0.5 break-words whitespace-pre-wrap">{{ field.value || '—' }}</dd>
           </div>
         </dl>
-        <a
-          v-if="detail?.url"
-          :href="detail.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
-        >
-          <ExternalLink class="size-3.5" />
-          {{ c('visit_website') }}
-        </a>
+        <div v-if="detail?.listing_type === 'website' && detail.url">
+          <a
+            :href="detail.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
+          >
+            <ExternalLink class="size-3.5" />
+            {{ c('visit_website') }}
+          </a>
+        </div>
+        <div v-else-if="detail?.listing_type === 'app'" class="flex flex-wrap gap-3">
+          <a
+            v-for="store in detail.app_stores"
+            :key="`detail-store-${store.platform}`"
+            :href="store.storeUrl"
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+            class="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
+          >
+            <ExternalLink class="size-3.5" />
+            {{ store.platform === 'macos' ? 'Mac App Store' : store.platform === 'ios' ? 'App Store' : 'Google Play' }}
+          </a>
+        </div>
         <UiDialogFooter>
           <UiButton variant="outline" @click="detail = null">{{ c('close') }}</UiButton>
         </UiDialogFooter>

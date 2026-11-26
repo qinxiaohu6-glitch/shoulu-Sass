@@ -26,14 +26,27 @@ import type { LocalizedTool } from '~~/shared/types/catalog'
 
 const props = defineProps<{ tool: LocalizedTool }>()
 
-const { lang } = useLang()
+const { lang, pick } = useLang()
 const localePath = useLocalePath()
 const t = useDirectoryCopy()
 const { categories } = useDirectoryMeta()
 
 const categoryName = computed(() => {
+  if (props.tool.listing_type === 'app') return ''
   const hit = categoryBySlug(props.tool.category, categories.value)
   return hit ? localizeCategory(hit, lang.value).name : ''
+})
+
+const appStoreSummary = computed(() => {
+  if (props.tool.listing_type !== 'app') return null
+  const stores = props.tool.app_stores ?? []
+  const rating = stores.find((store) => store.rating !== null)
+  return {
+    platforms: stores.map((store) => ({ ios: 'iOS', android: 'Android', macos: 'Mac' })[store.platform]),
+    category: stores.find((store) => store.category)?.category ?? '',
+    rating: rating?.rating ?? null,
+    ratingCount: rating?.ratingCount ?? null,
+  }
 })
 </script>
 
@@ -52,7 +65,7 @@ const categoryName = computed(() => {
         <div class="flex items-center gap-1.5">
           <h3 class="min-w-0 truncate text-[15px] leading-tight font-semibold">
             <NuxtLink
-              :to="localePath(`/products/${tool.slug}`)"
+              :to="localePath(`/${tool.listing_type === 'app' ? 'apps' : 'products'}/${tool.slug}`)"
               class="after:absolute after:inset-0 after:rounded-xl"
             >
               {{ tool.name }}
@@ -72,6 +85,14 @@ const categoryName = computed(() => {
         >
           {{ tool.short }}
         </p>
+        <p v-if="appStoreSummary" class="mt-1 flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+          <span v-if="appStoreSummary.platforms.length">{{ appStoreSummary.platforms.join(' · ') }}</span>
+          <span v-if="appStoreSummary.category">{{ appStoreSummary.category }}</span>
+          <span v-if="appStoreSummary.rating !== null">
+            {{ pick('商店评分', 'Store rating') }} {{ appStoreSummary.rating }}
+            <span v-if="appStoreSummary.ratingCount">({{ appStoreSummary.ratingCount.toLocaleString() }})</span>
+          </span>
+        </p>
       </div>
     </div>
 
@@ -83,6 +104,7 @@ const categoryName = computed(() => {
         {{ t('directory.pricing_paid') }}
       </span>
       <span
+        v-if="categoryName"
         class="ml-auto min-w-0 truncate rounded-md bg-secondary px-2 py-0.5 text-[11px] font-medium text-secondary-foreground"
       >
         {{ categoryName }}

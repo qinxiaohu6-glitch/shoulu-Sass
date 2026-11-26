@@ -9,6 +9,9 @@
 -- existing records port over without a format decision.
 
 CREATE TABLE IF NOT EXISTS submissions (
+  -- `website` preserves every existing directory entry; `app` carries store metadata.
+  listing_type      TEXT    NOT NULL DEFAULT 'website',
+  app_stores        TEXT    NOT NULL DEFAULT '[]',
   -- Public id, e.g. `s_3f9a2c1b`. Never reused, never sequential: a queue
   -- number in a URL tells the world how many submissions the site has had.
   id                TEXT    PRIMARY KEY,

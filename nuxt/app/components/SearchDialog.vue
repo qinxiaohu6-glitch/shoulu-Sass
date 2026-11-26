@@ -16,28 +16,44 @@ const input = ref<HTMLInputElement | null>(null)
  * A failed fetch is retried on the next open rather than cached as "empty".
  */
 const extra = ref<LocalizedTool[]>([])
+const extraApps = ref<LocalizedTool[]>([])
 let fetched = false
+let fetchGeneration = 0
 
 watch(open, async (isOpen) => {
-  if (!isOpen || fetched) return
-  fetched = true
-  try {
-    const res = await $fetch<{ ok: boolean; tools?: Tool[] }>('/api/tools')
-    extra.value = (res?.tools ?? []).map((tool) => localizeTool(tool, lang.value))
-  } catch {
-    fetched = false
+  fetchGeneration++
+  if (!isOpen) return
+  if (fetched) {
+    extra.value = extra.value.map((tool) => localizeTool(tool, lang.value))
+    extraApps.value = extraApps.value.map((app) => localizeTool(app, lang.value))
+    return
   }
+  const generation = fetchGeneration
+  fetched = true
+  const [toolsResult, appsResult] = await Promise.allSettled([
+    $fetch<{ ok: boolean; tools?: Tool[] }>('/api/tools'),
+    $fetch<{ ok: boolean; apps?: Tool[] }>('/api/apps'),
+  ])
+  if (!open.value || generation !== fetchGeneration) return
+  if (toolsResult.status === 'fulfilled') {
+    extra.value = (toolsResult.value?.tools ?? []).map((tool) => localizeTool(tool, lang.value))
+  }
+  if (appsResult.status === 'fulfilled') {
+    extraApps.value = (appsResult.value?.apps ?? []).map((app) => localizeTool(app, lang.value))
+  }
+  if (toolsResult.status === 'rejected' && appsResult.status === 'rejected') fetched = false
 })
 
 const overrides = useOverrides()
-const all = computed(() =>
-  mergeDirectory(orderedTools(lang.value, overrides.value), extra.value, overrides.value),
-)
+const all = computed(() => [
+  ...mergeDirectory(orderedTools(lang.value, overrides.value), extra.value, overrides.value),
+  ...extraApps.value,
+])
 
 /**
- * Client-side search over the catalogue. 30 records today, so a linear scan is
- * instant and needs no endpoint. Swap for a server search once the directory
- * outgrows a few hundred rows.
+ * Client-side search over the catalogue and community listings. The current
+ * directory is small enough for an instant linear scan; move this to a server
+ * search once it grows beyond a few hundred rows.
  */
 const results = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -113,7 +129,7 @@ watch(open, async (value) => {
         <NuxtLink
           v-for="tool in results"
           :key="tool.slug"
-          :to="localePath(`/products/${tool.slug}`)"
+          :to="localePath(`/${tool.listing_type === 'app' ? 'apps' : 'products'}/${tool.slug}`)"
           class="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-[var(--secondary)]"
           @click="close"
         >

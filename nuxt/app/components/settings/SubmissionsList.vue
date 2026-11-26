@@ -46,7 +46,11 @@ function statusLabel(status: Status) {
   return t('directory.settings_status_pending')
 }
 
-const { isZh } = useLang()
+function detailPath(item: MySubmission) {
+  return `/${item.listing_type === 'app' ? 'apps' : 'products'}/${item.slug}`
+}
+
+const { isZh, pick } = useLang()
 
 /** Live charge for this row, with the plan name so Pro is never a bare amount. */
 function payPrice(plan: string): string {
@@ -102,19 +106,21 @@ async function onPay(item: MySubmission) {
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-1.5">
               <a
-                :href="
-                  localePath(
-                    statusOf(item) === 'published'
-                      ? `/products/${item.slug}`
-                      : `/products/${item.slug}?preview=1`,
-                  )
-                "
+                v-if="statusOf(item) === 'published'"
+                :href="localePath(detailPath(item))"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="truncate text-sm leading-none font-medium hover:underline"
               >
                 {{ item.name }}
               </a>
+              <span v-else class="truncate text-sm leading-none font-medium">{{ item.name }}</span>
+              <span
+                v-if="item.listing_type === 'app'"
+                class="inline-flex items-center rounded-md border border-border px-1.5 py-0.5 text-[11px] leading-none font-medium text-muted-foreground"
+              >
+                {{ pick('APP', 'App') }}
+              </span>
 
               <span
                 class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] leading-none font-medium"
@@ -145,24 +151,17 @@ async function onPay(item: MySubmission) {
 
         <div class="flex shrink-0 flex-wrap items-center gap-1.5">
           <a
-            :href="
-              localePath(
-                statusOf(item) === 'published'
-                  ? `/products/${item.slug}`
-                  : `/products/${item.slug}?preview=1`,
-              )
-            "
+            v-if="statusOf(item) === 'published'"
+            :href="localePath(detailPath(item))"
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-medium text-foreground transition hover:bg-muted"
           >
             <ExternalLink class="size-3" />
-            <span>
-              {{ statusOf(item) === 'published' ? t('directory.view') : t('directory.preview') }}
-            </span>
+            <span>{{ t('directory.view') }}</span>
           </a>
           <a
-            v-if="statusOf(item) !== 'published' && item.url"
+            v-if="statusOf(item) !== 'published' && item.listing_type !== 'app' && item.url"
             :href="item.url"
             target="_blank"
             rel="noopener noreferrer"
@@ -170,6 +169,17 @@ async function onPay(item: MySubmission) {
           >
             <ExternalLink class="size-3" />
             <span>{{ t('directory.visit_website') }}</span>
+          </a>
+          <a
+            v-for="store in (statusOf(item) !== 'published' && item.listing_type === 'app' ? item.app_stores : [])"
+            :key="`store-${store.platform}`"
+            :href="store.storeUrl"
+            target="_blank"
+            rel="nofollow noopener noreferrer"
+            class="inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-medium text-foreground transition hover:bg-muted"
+          >
+            <ExternalLink class="size-3" />
+            <span>{{ store.platform === 'macos' ? 'Mac' : store.platform === 'ios' ? 'iOS' : 'Android' }}</span>
           </a>
 
           <button

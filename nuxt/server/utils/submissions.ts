@@ -32,6 +32,8 @@ import {
 } from '~~/shared/utils/submit-limits'
 import type { DetailBlock, Tool } from '~~/shared/types/catalog'
 import type { Db } from './db'
+import { AppStoreError, cleanAppStores } from './app-store.ts'
+import type { AppStoreInfo } from '../../shared/types/app-store.ts'
 
 /* -------------------------------------------------------------------------
    limits
@@ -214,6 +216,8 @@ function slugify(name: string, domain: string): string {
    ------------------------------------------------------------------------- */
 
 export type CleanSubmission = {
+  listing_type: 'website' | 'app'
+  app_stores: AppStoreInfo[]
   url: string
   domain: string
   name: string
@@ -235,11 +239,25 @@ export function validate(payload: unknown): CleanSubmission {
   if (!payload || typeof payload !== 'object') throw new SubmissionError('bad_payload')
   const body = payload as Record<string, unknown>
   const cat = catalogIndex()
+  const rawType = String(body.listing_type ?? 'website').trim().toLowerCase()
+  if (rawType !== 'website' && rawType !== 'app') throw new SubmissionError('bad_listing_type')
+  const listing_type = rawType
+  let app_stores: AppStoreInfo[] = []
+  if (listing_type === 'app') {
+    try {
+      app_stores = cleanAppStores(body.app_stores)
+    } catch (error) {
+      throw new SubmissionError(error instanceof AppStoreError ? error.code : 'app_store_required', 'app_stores')
+    }
+  }
 
-  // The wizard keeps two URL fields: `url` from step 1 and `website`, the
-  // editable copy in step 2. Whatever the submitter last saw wins.
-  const [url, domain] = cleanUrl(body.url || body.website)
-  if (cat.taken.has(domain)) throw new SubmissionError('already_listed', 'url', domain)
+  // App-store hosts are shared by millions of listings, so their domain is not
+  // an identity. Websites retain the original domain-based duplicate rule.
+  const candidateUrl = listing_type === 'app' ? app_stores[0]!.storeUrl : body.url || body.website
+  const [url, domain] = cleanUrl(candidateUrl)
+  if (listing_type === 'website' && cat.taken.has(domain)) {
+    throw new SubmissionError('already_listed', 'url', domain)
+  }
 
   // Plan is read before the copy is measured, because the tier decides whether
   // a length floor applies at all. See `submit-limits.ts`: a buyer who is
@@ -258,16 +276,24 @@ export function validate(payload: unknown): CleanSubmission {
   if (!(PLANS as readonly string[]).includes(plan)) plan = 'free'
   const paid = isPaidPlan(plan)
 
+  const importedPrimary = app_stores[0]
+  const importedDescription = String(importedPrimary?.description ?? '').replace(/https?:\/\/\S+/gi, '')
+  if (!body.name) body.name = importedPrimary?.name ?? ''
+  if (!body.short) body.short = importedDescription.slice(0, SHORT_MAX)
+  if (!body.long) body.long = importedDescription
   const name = publicProductName(
     cleanText(body.name, 'name', textFloor(paid, NAME_MIN), NAME_MAX),
   )
   const short = cleanText(body.short, 'short', textFloor(paid, SHORT_MIN), SHORT_MAX)
   const long = cleanText(body.long, 'long', textFloor(paid, LONG_MIN), LONG_MAX, false)
 
-  const category = String(body.category ?? '').trim().toLowerCase()
-  if (!cat.cats.has(category)) throw new SubmissionError('bad_category', 'category')
+  const importedCategory = app_stores.find((store) => store.category)?.category ?? ''
+  const category = listing_type === 'app'
+    ? cleanText(importedCategory, 'category', 0, 100, false)
+    : String(body.category ?? '').trim().toLowerCase()
+  if (listing_type === 'website' && !cat.cats.has(category)) throw new SubmissionError('bad_category', 'category')
 
-  let rawTags: unknown = body.tags ?? []
+  let rawTags: unknown = listing_type === 'app' ? [] : body.tags ?? []
   if (typeof rawTags === 'string') rawTags = rawTags.split(/[,\s]+/).filter(Boolean)
   // The form posts tag *slugs* while the catalogue stores tools with tag
   // *names* ("API"), so accept either and normalise to the name. Dropping an
@@ -283,7 +309,7 @@ export function validate(payload: unknown): CleanSubmission {
     if (cat.tags.has(tag) && !tags.includes(tag)) tags.push(tag)
     if (tags.length >= MAX_TAGS) break
   }
-  const tagError = submissionTagError(category, tags)
+  const tagError = listing_type === 'app' ? null : submissionTagError(category, tags)
   if (tagError) throw new SubmissionError(tagError, 'tags')
 
   const email = String(body.email ?? '').trim()
@@ -299,7 +325,7 @@ export function validate(payload: unknown): CleanSubmission {
   // values are rejected rather than stored as an empty string. Rows already
   // in the queue are not touched here — the review page badges a missing logo
   // so an operator can see them; this function does not delete those rows.
-  const logoInput = String(body.logo ?? '').trim()
+  const logoInput = String(body.logo || importedPrimary?.icon || '').trim()
   const logo = legalLogoUrl(logoInput)
   if (!logoInput) throw new SubmissionError('logo_required', 'logo')
   if (!logo) throw new SubmissionError('bad_logo', 'logo')
@@ -309,7 +335,7 @@ export function validate(payload: unknown): CleanSubmission {
   let slot = String(body.slot ?? '').trim().toLowerCase()
   if (plan !== 'ad' || !['board', 'sidebar'].includes(slot)) slot = ''
 
-  const maker = cleanText(body.maker, 'maker', 0, 60, false)
+  const maker = cleanText(body.maker || importedPrimary?.developer, 'maker', 0, 60, false)
 
   const features = cleanFeatures(body.features)
   const pricingLabel = cleanText(body.pricing_label ?? body.pricingLabel, 'pricing_label', 0, 80, false)
@@ -318,6 +344,8 @@ export function validate(payload: unknown): CleanSubmission {
   pricingUrl = pricingUrl.slice(0, 300)
 
   return {
+    listing_type,
+    app_stores,
     url,
     domain,
     name,
@@ -365,6 +393,8 @@ function cleanFeatures(value: unknown): { title: string; desc: string }[] {
 
 export type SubmissionRow = {
   id: string
+  listing_type: 'website' | 'app'
+  app_stores: string
   slug: string
   url: string
   domain: string
@@ -429,13 +459,13 @@ async function slugIsFree(db: Db, slug: string): Promise<boolean> {
   return !hit
 }
 
-async function uniqueSlug(db: Db, name: string, domain: string): Promise<string> {
-  const base = slugify(name, domain)
+async function uniqueSlug(db: Db, name: string, domain: string, identityFallback = ''): Promise<string> {
+  const base = slugify(name, identityFallback || domain)
 
-  // A product keeps the address it already had. Only a slug that is genuinely
-  // taken falls through to the derived one, so the remembered value can never
-  // steal a page that belongs to something else.
-  const remembered = await rememberedSlug(db, domain)
+  // Website products keep their remembered address. App entries share store
+  // hostnames, so their fallback identity is the app ID and host aliases must
+  // never be reused across unrelated apps.
+  const remembered = identityFallback ? '' : await rememberedSlug(db, domain)
   if (remembered && (await slugIsFree(db, remembered))) return remembered
 
   let candidate = base
@@ -472,13 +502,31 @@ export async function createSubmission(
 ): Promise<SubmissionRow> {
   const body = validate(payload)
 
-  const live = await db
-    .prepare(
-      "SELECT id FROM submissions WHERE domain = ? AND status IN ('pending','approved') LIMIT 1",
-    )
-    .bind(body.domain)
-    .first<{ id: string }>()
-  if (live) throw new SubmissionError('duplicate', 'url', live.id)
+  if (body.listing_type === 'website') {
+    const live = await db
+      .prepare(
+        "SELECT id FROM submissions WHERE listing_type = 'website' AND domain = ? AND status IN ('pending','approved') LIMIT 1",
+      )
+      .bind(body.domain)
+      .first<{ id: string }>()
+    if (live) throw new SubmissionError('duplicate', 'url', live.id)
+  } else {
+    const { results } = await db
+      .prepare("SELECT id, app_stores FROM submissions WHERE listing_type = 'app' AND status IN ('pending','approved')")
+      .all<{ id: string; app_stores: string }>()
+    const identities = new Set(body.app_stores.map((store) => `${store.platform}:${store.appId}`))
+    for (const existing of results) {
+      try {
+        const stores = JSON.parse(existing.app_stores || '[]') as { platform?: string; appId?: string }[]
+        if (stores.some((store) => identities.has(`${store.platform}:${store.appId}`))) {
+          throw new SubmissionError('duplicate_app', 'app_stores', existing.id)
+        }
+      } catch (error) {
+        if (error instanceof SubmissionError) throw error
+        // A malformed legacy JSON field cannot block a new listing.
+      }
+    }
+  }
 
   const ipHash = opts.ipHash ?? ''
   if (ipHash) {
@@ -499,7 +547,13 @@ export async function createSubmission(
   if ((total?.n ?? 0) >= MAX_SUBMISSIONS) throw new SubmissionError('closed')
 
   const now = Math.floor(Date.now() / 1000)
-  const slug = await uniqueSlug(db, body.name, body.domain)
+  const primaryStore = body.app_stores[0]
+  const slug = await uniqueSlug(
+    db,
+    body.name,
+    body.domain,
+    primaryStore ? `${primaryStore.platform}-${primaryStore.appId}` : '',
+  )
 
   for (let attempt = 0; attempt < 5; attempt++) {
     const id = randomId()
@@ -507,15 +561,16 @@ export async function createSubmission(
       await db
         .prepare(
           `INSERT INTO submissions (
-             id, slug, url, domain, name, short, long_desc, category, tags, email, logo,
-             maker, plan, slot, status, paid_at, payment_ref, awaiting_payment,
-             created_at, updated_at, reviewed_at, reviewer, notes, ip_hash,
-             owner_sub, owner_email
-           ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',NULL,'',?,?,?,NULL,'','',?,?,?)`,
+             id, slug, listing_type, app_stores, url, domain, name, short, long_desc, category,
+             tags, email, logo, maker, plan, slot, status, paid_at, payment_ref, awaiting_payment,
+             created_at, updated_at, reviewed_at, reviewer, notes, ip_hash, owner_sub, owner_email
+           ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending',NULL,'',?,?,?,NULL,'','',?,?,?)`,
         )
         .bind(
           id,
           slug,
+          body.listing_type,
+          JSON.stringify(body.app_stores),
           body.url,
           body.domain,
           body.name,
@@ -579,6 +634,8 @@ export function publicRecord(row: SubmissionRow) {
   return {
     id: row.id,
     slug: row.slug,
+    listing_type: row.listing_type || 'website',
+    app_stores: safeAppStores(row.app_stores),
     name: row.name,
     url: row.url,
     domain: row.domain,
@@ -642,6 +699,14 @@ function safeTags(raw: string): string[] {
   }
 }
 
+function safeAppStores(raw: string): AppStoreInfo[] {
+  try {
+    return cleanAppStores(JSON.parse(raw || '[]'))
+  } catch {
+    return []
+  }
+}
+
 /* -------------------------------------------------------------------------
    editorial detail — operator-written copy, never submitter-written
    ------------------------------------------------------------------------- */
@@ -680,10 +745,8 @@ function parseDetail(raw: unknown): DetailBlock {
             .filter((item) => item.title || item.desc)
             .slice(0, 20)
         : []
-    const pricingRaw = value.pricing
-    const pricingEntry = pricingRaw && typeof pricingRaw === 'object' ? (pricingRaw as Record<string, unknown>) : null
-    const pricingLabel = String(pricingEntry?.label ?? '').trim().slice(0, 80)
-    let pricingUrl = String(pricingEntry?.url ?? '').trim().slice(0, 300)
+    const pricingLabel = String(value.pricing?.label ?? '').trim().slice(0, 80)
+    let pricingUrl = String(value.pricing?.url ?? '').trim().slice(0, 300)
     if (pricingUrl && !/^https:\/\//i.test(pricingUrl)) pricingUrl = ''
     return {
       how_to_use: lines(value.how_to_use),
@@ -780,6 +843,8 @@ export function publicTool(row: SubmissionRow, votesWeek = 0): Tool {
   const detailZh = parseDetail(row.detail_zh)
   return {
     slug: row.slug,
+    listing_type: row.listing_type || 'website',
+    app_stores: row.listing_type === 'app' ? safeAppStores(row.app_stores) : [],
     name_en: row.name,
     name_zh: row.name,
     short_en: row.short,
@@ -846,11 +911,15 @@ export async function getSubmission(db: Db, id: string): Promise<SubmissionRow |
  * exactly like a slug that never existed. A detail page that could tell those
  * apart would leak the review queue.
  */
-export async function getPublicBySlug(db: Db, slug: string): Promise<SubmissionRow | null> {
+export async function getPublicBySlug(
+  db: Db,
+  slug: string,
+  listingType: 'website' | 'app' = 'website',
+): Promise<SubmissionRow | null> {
   if (!slug) return null
   const row = await db
-    .prepare('SELECT * FROM submissions WHERE slug = ?')
-    .bind(slug)
+    .prepare('SELECT * FROM submissions WHERE slug = ? AND listing_type = ?')
+    .bind(slug, listingType)
     .first<SubmissionRow>()
   if (!row || !publiclyListed(row)) return null
   return row
@@ -888,10 +957,14 @@ export async function listByOwner(db: Db, sub: string, limit = 200): Promise<Sub
  * being published. Votes come from the same table the vote button writes to, so
  * the count on a card is never a number nobody can move.
  */
-export async function listPublishedTools(db: Db, limit = 500): Promise<Tool[]> {
+export async function listPublishedTools(
+  db: Db,
+  limit = 500,
+  listingType: 'website' | 'app' = 'website',
+): Promise<Tool[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM submissions WHERE ${PUBLIC_SQL} ORDER BY created_at DESC LIMIT ?`)
-    .bind(...PAID_PLANS, Math.max(1, Math.min(2000, limit)))
+    .prepare(`SELECT * FROM submissions WHERE ${PUBLIC_SQL} AND listing_type = ? ORDER BY created_at DESC LIMIT ?`)
+    .bind(...PAID_PLANS, listingType, Math.max(1, Math.min(2000, limit)))
     .all<SubmissionRow>()
 
   if (!results.length) return []

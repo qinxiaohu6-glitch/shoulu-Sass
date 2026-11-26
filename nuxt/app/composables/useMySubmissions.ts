@@ -9,6 +9,7 @@
 
 import { planAmountCents, tiers } from '~~/shared/content/pricing'
 import { effectiveQuote } from '~~/shared/utils/pricing-effective'
+import type { AppStoreInfo } from '~~/shared/types/app-store'
 
 export type MySubmission = {
   id: string
@@ -21,6 +22,8 @@ export type MySubmission = {
   plan: string
   slot: string
   status: 'pending' | 'approved' | 'rejected'
+  listing_type: 'website' | 'app'
+  app_stores: AppStoreInfo[]
   awaiting_payment: boolean
   /** Unix seconds; `null` until the payment settles (the webhook publishes automatically). */
   paid_at: number | null

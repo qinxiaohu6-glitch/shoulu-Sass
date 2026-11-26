@@ -64,6 +64,7 @@ const navGroups = computed(() => [
     items: [
       { label: pick('发现', 'Discover'), to: '/', icon: 'compass' },
       { label: pick('产品', 'Products'), to: '/products', icon: 'layout-grid' },
+      { label: pick('应用', 'Apps'), to: '/apps', icon: 'layout-grid' },
       { label: pick('分类', 'Categories'), to: '/categories', icon: 'shapes' },
       { label: pick('工具', 'Tools'), to: '/tools', icon: 'sparkles' },
       { label: pick('定价', 'Pricing'), to: '/pricing', icon: 'credit-card' },
@@ -80,6 +81,7 @@ const navGroups = computed(() => [
       // content, not this site's writing. The page still exists at /blog so it
       // can be switched on once there is something real to publish.
       { label: pick('提交产品', 'Submit a product'), to: '/submit', icon: 'plus' },
+      { label: pick('提交应用', 'Submit an app'), to: '/apps/submit', icon: 'plus' },
       { label: pick('深度文章', 'Spotlights'), to: '/spotlights', icon: 'file-text' },
       // `git-compare` is not in the sprite, so this rendered an empty glyph for
       // as long as the item has existed. `arrow-up-right` is what the item
@@ -203,6 +205,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
     title: pick('目录', 'Directory'),
     links: [
       { label: pick('产品', 'Products'), to: '/products' },
+      { label: pick('应用', 'Apps'), to: '/apps' },
       { label: pick('分类', 'Categories'), to: '/categories' },
       { label: pick('工具', 'Tools'), to: '/tools' },
       { label: pick('SEO 诊断', 'SEO check'), to: '/seo-check' },
@@ -220,6 +223,7 @@ const footerCols = computed<{ title: string; links: FooterLink[] }[]>(() => [
       { label: pick('投放', 'Advertise'), to: '/advertise' },
       { label: pick('目录数字', 'Directory numbers'), to: '/stats' },
       { label: pick('提交产品', 'Submit a product'), to: '/submit' },
+      { label: pick('提交应用', 'Submit an app'), to: '/apps/submit' },
       { label: pick('我的提交', 'My submissions'), to: '/settings/submissions' },
       // Rules and FAQ come before the legal pages: they are what a seller reads
       // before paying, and both answer questions the policies only define.
@@ -426,6 +430,7 @@ watch(() => route.fullPath, () => {
           <nav class="topbar__nav" :aria-label="pick('主导航', 'Primary')">
             <NuxtLink class="topbar__link" :to="localePath('/')">{{ pick('发现', 'Discover') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/products')">{{ pick('产品', 'Products') }}</NuxtLink>
+            <NuxtLink class="topbar__link" :to="localePath('/apps')">{{ pick('应用', 'Apps') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/tools')">{{ pick('工具', 'Tools') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/weekly')">{{ pick('周榜', 'Weekly') }}</NuxtLink>
             <NuxtLink class="topbar__link" :to="localePath('/seo-check')">{{ pick('SEO 诊断', 'SEO check') }}</NuxtLink>
@@ -563,6 +568,7 @@ watch(() => route.fullPath, () => {
             <NuxtLink :to="localePath('/weekly')">{{ pick('归档', 'Archive') }}</NuxtLink>
             <NuxtLink :to="localePath('/seo-check')">{{ pick('SEO 诊断', 'SEO check') }}</NuxtLink>
             <NuxtLink :to="localePath('/pricing')">{{ pick('定价', 'Pricing') }}</NuxtLink>
+            <NuxtLink :to="localePath('/apps')">{{ pick('应用', 'Apps') }}</NuxtLink>
             <NuxtLink :to="localePath('/alternatives')">{{ pick('替代品', 'Alternatives') }}</NuxtLink>
             <NuxtLink :to="localePath('/submit')">{{ pick('提交', 'Submit') }}</NuxtLink>
             <NuxtLink :to="localePath('/sponsor')">{{ pick('投放', 'Sponsor') }}</NuxtLink>

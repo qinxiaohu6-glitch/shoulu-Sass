@@ -25,6 +25,12 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
     en: 'No links in the description — use the URL field.',
   },
   bad_category: { status: 400, zh: '请选择一个分类。', en: 'Pick a category.' },
+  tags_required: { status: 400, zh: '至少选一个标签。', en: 'Pick at least one tag.' },
+  video_tag_required: {
+    status: 400,
+    zh: '视频分类必须包含「视频生成」「视频聊天」或「转录」之一。',
+    en: 'Video listings must include Video generation, Video chat, or Transcripts.',
+  },
   bad_email: { status: 400, zh: '邮箱格式不对。', en: 'That email address is not valid.' },
   email_required: {
     status: 400,
@@ -47,6 +53,11 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
     zh: '这个站点已经提交过了，正在处理中。',
     en: 'That site has already been submitted and is in the queue.',
   },
+  duplicate_app: {
+    status: 409,
+    zh: '这个应用已经提交过了，正在处理中。',
+    en: 'That app has already been submitted and is in the queue.',
+  },
   rate_limited: {
     status: 429,
     zh: '提交太频繁了，过一会儿再试。',
@@ -54,6 +65,15 @@ export const SUBMIT_ERRORS: Record<string, ErrorCopy> = {
   },
   closed: { status: 503, zh: '提交暂时关闭。', en: 'Submissions are temporarily closed.' },
   bad_payload: { status: 400, zh: '请求格式不对。', en: 'Bad request.' },
+  bad_listing_type: { status: 400, zh: '收录类型无效。', en: 'That listing type is not supported.' },
+  app_store_required: { status: 400, zh: '至少导入一个应用商店链接。', en: 'Import at least one app store listing.' },
+  invalid_store_url: { status: 400, zh: '应用商店链接无效。', en: 'That app store URL is invalid.' },
+  invalid_platform: { status: 400, zh: '应用平台无效。', en: 'That app platform is not supported.' },
+  platform_mismatch: { status: 400, zh: '商店链接与所选平台不一致。', en: 'The store URL does not match the selected platform.' },
+  unsupported_store_url: { status: 400, zh: '暂不支持这个应用商店链接。', en: 'That app store URL is not supported.' },
+  invalid_app_store_data: { status: 400, zh: '应用商店资料无效，请重新导入。', en: 'The app store details are invalid. Import them again.' },
+  duplicate_app_platform: { status: 400, zh: '同一平台只能添加一个商店链接。', en: 'Add no more than one store listing per platform.' },
+  app_store_data_too_large: { status: 400, zh: '应用商店资料过大，请重新导入。', en: 'The app store details are too large. Import them again.' },
   not_found: { status: 404, zh: '找不到这条提交。', en: 'No such submission.' },
   not_your_listing: {
     status: 403,

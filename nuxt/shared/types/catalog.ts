@@ -1,3 +1,5 @@
+import type { AppStoreInfo } from './app-store'
+
 export type Locale = 'en' | 'zh'
 
 /* -------------------------------------------------------------------------
@@ -64,6 +66,10 @@ export interface Tool {
   /** Editorial sections. Absent on most records until the admin fills them. */
   detail_en?: PartialDetail
   detail_zh?: PartialDetail
+  /** Community listings default to website; only app submissions set this. */
+  listing_type?: 'website' | 'app'
+  /** Store metadata imported from Apple / Google public listings. */
+  app_stores?: AppStoreInfo[]
   /**
    * The tier a community submission actually bought (`free`, `standard`,
    * `featured`, `pro`). Catalogue rows omit it. Display only — checkout never

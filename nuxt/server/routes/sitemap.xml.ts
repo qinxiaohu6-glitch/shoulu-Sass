@@ -43,12 +43,14 @@ async function entries(event: H3Event): Promise<Entry[]> {
   // has pulled, and what the community has published. A failure leaves both
   // empty, so the static list still ships rather than the whole sitemap 500ing.
   let published: Awaited<ReturnType<typeof listPublishedTools>> = []
+  let publishedApps: Awaited<ReturnType<typeof listPublishedTools>> = []
   let spotlights: Spotlight[] = []
   let overrides: OverrideView = { pinned: {}, hidden: [] }
   try {
     const db = await useDb(event)
-    ;[published, spotlights, overrides] = await Promise.all([
+    ;[published, publishedApps, spotlights, overrides] = await Promise.all([
       listPublishedTools(db),
+      listPublishedTools(db, 500, 'app'),
       listPublished(db),
       loadOverrides(db),
     ])
@@ -65,6 +67,7 @@ async function entries(event: H3Event): Promise<Entry[]> {
   const list: Entry[] = [
     { path: '/', priority: '1.0' },
     { path: '/products', priority: '0.9' },
+    { path: '/apps', priority: '0.8' },
     { path: '/tools', priority: '0.7' },
     { path: '/tools/dr-checker', priority: '0.7' },
     { path: '/seo-check', priority: '0.8' },
@@ -130,6 +133,15 @@ async function entries(event: H3Event): Promise<Entry[]> {
       lastmod: tool.created_at,
       priority: '0.8',
       enOnly: !hasChineseCopy(tool),
+    })
+  }
+  for (const app of publishedApps) {
+    if (!visible(app.slug) || isReservedProductSlug(app.slug)) continue
+    list.push({
+      path: `/apps/${app.slug}`,
+      lastmod: app.created_at,
+      priority: '0.8',
+      enOnly: true,
     })
   }
 

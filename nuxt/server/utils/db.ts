@@ -89,6 +89,9 @@ async function getLocal(): Promise<{ db: any; ready: boolean }> {
   // Local file only. Production D1 is not altered here — run the migration
   // in server/database/migrations before a deploy that selects these columns.
   for (const sql of [
+    `ALTER TABLE submissions ADD COLUMN listing_type TEXT NOT NULL DEFAULT 'website'`,
+    `ALTER TABLE submissions ADD COLUMN app_stores TEXT NOT NULL DEFAULT '[]'`,
+    `CREATE INDEX IF NOT EXISTS idx_submissions_type_status_created ON submissions (listing_type, status, created_at)`,
     `ALTER TABLE billboard_placement ADD COLUMN order_id TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE billboard_placement ADD COLUMN amount_cents INTEGER NOT NULL DEFAULT 0`,
     `CREATE INDEX IF NOT EXISTS idx_billboard_order ON billboard_placement (order_id)`,
