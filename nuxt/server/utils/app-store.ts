@@ -378,6 +378,11 @@ async function fetchStoreTextOnce(
         signal: controller.signal,
         redirect: 'manual',
       })
+      if (!response.ok) {
+        // Kept as a log line because these are the failures a submitter reports
+        // as "cannot reach the store" and the status is the only evidence.
+        console.warn('[app-store] store answered', response.status, current.toString())
+      }
       if (response.status >= 300 && response.status < 400) {
         const location = response.headers.get('location')
         await response.body?.cancel().catch(() => {})
@@ -391,6 +396,7 @@ async function fetchStoreTextOnce(
     throw new AppStoreError('store_unavailable', 502)
   } catch (error) {
     if (error instanceof AppStoreError) throw error
+    console.warn('[app-store] fetch failed', current.toString(), String((error as Error)?.message ?? error))
     throw new AppStoreError(controller.signal.aborted ? 'store_timeout' : 'store_unavailable', 502)
   } finally {
     clearTimeout(timeout)
@@ -400,9 +406,12 @@ async function fetchStoreTextOnce(
 /**
  * The stores drop connections and answer 403/429 from shared edge IPs often
  * enough that a single attempt turns into "cannot reach the store" for a
- * perfectly valid link — which is exactly what a submitter saw on
- * 2026-11-26. One retry on a transient failure fixes that without making a
- * genuinely missing app or a timeout wait twice as long.
+ * perfectly valid link — which is what submitters reported on 2026-11-26, twice
+ * on links that worked seconds later. A fresh Worker isolate also pays for the
+ * first TLS handshake to the store, and that first attempt is the one that
+ * fails. Two retries (300ms, then 700ms) cover both cases while still failing
+ * fast for a genuinely dead host. Timeouts and 404s are not retried: they would
+ * only double the wait.
  */
 async function fetchStoreText(
   rawUrl: string,
@@ -411,9 +420,10 @@ async function fetchStoreText(
   maxBytes: number,
   timeoutMs = 7000,
 ): Promise<{ response: Response; text: string }> {
+  const backoff = [300, 700]
   let lastResult: { response: Response; text: string } | null = null
   let lastError: unknown = null
-  for (let attempt = 0; attempt < 2; attempt++) {
+  for (let attempt = 0; attempt <= backoff.length; attempt++) {
     try {
       const result = await fetchStoreTextOnce(rawUrl, init, allowedHost, maxBytes, timeoutMs)
       if (result.response.ok) return result
@@ -423,10 +433,10 @@ async function fetchStoreText(
       if (!retryable) return result
     } catch (error) {
       lastError = error
-      // A timeout already spent the whole budget; repeating it only doubles the wait.
       if (error instanceof AppStoreError && error.code === 'store_timeout') throw error
     }
-    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 220))
+    const wait = backoff[attempt]
+    if (wait) await new Promise((resolve) => setTimeout(resolve, wait))
   }
   if (lastResult) return lastResult
   throw lastError ?? new AppStoreError('store_unavailable', 502)
