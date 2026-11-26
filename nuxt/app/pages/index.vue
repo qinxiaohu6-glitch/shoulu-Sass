@@ -332,6 +332,10 @@ const PREVIEW_GROUPS: WeekGroup[] = [
 ]
 const isPreview = computed(() => import.meta.dev && realFeed.value === 0)
 const groups = computed(() => (isPreview.value ? PREVIEW_GROUPS : weekGroups.value))
+/* The sheen belongs to the #1 on screen, not to the #1 of every week block:
+   if the feed ever stacks more than one week, `row.rank === 1` alone would
+   light up a dozen rows at once. */
+const liveGroupId = computed(() => (groups.value.find((group) => group.current) ?? groups.value[0])?.id)
 
 const nextAt = computed(() => nextLaunchInstant(all.value, tick.value))
 const clock = computed(() => (nextAt.value ? remainingHms(nextAt.value, tick.value) : null))
@@ -681,6 +685,12 @@ useHead({ script: schemaScripts })
               :to="localePath(`/apps/${app.slug}`)"
             >
               <span class="home-app-spotlight__logo">
+                <!-- The top row wears the same crown the launch board's #1 wears,
+                     so the two lists read as "first place" rather than one
+                     having a mark the other cannot have. -->
+                <span v-if="index === 0" class="home-app-spotlight__crown" aria-hidden="true">
+                  <PaidCrown />
+                </span>
                 <ToolLogo :logo="app.logo" :name="app.name" :size="44" decorative />
               </span>
               <span class="home-app-spotlight__identity">
@@ -745,6 +755,7 @@ useHead({ script: schemaScripts })
               :class="{
                 'pb-row--featured': row.badges.length > 0,
                 'pb-row--podium': group.current && row.rank <= 3,
+                'pb-row--first': group.id === liveGroupId && row.rank === 1,
               }"
             >
               <span class="pb-row__rank" :class="`is-${row.rank}`">
@@ -1279,6 +1290,51 @@ a.pb-row__link::after {
   position: absolute;
   inset: 0;
 }
+/* ---- The week's #1 ------------------------------------------------------
+   The first row gets the two beats the newest app row already has: a sweep
+   every three seconds, and an icon that tilts under the pointer. Only the
+   first row — a wave down the whole list reads as noise. The sweep is painted
+   by the row's own `::after` as a moving background, not a sliding box, so it
+   never leaves the row and needs no `overflow: hidden` (which would slice the
+   crown off the logo). */
+.pb-row--first::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* The band is a stop range inside a 3.2x-wide background, so its on-screen
+     width is `(stop range) x 3.2`. At 46–54% that was 26% of the row; the
+     first attempt used 38–62% inside a 2.6x background and came out 62% wide,
+     which read as the whole row fogging over rather than a light passing
+     across it. */
+  background: linear-gradient(
+    100deg,
+    transparent 46%,
+    color-mix(in oklab, var(--primary, #b45309) 62%, transparent) 50%,
+    transparent 54%
+  );
+  background-size: 320% 100%;
+  background-position: 80% 0;
+  opacity: 0;
+  pointer-events: none;
+  animation: pb-row-sheen 3s linear 1.2s infinite;
+}
+/* 0.9s of sweep, 2.1s of rest — the same clock as `app-slot-sheen`.
+   With a 3.2x background, one row width of travel is 45% of the position
+   range, so 80% → 20% is exactly "off the left edge" to "off the right edge".
+   The first attempt ran 165% → -65%, five row widths of travel in the same
+   0.9s, and the band was on screen for about 200ms — a flicker, not a sweep.
+   Linear easing, because every segment here also moves the position: an eased
+   per-segment curve made the band stutter at each keyframe. The fade lives in
+   its own stops instead, holding full strength across the whole crossing. */
+@keyframes pb-row-sheen {
+  0% { opacity: 0; background-position: 80% 0; }
+  4% { opacity: .85; }
+  22% { opacity: .85; background-position: 36% 0; }
+  30% { opacity: 0; background-position: 20% 0; }
+  100% { opacity: 0; background-position: 20% 0; }
+}
+.pb-row--first:hover .pb-row__logo { transform: scale(1.05) rotate(-3deg); }
 /* A row that is one big target needs to look like one. */
 .pb-row:not(.pb-row--featured):hover {
   background: #fafbfc;
@@ -1299,6 +1355,7 @@ a.pb-row__link::after {
   width: 56px;
   height: 56px;
   border-radius: 10px;
+  transition: transform .3s cubic-bezier(.22, .61, .36, 1);
 }
 .pb-row__logo :deep(img) {
   display: block;
@@ -1656,14 +1713,29 @@ a.pb-row__link::after {
   line-height: 1;
 }
 .home-app-spotlight__logo {
+  position: relative;
   display: grid;
   width: 44px;
   height: 44px;
-  overflow: hidden;
+  /* `visible`, not `hidden`: the crown perches above the tile and a clipped
+     box would slice its top off. The image carries its own radius. */
+  overflow: visible;
   place-items: center;
   border-radius: 10px;
   background: var(--secondary, #f4f4f5);
   transition: transform .3s cubic-bezier(.22, .61, .36, 1);
+}
+/* Sized like the launch board's crown (22/56 of the tile), scaled to 44px.
+   Pivots on its own bottom edge so the tilt reads as "set down at an angle". */
+.home-app-spotlight__crown {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 17px;
+  height: 13px;
+  transform: translateX(-50%) rotate(-14deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
 }
 .home-app-spotlight__item:hover .home-app-spotlight__logo { transform: scale(1.05) rotate(-3deg); }
 .home-app-spotlight__logo :deep(img) { width: 44px; height: 44px; border-radius: 10px; object-fit: contain; }
@@ -1787,6 +1859,8 @@ a.pb-row__link::after {
   .home-app-spotlight__eyebrow::before,
   .home-app-spotlight__empty-icon { animation: none !important; }
   .home-app-spotlight__item:first-child::after { animation: none; opacity: 0; }
+  .pb-row--first::after { animation: none; opacity: 0; }
+  .pb-row--first:hover .pb-row__logo { transform: none; }
   .home-app-spotlight__item:hover .home-app-spotlight__logo,
   .home-app-spotlight__item:hover .home-app-spotlight__action,
   .home-app-spotlight__browse:hover span,
