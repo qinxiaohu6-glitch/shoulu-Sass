@@ -92,8 +92,9 @@ export type EffectiveQuote = {
  */
 export function effectiveAdCents(slot: string, weeks: number, now = Date.now()): number {
   if (slot === 'board') return adPriceCents('board', weeks)
-  if (slot !== 'sidebar') return 0
-  return effectiveAmountCents('sidebar', String(weeks), now)
+  if (slot === 'sidebar') return effectiveAmountCents('sidebar', String(weeks), now)
+  // Slots with no campaign price (the app showcase) charge the regular price.
+  return adPriceCents(slot, weeks)
 }
 
 export function effectiveQuote(kind: PriceKind, id: string, now = Date.now()): EffectiveQuote {

@@ -20,9 +20,9 @@ export type AdPublic = {
   note: string
 }
 
-type AdsPayload = { board: AdPublic | null; sidebar: AdPublic | null }
+type AdsPayload = { board: AdPublic | null; sidebar: AdPublic | null; app: AdPublic | null }
 
-const EMPTY: AdsPayload = { board: null, sidebar: null }
+const EMPTY: AdsPayload = { board: null, sidebar: null, app: null }
 
 /**
  * The public availability hint, used by the homepage, /pricing and /book-ad to
@@ -53,6 +53,7 @@ export function openAdWeeks(data: AdAvailability | null | undefined): string[] {
 export async function useAds(): Promise<{
   board: ComputedRef<AdPublic | null>
   sidebar: ComputedRef<AdPublic | null>
+  app: ComputedRef<AdPublic | null>
 }> {
   // Relative `$fetch` cannot resolve on Workers — see `overrides.server.ts`.
   // The `catch` here would otherwise make every booked placement look unbooked.
@@ -63,7 +64,11 @@ export async function useAds(): Promise<{
     async () => {
       try {
         const res = await requestFetch<Partial<AdsPayload>>('/api/ads')
-        return { board: res?.board ?? null, sidebar: res?.sidebar ?? null }
+        return {
+          board: res?.board ?? null,
+          sidebar: res?.sidebar ?? null,
+          app: res?.app ?? null,
+        }
       } catch {
         // A missing ad is a missing ad; a failed ad fetch must not blank the page.
         return EMPTY
@@ -75,5 +80,6 @@ export async function useAds(): Promise<{
   return {
     board: computed(() => data.value?.board ?? null),
     sidebar: computed(() => data.value?.sidebar ?? null),
+    app: computed(() => data.value?.app ?? null),
   }
 }

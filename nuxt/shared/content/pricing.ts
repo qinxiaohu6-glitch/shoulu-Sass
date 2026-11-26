@@ -167,7 +167,7 @@ export const tiers: PriceTier[] = [
 ]
 
 export interface AdPlan {
-  id: 'board' | 'sidebar'
+  id: 'board' | 'sidebar' | 'app'
   name: Pair
   price: string
   unit: Pair
@@ -254,6 +254,39 @@ export const adPlans: AdPlan[] = [
         'Seven days, starting Monday',
       ],
       zh: ['首页 + 最新收录页的右栏顶部', '卡片形态，含 logo 与一句话', '展示 7 天，周一起算'],
+    },
+    bundle: { en: 'Four-week bundle available', zh: '可连投 4 周' },
+  },
+  {
+    /**
+     * One booking, three homepage positions: the hero's left rail plus the two
+     * rails flanking the directory feed. It is a single SKU on purpose — three
+     * separate slots would mean three checkouts and three weekly conflicts for
+     * what a buyer experiences as one campaign.
+     */
+    id: 'app',
+    name: { en: 'App showcase', zh: 'APP 广告位' },
+    price: '$39',
+    weeklyCents: 3900,
+    bundleWeeks: 4,
+    bundleCents: 15600,
+    unit: { en: '/ week', zh: '/ 周' },
+    where: {
+      en: 'Three spots on the homepage: the hero rail and both directory rails',
+      zh: '首页三处：首屏左栏，以及榜单左右两栏',
+    },
+    pitch: {
+      en: 'Built for app developers: one booking puts your app beside the hero and in both rails for the whole week.',
+      zh: '为应用开发者准备的位子：订一次，你的应用整周同时出现在首屏左栏与左右两栏。',
+    },
+    bullets: {
+      en: [
+        'Hero left rail, plus the left and right rails of the directory',
+        'A card with your icon, name and one line',
+        'Seven days, starting Monday',
+        'One app per week',
+      ],
+      zh: ['首屏左栏 + 榜单左右两栏，共三处', '卡片形态，含图标、名称与一句话', '展示 7 天，周一起算', '每周只卖给一个应用'],
     },
     bundle: { en: 'Four-week bundle available', zh: '可连投 4 周' },
   },

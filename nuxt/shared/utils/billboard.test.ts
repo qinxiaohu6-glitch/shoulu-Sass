@@ -47,7 +47,7 @@ test('listing prices are the regular list charges; Billboard tiers stay storage 
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}:${plan.weeklyCents}:${plan.bundleCents}`),
-    ['board:$29:2900:11600', 'sidebar:$19:1900:7600'],
+    ['board:$29:2900:11600', 'sidebar:$19:1900:7600', 'app:$39:3900:15600'],
   )
   assert.equal(billboardStandardCents(), 2900)
   assert.equal(planAmountCents('ad'), 2900)
@@ -58,6 +58,9 @@ test('listing prices are the regular list charges; Billboard tiers stay storage 
   assert.equal(adPriceCents('board', 1), 2900)
   assert.equal(adPriceCents('board', 4), 11600)
   assert.equal(adPriceCents('board', 2), 0)
+  assert.equal(adPriceCents('app', 1), 3900)
+  assert.equal(adPriceCents('app', 4), 15600)
+  assert.equal(adPriceCents('app', 2), 0)
 })
 
 test('percent-off stays at zero and the countdown clock still ends', () => {

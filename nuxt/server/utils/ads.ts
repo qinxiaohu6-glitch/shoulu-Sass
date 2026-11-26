@@ -25,7 +25,7 @@
 import { publicProductName } from '~~/shared/utils/public-name'
 import type { Db } from './db'
 
-export const AD_SLOTS = ['board', 'sidebar'] as const
+export const AD_SLOTS = ['board', 'sidebar', 'app'] as const
 export type AdSlot = (typeof AD_SLOTS)[number]
 
 export const isAdSlot = (value: string): value is AdSlot =>

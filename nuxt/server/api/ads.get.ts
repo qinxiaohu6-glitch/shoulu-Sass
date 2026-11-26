@@ -15,9 +15,10 @@ import { currentAd, publicAd } from '../utils/ads'
 export default defineEventHandler(async (event) => {
   try {
     const db = await useDb(event)
-    const [board, sidebar] = await Promise.all([
+    const [board, sidebar, app] = await Promise.all([
       currentAd(db, 'board'),
       currentAd(db, 'sidebar'),
+      currentAd(db, 'app'),
     ])
     // A window can close at midnight, so a cached copy is wrong by morning.
     setResponseHeader(event, 'cache-control', 'no-store')
@@ -25,9 +26,10 @@ export default defineEventHandler(async (event) => {
       ok: true,
       board: board ? publicAd(board) : null,
       sidebar: sidebar ? publicAd(sidebar) : null,
+      app: app ? publicAd(app) : null,
     }
   } catch (err) {
     console.error('[ads]', err)
-    return { ok: false, board: null, sidebar: null }
+    return { ok: false, board: null, sidebar: null, app: null }
   }
 })

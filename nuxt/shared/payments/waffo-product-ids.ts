@@ -20,5 +20,7 @@ export const WAFFO_PRODUCT_IDS: Record<string, string> = {
   "ad:1900": "PROD_2t6wq9wL3Wl0voRlAAjpGU",
   "ad:900": "PROD_0KdPc0mjsZY5U3tjsWzzb1",
   "ad:7600": "PROD_5TwEZ4bmYBM4dN0hglilHe",
-  "ad:3200": "PROD_77ciwxRi68FPLyEUxIhK1X"
+  "ad:3200": "PROD_77ciwxRi68FPLyEUxIhK1X",
+  "ad:3900": "PROD_7HSJbyGuEILzJ5IQicR6bU",
+  "ad:15600": "PROD_54bwXhXENLURIGg3YpUYCV"
 }

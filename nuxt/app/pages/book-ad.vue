@@ -32,14 +32,16 @@ const route = useRoute()
 const requestFetch = useRequestFetch()
 const payment = await usePayment()
 
-type Slot = 'board' | 'sidebar'
+type Slot = 'board' | 'sidebar' | 'app'
 type Availability = {
   ok: boolean
   starts: string[]
   available: Record<string, boolean>
 }
 
-const slot = ref<Slot>(route.query.slot === 'board' ? 'board' : 'sidebar')
+const slot = ref<Slot>(
+  route.query.slot === 'board' || route.query.slot === 'app' ? route.query.slot : 'sidebar',
+)
 const weeks = ref<number>(
   AD_WEEK_OPTIONS.includes(Number(route.query.weeks) as 1 | 4) ? Number(route.query.weeks) : 1,
 )
@@ -69,14 +71,20 @@ const available = computed(() => data.value?.available ?? {})
 const openWeeks = computed(() => openAdWeeks(data.value))
 const plan = computed(() => adPlans.find((entry) => entry.id === slot.value) ?? adPlans[0]!)
 const quote = computed(() => {
-  if (slot.value === 'board') {
-    const amount = effectiveAdCents('board', weeks.value)
+  // `board` and `app` have no campaign price, so the regular price is the
+  // charged price and there is nothing to strike through.
+  if (slot.value === 'board' || slot.value === 'app') {
+    const amount = effectiveAdCents(slot.value, weeks.value)
     const label = centsLabel(amount)
     return { amountCents: amount, priceLabel: label, strikeLabel: null as string | null }
   }
   return effectiveQuote('sidebar', String(weeks.value))
 })
 const sidebarWeekQuote = computed(() => effectiveQuote('sidebar', '1'))
+/** Per-week label for the slot tabs; the sidebar still follows the campaign. */
+function tabWeekLabel(id: string): string {
+  return id === 'sidebar' ? sidebarWeekQuote.value.priceLabel : centsLabel(adPriceCents(id, 1))
+}
 const weekQuote = computed(() =>
   slot.value === 'board'
     ? { priceLabel: centsLabel(adPriceCents('board', 1)), strikeLabel: null as string | null }
@@ -174,7 +182,7 @@ const canSubmit = computed(() =>
 )
 
 async function submit() {
-  if (slot.value !== 'board' && slot.value !== 'sidebar') return
+  if (slot.value !== 'board' && slot.value !== 'sidebar' && slot.value !== 'app') return
   if (!canSubmit.value) return
   busy.value = true
   error.value = ''
@@ -253,7 +261,7 @@ useHead({
         <!-- position -->
         <section class="space-y-3">
           <h2 class="text-sm font-semibold">{{ pick('选择位置', 'Choose a position') }}</h2>
-          <div class="grid gap-3 sm:grid-cols-2">
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <button
               v-for="entry in adPlans"
               :key="entry.id"
@@ -270,7 +278,7 @@ useHead({
                 <span class="font-medium">{{ isZh ? entry.name.zh : entry.name.en }}</span>
                 <span class="font-serif text-xl tabular-nums">
                   <s v-if="entry.id === 'sidebar' && sidebarWeekQuote.strikeLabel" class="mr-1 text-sm text-muted-foreground">{{ sidebarWeekQuote.strikeLabel }}</s>
-                  {{ entry.id === 'board' ? centsLabel(adPriceCents('board', 1)) : sidebarWeekQuote.priceLabel }}<small class="ml-0.5 text-xs text-muted-foreground">{{ pick('/周', '/wk') }}</small>
+                  {{ tabWeekLabel(entry.id) }}<small class="ml-0.5 text-xs text-muted-foreground">{{ pick('/周', '/wk') }}</small>
                 </span>
               </div>
               <p class="mt-1 text-xs text-muted-foreground">

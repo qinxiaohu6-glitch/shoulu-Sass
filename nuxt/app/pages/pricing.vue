@@ -203,6 +203,33 @@ const adPlans = computed<PlanView[]>(() => {
       cta: pick(`预订右栏 · ${sidebar.priceLabel} ↗`, `Book sidebar · ${sidebar.priceLabel} ↗`),
       to: `${localePath('/sponsor')}?spot=sidebar#book`,
     },
+    {
+      id: 'app',
+      n: '5',
+      name: pick('APP 广告位', 'App showcase'),
+      badge: pick('每周 1 个应用', '1 app'),
+      description: pick('首页三处同时展示你的应用：首屏左栏与榜单左右两栏。', "Your app in three homepage spots at once: the hero rail and both directory rails."),
+      price: centsLabel(adPriceCents('app', 1)),
+      unit: pick('/ 周', '/ week'),
+      features: pick(
+        [
+          '首屏左栏 + 榜单左右两栏，共三处',
+          '卡片形态，含图标、名称与一句话',
+          '每周只卖给一个应用',
+          '周一到周日展示 7 天',
+          '不自动续费',
+        ],
+        [
+          'Hero left rail, plus both directory rails',
+          'A card with your icon, name and one line',
+          'One app per week',
+          'Runs Monday to Sunday',
+          'No auto-renewal',
+        ],
+      ),
+      cta: pick(`预订 APP 位 · ${centsLabel(adPriceCents('app', 1))} ↗`, `Book the app slot · ${centsLabel(adPriceCents('app', 1))} ↗`),
+      to: `${localePath('/book-ad')}?slot=app&weeks=1`,
+    },
   ]
 })
 
@@ -211,6 +238,7 @@ const whereItems = computed(() => [
   { n: '2', title: pick('加速发布', 'Boost launch'), body: pick('金色高亮行，带认证徽章，排在免费收录之前。', 'A highlighted gold row with a verified badge, above free listings.'), spot: '2' },
   { n: '3', title: pick('发布榜广告', 'Launch board ad'), body: pick('前三名下面的一条赞助横幅，每周一个品牌。', 'A sponsored banner under the top 3. One brand per week.'), spot: '3' },
   { n: '4', title: pick('右栏广告', 'Right sidebar ad'), body: pick('首页右栏，以及小屏时的榜单下方。', 'Right sidebar on the homepage, under the board on smaller screens.'), spot: '4' },
+  { n: '5', title: pick('APP 广告位', 'App showcase'), body: pick('首屏左栏与榜单左右两栏，三处同时展示一个应用。', 'The hero left rail plus both directory rails — one app, three spots.'), spot: '5' },
 ])
 
 const hoverSpot = ref('')
@@ -376,7 +404,7 @@ useHead({
             <p>{{ pick('按周预订，周一到周日。把你的品牌放到正在看榜单的开发者和早期用户面前。', 'Booked per week, Monday to Sunday. Put your brand in front of makers and early adopters.') }}</p>
             <NuxtLink :to="localePath('/sponsor')">{{ pick('查看开放周次', 'See availability') }} →</NuxtLink>
           </header>
-          <div class="pb-card-grid pb-card-grid--two">
+          <div class="pb-card-grid pb-card-grid--three">
             <DirectoryPricingPlanCard v-for="plan in adPlans" :key="plan.id" :plan="plan" />
           </div>
           <p v-if="nextOpenWeek" class="pb-live-note">

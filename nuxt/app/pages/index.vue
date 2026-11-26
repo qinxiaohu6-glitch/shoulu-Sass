@@ -46,18 +46,21 @@ const all = computed(() =>
 )
 
 /** The app slot is deliberately separate from the ranked product feed and ad rows. */
-const homeApp = computed(() => submittedApps.value[0] ?? null)
-const homeAppSummary = computed(() => {
-  const stores = homeApp.value?.app_stores ?? []
+const homeApps = computed(() => submittedApps.value.slice(0, 3))
+const appMeta = (app: (typeof submittedApps.value)[number]) => {
+  const stores = app.app_stores ?? []
   const platformLabels = { ios: 'iOS', android: 'Android', macos: 'Mac' }
-  const rating = stores.find((store) => store.rating !== null)
+  const rated = stores.find((store) => store.rating !== null)
+  const rating = rated?.rating ?? null
   return {
     platforms: [...new Set(stores.map((store) => platformLabels[store.platform]))],
-    category: stores.find((store) => store.category)?.category ?? '',
-    rating: rating?.rating ?? null,
-    ratingCount: rating?.ratingCount ?? null,
+    // `hasRating` keeps the template narrowing explicit: template type-checking
+    // cannot narrow a repeated function call, so `rating` is widened to a number.
+    hasRating: rating !== null,
+    rating: rating ?? 0,
+    ratingCount: rated?.ratingCount ?? 0,
   }
-})
+}
 
 /**
  * Entrance motion for the app slot. The animation classes are only applied
@@ -338,7 +341,7 @@ const boostQuote = computed(() => effectiveQuote('listing', 'boost', tick.value)
 const sidebarQuote = computed(() => effectiveQuote('sidebar', '1'))
 
 // Real booked ads (if any) drive the rail; empty slots show an honest placeholder.
-const { sidebar: bookedSidebar, board: bookedBoard } = await useAds()
+const { sidebar: bookedSidebar, board: bookedBoard, app: bookedApp } = await useAds()
 const adsTo = computed(() => `${localePath('/sponsor')}`)
 const bookSidebarTo = computed(() => `${localePath('/book-ad')}?slot=sidebar&weeks=1`)
 
@@ -523,6 +526,10 @@ useHead({ script: schemaScripts })
               <small>{{ tool.short }}</small>
             </span>
           </NuxtLink>
+
+          <!-- The APP placement: this column's dedicated slot, sold separately
+               from the FEATURED rows above it. -->
+          <HomeAppAdCard variant="hero" :ad="bookedApp" />
         </aside>
 
         <section class="mk-hero mk-hero--center mk-hero--launch hero-launch">
@@ -596,6 +603,13 @@ useHead({ script: schemaScripts })
         <!-- The board runs down the rail, not across the page: five slots level
              with the feed instead of a ten-cell band above it. -->
         <BillboardRail :cells="billboardLeft" :product-slugs="billboardProductSlugs" side="left" />
+        <div class="rail-ad">
+          <p class="rail-ad__kicker">
+            {{ pick('APP 广告位', 'APP SPOT') }}
+            <NuxtLink :to="adsTo">{{ pick('全部价格', 'All prices') }} ›</NuxtLink>
+          </p>
+          <HomeAppAdCard :ad="bookedApp" />
+        </div>
         <div class="home-dir__panel">
           <p class="home-dir__kicker">{{ pick('目录', 'DIRECTORY') }}</p>
           <p class="home-dir__stat"><strong>{{ all.length }}</strong> {{ isZh ? '个产品已收录' : `${englishCount(all.length, 'product')} listed` }}</p>
@@ -658,33 +672,48 @@ useHead({ script: schemaScripts })
             </NuxtLink>
           </div>
 
-          <NuxtLink
-            v-if="homeApp"
-            class="home-app-spotlight__feature"
-            :to="localePath(`/apps/${homeApp.slug}`)"
-          >
-            <span class="home-app-spotlight__logo">
-              <ToolLogo :logo="homeApp.logo" :name="homeApp.name" :size="56" decorative />
-            </span>
-            <span class="home-app-spotlight__identity">
-              <span class="home-app-spotlight__tag">{{ pick('应用速览', 'APP SPOTLIGHT') }}</span>
-              <strong>{{ homeApp.name }}</strong>
-              <span class="home-app-spotlight__description">{{ homeApp.short }}</span>
-              <span
-                v-if="homeAppSummary.platforms.length || homeAppSummary.category || homeAppSummary.rating !== null"
-                class="home-app-spotlight__meta"
-              >
-                <em v-for="platform in homeAppSummary.platforms" :key="platform">{{ platform }}</em>
-                <em v-if="homeAppSummary.category">{{ homeAppSummary.category }}</em>
-                <em v-if="homeAppSummary.rating !== null">
-                  ★ {{ homeAppSummary.rating }}<span v-if="homeAppSummary.ratingCount"> ({{ homeAppSummary.ratingCount.toLocaleString() }})</span>
-                </em>
+          <div v-if="homeApps.length" class="home-app-spotlight__list">
+            <NuxtLink
+              v-for="(app, index) in homeApps"
+              :key="app.slug"
+              class="home-app-spotlight__item"
+              :style="{ '--i': index }"
+              :to="localePath(`/apps/${app.slug}`)"
+            >
+              <span class="home-app-spotlight__logo">
+                <ToolLogo :logo="app.logo" :name="app.name" :size="44" decorative />
               </span>
-            </span>
-            <span class="home-app-spotlight__action">
-              {{ pick('查看应用', 'View app') }} <span aria-hidden="true">↗</span>
-            </span>
-          </NuxtLink>
+              <span class="home-app-spotlight__identity">
+                <strong>{{ app.name }}</strong>
+                <span class="home-app-spotlight__description">{{ app.short }}</span>
+                <span
+                  v-if="appMeta(app).platforms.length || appMeta(app).hasRating"
+                  class="home-app-spotlight__meta"
+                >
+                  <em v-for="platform in appMeta(app).platforms" :key="platform">{{ platform }}</em>
+                  <em v-if="appMeta(app).hasRating">
+                    ★ {{ appMeta(app).rating }}<span v-if="appMeta(app).ratingCount"> ({{ appMeta(app).ratingCount.toLocaleString() }})</span>
+                  </em>
+                </span>
+              </span>
+              <span class="home-app-spotlight__action" aria-hidden="true">↗</span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="homeApps.length < 3"
+              class="home-app-spotlight__item home-app-spotlight__item--cta"
+              :to="localePath('/apps/submit')"
+            >
+              <span class="home-app-spotlight__cta-icon" aria-hidden="true">+</span>
+              <span class="home-app-spotlight__identity">
+                <strong>{{ pick('提交你的应用', 'Submit your app') }}</strong>
+                <span class="home-app-spotlight__description">
+                  {{ pick('iOS、Android、Mac 都可以，粘贴商店链接自动填充。', 'iOS, Android or Mac — paste a store link and we fill it in.') }}
+                </span>
+              </span>
+              <span class="home-app-spotlight__action" aria-hidden="true">→</span>
+            </NuxtLink>
+          </div>
 
           <div v-else class="home-app-spotlight__empty">
             <span class="home-app-spotlight__empty-icon" aria-hidden="true">
@@ -913,6 +942,10 @@ useHead({ script: schemaScripts })
               </span>
             </span>
           </NuxtLink>
+
+          <!-- The APP placement, same booking as the hero card and the left
+               rail: one app, three spots on this page. -->
+          <HomeAppAdCard :ad="bookedApp" />
         </div>
       </aside>
     </div>
@@ -1010,8 +1043,10 @@ useHead({ script: schemaScripts })
 .rail-ad__body em { font-style: normal; font-size: 11px; color: var(--muted-foreground); }
 .rail-ad__body small { font-size: 11px; line-height: 1.45; color: var(--muted-foreground); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .rail-ad__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
-.rail-ad__foot b { font-size: 14px; font-weight: 850; }
-.rail-ad__foot b small { font-size: 11px; font-weight: 600; }
+.rail-ad__foot b { font-size: 14px; font-weight: 850; white-space: nowrap; }
+/* The base layer gives `<small>` a block-ish display, which broke the amount
+   and its "/week" unit onto two lines in the 236px rail. Keep the unit inline. */
+.rail-ad__foot b small { display: inline; font-size: 11px; font-weight: 600; }
 .rail-ad__foot a, .rail-ad__foot span { font-size: 11px; font-weight: 800; color: var(--primary, #b45309); text-decoration: none; }
 
 /* ---- Last week's top 3 rail card ---- */
@@ -1475,18 +1510,19 @@ a.pb-row__link::after {
 }
 /* Staged reveal: only armed after mount, so SSR never hides the slot.
    `backwards` (not `both`) keeps the finished animation from pinning
-   `transform`, which would otherwise kill the card's hover lift. */
+   `transform`, which would otherwise kill the row's hover lift. */
 .home-app-spotlight--anim .home-app-spotlight__head,
-.home-app-spotlight--anim .home-app-spotlight__feature,
+.home-app-spotlight--anim .home-app-spotlight__item,
 .home-app-spotlight--anim .home-app-spotlight__empty { opacity: 0; }
 .home-app-spotlight--anim.is-visible .home-app-spotlight__head {
   opacity: 1;
   animation: app-slot-rise .5s cubic-bezier(.22, .61, .36, 1) backwards;
 }
-.home-app-spotlight--anim.is-visible .home-app-spotlight__feature,
+.home-app-spotlight--anim.is-visible .home-app-spotlight__item,
 .home-app-spotlight--anim.is-visible .home-app-spotlight__empty {
   opacity: 1;
-  animation: app-slot-rise .62s cubic-bezier(.22, .61, .36, 1) .1s backwards;
+  animation: app-slot-rise .5s cubic-bezier(.22, .61, .36, 1) backwards;
+  animation-delay: calc(.1s + var(--i, 0) * .07s);
 }
 @keyframes app-slot-rise {
   from { opacity: 0; transform: translate3d(0, 12px, 0) scale(.985); }
@@ -1543,24 +1579,28 @@ a.pb-row__link::after {
 .home-app-spotlight__browse:hover { text-decoration: underline; text-underline-offset: 3px; }
 .home-app-spotlight__browse span { display: inline-block; transition: transform .2s ease; }
 .home-app-spotlight__browse:hover span { transform: translateX(3px); }
-.home-app-spotlight__feature {
+/* Up to three apps, one row each: the homepage column is too narrow for a
+   3-up card grid, and a row reads like the ranked feed right below it. */
+.home-app-spotlight__list { display: grid; gap: 8px; }
+.home-app-spotlight__item {
   position: relative;
   display: grid;
   overflow: hidden;
-  grid-template-columns: 56px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 13px;
+  gap: 11px;
   min-width: 0;
-  padding: 11px 12px;
+  padding: 9px 11px;
   border: 1px solid var(--border, #e5e7eb);
-  border-radius: 12px;
+  border-radius: 11px;
   background: var(--card, #fff);
   color: inherit;
   text-decoration: none;
   transition: border-color .2s, transform .28s cubic-bezier(.22, .61, .36, 1), box-shadow .28s;
 }
-/* A light sweep that keeps looping on its own, the "premium listing" cue. */
-.home-app-spotlight__feature::after {
+/* Only the newest row carries the looping sweep; a wave down all three would
+   read as noise. */
+.home-app-spotlight__item:first-child::after {
   content: '';
   position: absolute;
   top: 0;
@@ -1585,41 +1625,55 @@ a.pb-row__link::after {
   30% { opacity: 0; transform: translateX(330%) skewX(-14deg); }
   100% { opacity: 0; transform: translateX(330%) skewX(-14deg); }
 }
-.home-app-spotlight__feature:hover {
+.home-app-spotlight__item:hover {
   border-color: color-mix(in oklab, var(--primary, #b45309) 42%, var(--border, #e5e7eb));
   transform: translateY(-2px);
   box-shadow: 0 12px 26px -16px color-mix(in oklab, var(--primary, #b45309) 60%, transparent);
 }
-.home-app-spotlight__feature:focus-visible,
+.home-app-spotlight__item:focus-visible,
 .home-app-spotlight__browse:focus-visible,
 .home-app-spotlight__empty-actions a:focus-visible {
   outline: 3px solid var(--ring, var(--primary, #b45309));
   outline-offset: 3px;
 }
+/* The empty slot doubles as a submission prompt, so three rows never leave a
+   hole when the directory is still small. */
+.home-app-spotlight__item--cta {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--primary, #b45309) 38%, var(--border, #e5e7eb));
+  background: color-mix(in oklab, var(--primary, #b45309) 4%, var(--card, #fff));
+}
+.home-app-spotlight__cta-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px dashed color-mix(in oklab, var(--primary, #b45309) 45%, var(--border, #e5e7eb));
+  border-radius: 10px;
+  color: var(--primary, #b45309);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
 .home-app-spotlight__logo {
   display: grid;
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   overflow: hidden;
   place-items: center;
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--secondary, #f4f4f5);
   transition: transform .3s cubic-bezier(.22, .61, .36, 1);
 }
-.home-app-spotlight__feature:hover .home-app-spotlight__logo { transform: scale(1.05) rotate(-3deg); }
-.home-app-spotlight__logo :deep(img) { width: 56px; height: 56px; border-radius: 12px; object-fit: contain; }
-.home-app-spotlight__identity { display: grid; min-width: 0; gap: 3px; }
-.home-app-spotlight__tag {
-  color: var(--primary, #b45309);
-  font-size: 9px;
-  font-weight: 850;
-  letter-spacing: .08em;
-}
+.home-app-spotlight__item:hover .home-app-spotlight__logo { transform: scale(1.05) rotate(-3deg); }
+.home-app-spotlight__logo :deep(img) { width: 44px; height: 44px; border-radius: 10px; object-fit: contain; }
+.home-app-spotlight__identity { display: grid; min-width: 0; gap: 2px; }
 .home-app-spotlight__identity > strong {
   overflow: hidden;
   color: var(--foreground, #1a1a1a);
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 800;
+  letter-spacing: -.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1627,32 +1681,37 @@ a.pb-row__link::after {
   display: -webkit-box;
   overflow: hidden;
   color: var(--muted-foreground, #6b7280);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11.5px;
+  line-height: 1.4;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
 }
-.home-app-spotlight__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.home-app-spotlight__meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
 .home-app-spotlight__meta em {
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 999px;
   background: var(--secondary, #f4f4f5);
   color: var(--muted-foreground, #6b7280);
-  font-size: 10px;
+  font-size: 9.5px;
   font-style: normal;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 .home-app-spotlight__action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary, #b45309) 9%, transparent);
   color: var(--primary, #b45309);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  white-space: nowrap;
+  transition: background-color .2s ease, transform .2s ease;
 }
-.home-app-spotlight__action span { display: inline-block; transition: transform .2s ease; }
-.home-app-spotlight__feature:hover .home-app-spotlight__action span { transform: translate(3px, -3px); }
+.home-app-spotlight__item:hover .home-app-spotlight__action {
+  background: color-mix(in oklab, var(--primary, #b45309) 18%, transparent);
+  transform: translate(2px, -2px);
+}
 .home-app-spotlight__empty {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) auto;
@@ -1708,8 +1767,10 @@ a.pb-row__link::after {
   .pb-row__logo { display: none; }
   .pb-row__rank em { width: 28px; height: 28px; font-size: 13px; }
   .home-app-spotlight { padding: 11px; }
-  .home-app-spotlight__feature { grid-template-columns: 56px minmax(0, 1fr); gap: 10px; }
-  .home-app-spotlight__action { grid-column: 2; }
+  .home-app-spotlight__item { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 9px; padding: 8px 10px; }
+  .home-app-spotlight__logo,
+  .home-app-spotlight__logo :deep(img),
+  .home-app-spotlight__cta-icon { width: 40px; height: 40px; }
   .home-app-spotlight__empty { grid-template-columns: 40px minmax(0, 1fr); gap: 10px; }
   .home-app-spotlight__empty-actions { grid-column: 2; flex-wrap: wrap; }
 }
@@ -1720,18 +1781,18 @@ a.pb-row__link::after {
     animation: none !important;
     transform: none !important;
   }
-  .home-app-spotlight__feature { transition: none; }
-  .home-app-spotlight__feature:hover { transform: none; }
+  .home-app-spotlight__item { transition: none; }
+  .home-app-spotlight__item:hover { transform: none; }
   .home-app-spotlight::before,
   .home-app-spotlight__eyebrow::before,
   .home-app-spotlight__empty-icon { animation: none !important; }
-  .home-app-spotlight__feature::after { animation: none; opacity: 0; }
-  .home-app-spotlight__feature:hover .home-app-spotlight__logo,
-  .home-app-spotlight__feature:hover .home-app-spotlight__action span,
+  .home-app-spotlight__item:first-child::after { animation: none; opacity: 0; }
+  .home-app-spotlight__item:hover .home-app-spotlight__logo,
+  .home-app-spotlight__item:hover .home-app-spotlight__action,
   .home-app-spotlight__browse:hover span,
   .home-app-spotlight__empty-actions a:hover { transform: none; }
   .home-app-spotlight--anim .home-app-spotlight__head,
-  .home-app-spotlight--anim .home-app-spotlight__feature,
+  .home-app-spotlight--anim .home-app-spotlight__item,
   .home-app-spotlight--anim .home-app-spotlight__empty {
     opacity: 1 !important;
     animation: none !important;

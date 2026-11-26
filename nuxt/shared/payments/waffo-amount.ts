@@ -21,7 +21,7 @@ const ZERO_DECIMAL = new Set([
 ])
 
 const LISTING_PLANS = ['boost', 'standard', 'featured', 'pro'] as const
-const AD_SLOTS = ['board', 'sidebar'] as const
+const AD_SLOTS = ['board', 'sidebar', 'app'] as const
 
 export interface WaffoChargeProduct {
   /** `plan:cents`, the key in `NUXT_WAFFO_PRODUCT_IDS`. Ads all use plan `ad`. */

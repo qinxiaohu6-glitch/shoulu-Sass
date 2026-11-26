@@ -229,7 +229,7 @@ test('the homepage no longer hosts the four benefit cards, and pricing does', ()
   )
   assert.deepEqual(
     adPlans.map((plan) => `${plan.id}:${plan.price}`),
-    ['board:$29', 'sidebar:$19'],
+    ['board:$29', 'sidebar:$19', 'app:$39'],
   )
   assert.deepEqual(
     BILLBOARD_TIERS.map((tier) => `${tier.id}:${tier.price}`),
