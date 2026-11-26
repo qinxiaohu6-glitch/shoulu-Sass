@@ -224,6 +224,46 @@ function firstText(...values: unknown[]): string {
   return ''
 }
 
+const GOOGLE_IMAGE_HOST = 'https://play-lh.googleusercontent.com/'
+
+/**
+ * Google Play renders its screenshot strip as `<div role="listitem">` cards
+ * whose `<img src>` points at `play-lh.googleusercontent.com`. The page's
+ * JSON-LD block carries no `screenshot` field at all, which is why the generic
+ * reader returned zero images for every Android app. The app icon and the
+ * reviewer avatars live outside that strip (and use `=s…` or very small
+ * `=wN-hM` sizes), so requiring the list wrapper plus a screenshot-sized
+ * `=wN-hM` suffix keeps them out. The suffix is then widened to `=w720` so the
+ * gallery is not blurry on a retina screen.
+ */
+export function googleScreenshots(html: string, icon: string): string[] {
+  const iconBase = icon.split('=')[0] ?? ''
+  const out: string[] = []
+  const add = (raw: string) => {
+    const url = httpsUrl(raw, 'https://play.google.com/')
+    if (!url) return
+    const [base = '', suffix = ''] = url.split('=')
+    if (!base.startsWith(GOOGLE_IMAGE_HOST) || !suffix) return
+    const size = /^w(\d+)-h(\d+)$/.exec(suffix)
+    if (!size) return
+    if (Math.max(Number(size[1]), Number(size[2])) < 300) return
+    if (base === iconBase) return
+    const widened = `${base}=w720`
+    if (!out.includes(widened)) out.push(widened)
+  }
+  for (const block of html.matchAll(/role="listitem"[\s\S]{0,600}?<img\b[^>]*\bsrc="([^"]+)"/g)) {
+    add(block[1] ?? '')
+  }
+  if (out.length) return out.slice(0, 12)
+  // Some markets ship the strip without the list wrapper, so fall back to the
+  // alt text every screenshot card carries in the page language.
+  const altFirst = /<img\b[^>]*\balt="(?:Screenshot|屏幕截图|スクリーンショット|스크린샷)[^"]*"[^>]*\bsrc="([^"]+)"/g
+  for (const block of html.matchAll(altFirst)) add(block[1] ?? '')
+  const srcFirst = /<img\b[^>]*\bsrc="([^"]+)"[^>]*\balt="(?:Screenshot|屏幕截图|スクリーンショット|스크린샷)[^"]*"/g
+  for (const block of html.matchAll(srcFirst)) add(block[1] ?? '')
+  return out.slice(0, 12)
+}
+
 function googleInfo(html: string, parsed: ParsedStoreUrl): AppStoreInfo {
   const info = blankInfo(parsed)
   const entries = jsonLdEntries(html)
@@ -242,13 +282,16 @@ function googleInfo(html: string, parsed: ParsedStoreUrl): AppStoreInfo {
   info.developer = firstText(author.name, app.authorName)
   info.description = firstText(app.description, extractMeta(html, 'og:description'), extractMeta(html, 'description')).slice(0, MAX_DESCRIPTION)
   info.icon = httpsUrl(firstText(app.image, extractMeta(html, 'og:image')), parsed.storeUrl)
-  info.screenshots = listOfStrings(
-    [...listOfStrings(app.screenshot, 12, 1200), ...listOfStrings(app.image, 12, 1200)]
-      .map((value) => httpsUrl(value, parsed.storeUrl))
-      .filter(Boolean),
-    12,
-    1200,
-  ).filter((value) => value !== info.icon)
+  const playShots = googleScreenshots(html, info.icon)
+  info.screenshots = playShots.length
+    ? playShots
+    : listOfStrings(
+        [...listOfStrings(app.screenshot, 12, 1200), ...listOfStrings(app.image, 12, 1200)]
+          .map((value) => httpsUrl(value, parsed.storeUrl))
+          .filter(Boolean),
+        12,
+        1200,
+      ).filter((value) => value !== info.icon)
   info.category = firstText(app.applicationCategory, app.applicationSubCategory)
   info.genres = listOfStrings(app.genre, 12, 100)
   info.version = firstText(app.softwareVersion)
@@ -289,12 +332,16 @@ async function readLimited(response: Response, limit: number): Promise<string> {
   return result
 }
 
-async function fetchStoreText(
+/**
+ * One attempt at a store URL: manual redirects, host allowlist, byte cap.
+ * Kept separate so the retry below can wrap it without duplicating the rules.
+ */
+async function fetchStoreTextOnce(
   rawUrl: string,
   init: RequestInit,
   allowedHost: string,
   maxBytes: number,
-  timeoutMs = 7000,
+  timeoutMs: number,
 ): Promise<{ response: Response; text: string }> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), timeoutMs)
@@ -326,6 +373,41 @@ async function fetchStoreText(
   } finally {
     clearTimeout(timeout)
   }
+}
+
+/**
+ * The stores drop connections and answer 403/429 from shared edge IPs often
+ * enough that a single attempt turns into "cannot reach the store" for a
+ * perfectly valid link — which is exactly what a submitter saw on
+ * 2026-11-26. One retry on a transient failure fixes that without making a
+ * genuinely missing app or a timeout wait twice as long.
+ */
+async function fetchStoreText(
+  rawUrl: string,
+  init: RequestInit,
+  allowedHost: string,
+  maxBytes: number,
+  timeoutMs = 7000,
+): Promise<{ response: Response; text: string }> {
+  let lastResult: { response: Response; text: string } | null = null
+  let lastError: unknown = null
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const result = await fetchStoreTextOnce(rawUrl, init, allowedHost, maxBytes, timeoutMs)
+      if (result.response.ok) return result
+      lastResult = result
+      const status = result.response.status
+      const retryable = status >= 500 || status === 403 || status === 408 || status === 429
+      if (!retryable) return result
+    } catch (error) {
+      lastError = error
+      // A timeout already spent the whole budget; repeating it only doubles the wait.
+      if (error instanceof AppStoreError && error.code === 'store_timeout') throw error
+    }
+    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 220))
+  }
+  if (lastResult) return lastResult
+  throw lastError ?? new AppStoreError('store_unavailable', 502)
 }
 
 export async function lookupAppStore(rawUrl: unknown, requestedPlatform?: unknown): Promise<AppStoreInfo> {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { AppStoreError, cleanAppStores, parseAppStoreUrl } from './app-store.ts'
+import { AppStoreError, cleanAppStores, googleScreenshots, lookupAppStore, parseAppStoreUrl } from './app-store.ts'
 import { SUBMIT_ERRORS } from './http.ts'
 
 const appStore = (platform: 'ios' | 'android' | 'macos', url: string, appId: string) => ({
@@ -89,4 +89,45 @@ test('APP and tag validation errors return client errors instead of internal err
   }
   assert.equal(SUBMIT_ERRORS.duplicate_app?.status, 409)
   assert.equal(SUBMIT_ERRORS.duplicate_app?.en, 'That app has already been submitted and is in the queue.')
+})
+
+test('Google Play screenshots come from the list strip, not the icon or avatars', () => {
+  const icon = 'https://play-lh.googleusercontent.com/ICONHASH0000000000000000=w240-h480'
+  const html = [
+    `<img src="${icon}" alt="Icon image">`,
+    '<div role="listitem"><div><img src="https://play-lh.googleusercontent.com/SHOTONE0000000000000000=w526-h296" alt="Screenshot image"></div></div>',
+    '<div role="listitem"><img src="https://play-lh.googleusercontent.com/SHOTTWO0000000000000000=w296-h526" alt="Screenshot image"></div>',
+    '<div role="listitem"><img src="https://play-lh.googleusercontent.com/AVATAR00000000000000000=s20"></div>',
+  ].join('')
+  assert.deepEqual(googleScreenshots(html, icon), [
+    'https://play-lh.googleusercontent.com/SHOTONE0000000000000000=w720',
+    'https://play-lh.googleusercontent.com/SHOTTWO0000000000000000=w720',
+  ])
+})
+
+test('Google Play screenshots fall back to the localised alt text', () => {
+  const html = '<img alt="屏幕截图图片" src="https://play-lh.googleusercontent.com/SHOTZH00000000000000000=w526-h296">'
+  assert.deepEqual(googleScreenshots(html, ''), [
+    'https://play-lh.googleusercontent.com/SHOTZH00000000000000000=w720',
+  ])
+})
+
+test('a transient store failure is retried once', async () => {
+  const original = globalThis.fetch
+  let calls = 0
+  globalThis.fetch = (async () => {
+    calls += 1
+    if (calls === 1) throw new TypeError('network reset')
+    return new Response(
+      JSON.stringify({ resultCount: 1, results: [{ trackId: 123, trackName: 'Retry App' }] }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )
+  }) as typeof fetch
+  try {
+    const info = await lookupAppStore('https://apps.apple.com/us/app/retry/id123')
+    assert.equal(info.name, 'Retry App')
+    assert.equal(calls, 2)
+  } finally {
+    globalThis.fetch = original
+  }
 })
